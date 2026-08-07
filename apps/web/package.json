@@ -1,0 +1,19 @@
+{
+  "name": "@nusa/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "build": "astro build",
+    "preview": "astro preview --port 4321"
+  },
+  "dependencies": {
+    "@astrojs/node": "^9.1.3",
+    "@nusa/shared": "*",
+    "astro": "^5.5.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2"
+  }
+}

@@ -1,0 +1,36 @@
+name: Feature request
+description: New capability toward Listeo/Dokan parity or geo platform
+title: "[feat] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / opportunity
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: dropdown
+    id: parity
+    attributes:
+      label: Parity map
+      options:
+        - Listeo directory
+        - Listeo booking
+        - Dokan / Mercur marketplace
+        - Geo / tenancy
+        - Field ops
+        - Other / net-new
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true

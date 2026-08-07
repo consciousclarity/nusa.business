@@ -1,0 +1,17 @@
+---
+import Base from "../layouts/Base.astro";
+const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
+---
+<Base title="Claim a listing — Nusa.Business">
+  <section class="hero">
+    <h1>Claim your listing</h1>
+    <p>
+      Field teams register businesses for free. Owners claim listings at no cost —
+      customize details, reply to reviews, and optionally open a vendor shop.
+    </p>
+    <p style="margin-top:1.25rem">
+      <a class="cta" href={`${portal}/claim`}>Open claim portal</a>
+      <a class="cta secondary" href={`${portal}/login`}>Owner login</a>
+    </p>
+  </section>
+</Base>

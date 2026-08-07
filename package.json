@@ -1,0 +1,21 @@
+{
+  "name": "nusa.business",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:packages": "npm run build -w @nusa/shared && npm run build -w @nusa/db",
+    "dev:api": "npm run build:packages && npm run dev -w @nusa/api",
+    "dev:web": "npm run dev -w @nusa/web",
+    "dev:portal": "npm run build -w @nusa/shared && npm run dev -w @nusa/portal",
+    "build": "npm run build:packages && npm run build -w @nusa/api && npm run build -w @nusa/web && npm run build -w @nusa/portal",
+    "seed": "npm run build:packages && npm run seed -w @nusa/db",
+    "docker:up": "docker compose -f docker/compose.yml up -d",
+    "docker:down": "docker compose -f docker/compose.yml down"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

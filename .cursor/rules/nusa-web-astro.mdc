@@ -1,0 +1,13 @@
+---
+description: Astro public app conventions
+globs: apps/web/**/*
+alwaysApply: false
+---
+
+# apps/web (Astro)
+
+- Server-rendered public pages; minimize client JS (islands only when needed).
+- Fetch data from `PUBLIC_API_URL` via `src/lib/api.ts`.
+- Tenant pages live under `src/pages/host/[label]/`.
+- Layout/branding: `src/layouts/Base.astro` + `src/styles/global.css`.
+- Do not put claim/admin mutations here — link to the portal instead.

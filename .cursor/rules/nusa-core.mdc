@@ -1,0 +1,15 @@
+---
+description: Always-on Nusa.Business engineering conventions
+alwaysApply: true
+---
+
+# Nusa.Business conventions
+
+- Stack: Astro (`apps/web`) + React Router portal (`apps/portal`) + Hono (`apps/api`). No Next.js, no WordPress.
+- Nested geo hosts are sacred: nation → island → place → business slug.
+- Prefer open-source dependencies (MIT/Apache/BSD/GPL). No Listeo theme code.
+- Launch economics: free listings, 0% commission unless an ADR changes it.
+- Update `docs/features-parity.md` when closing Listeo/Dokan gaps.
+- Dev tenants use `/host/...` paths. Do not create Astro routes under `_` folders.
+- Keep secrets out of git; use `.env.example` only.
+- Read `AGENTS.md` and relevant `.cursor/skills/*/SKILL.md` before large changes.

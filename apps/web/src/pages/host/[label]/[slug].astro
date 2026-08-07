@@ -1,0 +1,212 @@
+---
+import Base from "../../../layouts/Base.astro";
+import { api, API } from "../../../lib/api";
+
+const label = Astro.params.label!;
+const slug = Astro.params.slug!;
+const parts = label.split(".");
+if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
+
+const [placeSlug, islandSlug] = parts;
+const data = await api<{
+  business: {
+    id: string;
+    name: string;
+    slug: string;
+    summary: string;
+    description: string;
+    categories: string[];
+    address?: string;
+    phone?: string;
+    whatsapp?: string;
+    website?: string;
+    bookingMode: string;
+    status: string;
+    openingHours: { day: string; open: string; close: string; closed?: boolean }[];
+  };
+  reviews: {
+    authorName: string;
+    service: number;
+    value: number;
+    location: number;
+    cleanliness: number;
+    comment: string;
+  }[];
+  vendor?: {
+    id: string;
+    name: string;
+    description: string;
+    products: { name: string; price: number; currency: string; stock: number; description: string }[];
+  };
+}>(`/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}`);
+
+const placeMeta = await api<{
+  island: { name: string; slug: string };
+  place: { name: string; slug: string };
+}>(`/v1/islands/${islandSlug}/places/${placeSlug}`);
+
+const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
+---
+<Base
+  title={`${data.business.name} — ${placeMeta.place.name}`}
+  description={data.business.summary}
+  crumb={[
+    { label: "Indonesia", href: "/" },
+    { label: placeMeta.island.name, href: `/host/${islandSlug}` },
+    { label: placeMeta.place.name, href: `/host/${label}` },
+    { label: data.business.name },
+  ]}
+>
+  <section class="hero">
+    <h1>{data.business.name}</h1>
+    <p>{data.business.summary}</p>
+    <p class="meta">
+      {placeSlug}.{islandSlug}.nusa.business/{slug} · {data.business.status}
+    </p>
+    <p style="margin-top:1rem">
+      <a class="cta" href={`${portal}/claim?businessId=${data.business.id}`}>Claim listing</a>
+      {data.business.bookingMode !== "none" && (
+        <a class="cta secondary" href="#book">Book ({data.business.bookingMode})</a>
+      )}
+    </p>
+  </section>
+
+  <div class="stack">
+    <article class="card">
+      <h2 style="font-family:var(--font-display);margin-top:0">Overview</h2>
+      <p>{data.business.description}</p>
+      {data.business.categories.map((c) => <span class="pill">{c}</span>)}
+      {data.business.address && <p class="meta" style="margin-top:0.75rem">{data.business.address}</p>}
+      {data.business.phone && <p class="meta">Phone: {data.business.phone}</p>}
+      {data.business.whatsapp && <p class="meta">WhatsApp: {data.business.whatsapp}</p>}
+    </article>
+
+    {data.business.openingHours?.length > 0 && (
+      <article class="card">
+        <h3 style="font-family:var(--font-display);margin-top:0">Opening hours</h3>
+        <ul>
+          {data.business.openingHours.map((h) => (
+            <li>
+              {h.day}: {h.closed ? "Closed" : `${h.open} – ${h.close}`}
+            </li>
+          ))}
+        </ul>
+      </article>
+    )}
+
+    {data.vendor && (
+      <article class="card">
+        <h3 style="font-family:var(--font-display);margin-top:0">Shop · {data.vendor.name}</h3>
+        <p>{data.vendor.description}</p>
+        <p class="meta">Mercur/Dokan-parity store · 0% commission</p>
+        <div class="grid" style="padding-top:0.75rem">
+          {data.vendor.products.map((p) => (
+            <div class="card">
+              <h3>{p.name}</h3>
+              <p>{p.description}</p>
+              <p class="meta">
+                {p.price.toLocaleString("id-ID")} {p.currency} · stock {p.stock}
+              </p>
+            </div>
+          ))}
+        </div>
+      </article>
+    )}
+
+    <article class="card" id="reviews">
+      <h3 style="font-family:var(--font-display);margin-top:0">Reviews</h3>
+      {data.reviews.length === 0 && <p class="meta">No reviews yet.</p>}
+      {data.reviews.map((r) => (
+        <div style="margin-bottom:1rem">
+          <strong>{r.authorName}</strong>
+          <p class="meta">
+            Service {r.service}/5 · Value {r.value}/5 · Location {r.location}/5 · Cleanliness {r.cleanliness}/5
+          </p>
+          <p>{r.comment}</p>
+        </div>
+      ))}
+
+      <form class="stack" method="POST" id="review-form">
+        <h3 style="font-family:var(--font-display)">Add review</h3>
+        <label>Name <input name="authorName" required /></label>
+        <label>Comment <textarea name="comment" required rows="3"></textarea></label>
+        <label>Service <input type="number" name="service" min="1" max="5" value="5" /></label>
+        <label>Value <input type="number" name="value" min="1" max="5" value="5" /></label>
+        <label>Location <input type="number" name="location" min="1" max="5" value="5" /></label>
+        <label>Cleanliness <input type="number" name="cleanliness" min="1" max="5" value="5" /></label>
+        <button type="submit">Submit review</button>
+      </form>
+    </article>
+
+    {data.business.bookingMode !== "none" && (
+      <article class="card" id="book">
+        <h3 style="font-family:var(--font-display);margin-top:0">
+          Book · {data.business.bookingMode}
+        </h3>
+        <form class="stack" id="booking-form">
+          <label>Name <input name="customerName" required /></label>
+          <label>Email <input type="email" name="customerEmail" required /></label>
+          <label>Date <input type="date" name="startDate" required /></label>
+          {data.business.bookingMode === "service" && (
+            <label>Time slot <input name="timeSlot" placeholder="10:00" /></label>
+          )}
+          {data.business.bookingMode === "rental" && (
+            <label>End date <input type="date" name="endDate" /></label>
+          )}
+          {data.business.bookingMode === "event" && (
+            <label>Tickets <input type="number" name="tickets" min="1" value="1" /></label>
+          )}
+          <button type="submit">Request booking</button>
+          <p class="meta" id="booking-msg"></p>
+        </form>
+      </article>
+    )}
+  </div>
+</Base>
+
+<script define:vars={{ apiBase: API, businessId: data.business.id }}>
+  const reviewForm = document.getElementById("review-form");
+  reviewForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(reviewForm);
+    await fetch(`${apiBase}/v1/businesses/${businessId}/reviews`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        authorName: fd.get("authorName"),
+        comment: fd.get("comment"),
+        service: Number(fd.get("service")),
+        value: Number(fd.get("value")),
+        location: Number(fd.get("location")),
+        cleanliness: Number(fd.get("cleanliness")),
+      }),
+    });
+    location.reload();
+  });
+
+  const bookingForm = document.getElementById("booking-form");
+  bookingForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const fd = new FormData(bookingForm);
+    const res = await fetch(`${apiBase}/v1/businesses/${businessId}/bookings`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        customerName: fd.get("customerName"),
+        customerEmail: fd.get("customerEmail"),
+        startDate: fd.get("startDate"),
+        endDate: fd.get("endDate") || undefined,
+        timeSlot: fd.get("timeSlot") || undefined,
+        tickets: fd.get("tickets") ? Number(fd.get("tickets")) : undefined,
+      }),
+    });
+    const msg = document.getElementById("booking-msg");
+    if (res.ok) {
+      const data = await res.json();
+      if (msg) msg.textContent = `Booking ${data.booking.id} submitted (${data.booking.status}).`;
+      bookingForm.reset();
+    } else if (msg) {
+      msg.textContent = "Booking failed.";
+    }
+  });
+</script>

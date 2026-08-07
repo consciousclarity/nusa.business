@@ -1,0 +1,145 @@
+---
+import Base from "../../../layouts/Base.astro";
+import { api } from "../../../lib/api";
+
+const label = Astro.params.label!;
+const parts = label.split(".");
+
+type IslandPayload = {
+  island: { slug: string; name: string; tagline: string };
+  places: { id: string; slug: string; name: string; summary: string; type: string }[];
+  businesses: {
+    id: string;
+    placeId: string;
+    slug: string;
+    name: string;
+    summary: string;
+    categories: string[];
+  }[];
+};
+
+type PlacePayload = {
+  island: { slug: string; name: string };
+  place: { slug: string; name: string; summary: string; type: string };
+  businesses: {
+    slug: string;
+    name: string;
+    summary: string;
+    categories: string[];
+    registeredByAgentId?: string;
+  }[];
+};
+
+let mode: "island" | "place" | "none" = "none";
+let islandData: IslandPayload | null = null;
+let placeData: PlacePayload | null = null;
+
+if (parts.length === 1) {
+  mode = "island";
+  islandData = await api<IslandPayload>(`/v1/islands/${parts[0]}`);
+} else if (parts.length === 2) {
+  mode = "place";
+  placeData = await api<PlacePayload>(
+    `/v1/islands/${parts[1]}/places/${parts[0]}`,
+  );
+} else {
+  return Astro.redirect("/");
+}
+
+const placeById = islandData
+  ? Object.fromEntries(islandData.places.map((p) => [p.id, p]))
+  : {};
+const recent =
+  placeData?.businesses.filter((b) => b.registeredByAgentId).slice(0, 5) ?? [];
+---
+
+{mode === "island" && islandData && (
+  <Base
+    title={`${islandData.island.name} — Nusa.Business`}
+    description={islandData.island.tagline}
+    crumb={[{ label: "Indonesia", href: "/" }, { label: islandData.island.name }]}
+  >
+    <section class="hero">
+      <h1>{islandData.island.name}</h1>
+      <p>{islandData.island.tagline}</p>
+      <p class="meta">{islandData.island.slug}.nusa.business</p>
+    </section>
+
+    <h2 style="font-family:var(--font-display)">Places</h2>
+    <div class="grid">
+      {islandData.places.map((place) => (
+        <a class="card" href={`/host/${place.slug}.${islandData!.island.slug}`}>
+          <h3>{place.name}</h3>
+          <p>{place.summary}</p>
+          <span class="pill">{place.type.replaceAll("_", " ")}</span>
+        </a>
+      ))}
+    </div>
+
+    <h2 style="font-family:var(--font-display)">Featured listings</h2>
+    <div class="grid">
+      {islandData.businesses.slice(0, 9).map((b) => {
+        const place = placeById[b.placeId];
+        return (
+          <a
+            class="card"
+            href={
+              place
+                ? `/host/${place.slug}.${islandData!.island.slug}/${b.slug}`
+                : "#"
+            }
+          >
+            <h3>{b.name}</h3>
+            <p>{b.summary}</p>
+            {place && <p class="meta">{place.name}</p>}
+            {b.categories.map((c) => (
+              <span class="pill">{c}</span>
+            ))}
+          </a>
+        );
+      })}
+    </div>
+  </Base>
+)}
+
+{mode === "place" && placeData && (
+  <Base
+    title={`${placeData.place.name}, ${placeData.island.name} — Nusa.Business`}
+    description={placeData.place.summary}
+    crumb={[
+      { label: "Indonesia", href: "/" },
+      { label: placeData.island.name, href: `/host/${placeData.island.slug}` },
+      { label: placeData.place.name },
+    ]}
+  >
+    <section class="hero">
+      <h1>{placeData.place.name}</h1>
+      <p>{placeData.place.summary}</p>
+      <p class="meta">
+        {placeData.place.slug}.{placeData.island.slug}.nusa.business
+      </p>
+    </section>
+
+    {recent.length > 0 && (
+      <div class="banner">
+        <strong>Just registered by field team:</strong>{" "}
+        {recent.map((b) => b.name).join(" · ")}
+      </div>
+    )}
+
+    <h2 style="font-family:var(--font-display)">
+      Businesses in {placeData.place.name}
+    </h2>
+    <div class="grid">
+      {placeData.businesses.map((b) => (
+        <a class="card" href={`/host/${label}/${b.slug}`}>
+          <h3>{b.name}</h3>
+          <p>{b.summary}</p>
+          {b.categories.map((c) => (
+            <span class="pill">{c}</span>
+          ))}
+        </a>
+      ))}
+    </div>
+  </Base>
+)}

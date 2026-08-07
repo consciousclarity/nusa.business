@@ -1,0 +1,45 @@
+---
+import Base from "../layouts/Base.astro";
+import { api } from "../lib/api";
+import { resolveRequestContext } from "../lib/tenant";
+
+const { context, pathname } = resolveRequestContext(Astro.request, Astro.url);
+
+if (context.kind === "island") {
+  return Astro.redirect(`/host/${context.island}${pathname === "/" ? "" : pathname}`);
+}
+if (context.kind === "place") {
+  return Astro.redirect(
+    `/host/${context.place}.${context.island}${pathname === "/" ? "" : pathname}`,
+  );
+}
+
+const data = await api<{ islands: { slug: string; name: string; tagline: string; status: string }[] }>(
+  "/v1/islands",
+);
+---
+<Base title="Nusa.Business — Local businesses across Indonesia">
+  <section class="hero">
+    <h1>Nusa.Business</h1>
+    <p>
+      Indonesia’s local business directory — island by island, place by place.
+      Built for the nested map of the archipelago: bali.nusa.business,
+      gianyar.bali.nusa.business, and every listing in between.
+    </p>
+    <p style="margin-top:1.25rem">
+      <a class="cta" href="/claim">Claim your listing</a>
+      <a class="cta secondary" href="/host/bali">Explore Bali</a>
+    </p>
+  </section>
+
+  <h2 style="font-family:var(--font-display)">Islands</h2>
+  <div class="grid">
+    {data.islands.map((island) => (
+      <a class="card" href={`/host/${island.slug}`}>
+        <h3>{island.name}</h3>
+        <p>{island.tagline}</p>
+        <p class="meta" style="margin-top:0.5rem">{island.status === "active" ? "Open" : "Coming soon"}</p>
+      </a>
+    ))}
+  </div>
+</Base>

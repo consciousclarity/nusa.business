@@ -1,0 +1,14 @@
+---
+description: Hono API and data package conventions
+globs: apps/api/**/*,packages/db/**/*,packages/shared/**/*
+alwaysApply: false
+---
+
+# API & data
+
+- Keep route handlers thin; persistence in `packages/db`.
+- Host parsing and `toSlug` belong in `@nusa/shared` only.
+- JSON repository is the MVP store; Postgres SQL sketch in `schema.sql.ts`.
+- Version public routes under `/v1/`.
+- CORS must allow local web (4321) and portal (5173).
+- When adding entities, update seed data and docs/data-model.md.

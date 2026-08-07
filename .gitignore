@@ -1,0 +1,44 @@
+# Dependencies & builds
+node_modules/
+dist/
+build/
+.astro/
+.react-router/
+.turbo/
+coverage/
+*.tsbuildinfo
+
+# App outputs
+apps/web/dist/
+apps/portal/build/
+apps/portal/dist/
+apps/api/dist/
+packages/*/dist/
+
+# Runtime data
+.data/
+uploads/
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+*.swp
+*.swo
+
+# Local TLS / Caddy
+docker/caddy-data/
+docker/caddy-config/
+
+# Cursor local (keep shared skills/rules)
+.cursor/plans/
+!.cursor/skills/
+!.cursor/rules/

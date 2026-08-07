@@ -37,6 +37,17 @@ http://localhost:4321/host/gianyar.bali/babi-guling-pande-egi
 
 Demo logins: `owner@example.com` / `owner123` · `agent@nusa.business` / `agent123` · `admin@nusa.business` / `admin123`
 
+## Cloudflare
+
+Bindings already provisioned in your Cloudflare account (KV + D1). Zone onboarding and edge deploy:
+
+→ **[docs/ops/cloudflare.md](docs/ops/cloudflare.md)**
+
+```bash
+npm run cf:zone          # needs CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID
+npm run cf:deploy-edge   # needs wrangler login or API token
+```
+
 ## License
 
 [MIT](LICENSE)

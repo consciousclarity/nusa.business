@@ -49,6 +49,7 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 ### Ops
 
 - [Overview](./ops/overview.md)
+- [Cloudflare setup](./ops/cloudflare.md)
 - [DNS & routing](./ops/dns-and-routing.md)
 - [Docker Compose](./ops/docker.md)
 - [Environments](./ops/environments.md)

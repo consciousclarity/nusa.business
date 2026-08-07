@@ -1,0 +1,34 @@
+name = "nusa-edge"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+workers_dev = true
+
+# Bind after zone is on Cloudflare — see docs/ops/cloudflare.md
+# routes = [
+#   { pattern = "nusa.business/*", zone_name = "nusa.business" },
+#   { pattern = "*.nusa.business/*", zone_name = "nusa.business" },
+# ]
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "44f4df5e05bd4cc38646d82c25b69c31"
+
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "6f8099a68709471fb41dcb9e2faa073e"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nusa"
+database_id = "3c833755-9e83-4bfd-951e-64864d2934b4"
+
+# Enable R2 in the dashboard, create bucket `nusa-media`, then uncomment:
+# [[r2_buckets]]
+# binding = "MEDIA"
+# bucket_name = "nusa-media"
+
+[vars]
+# Temporary origin until apps move fully onto Workers
+# ORIGIN_WEB = "https://YOUR_ORIGIN"
+# ORIGIN_API = "https://api.YOUR_ORIGIN"
+ENVIRONMENT = "bootstrap"

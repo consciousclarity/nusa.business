@@ -13,8 +13,12 @@
 - [Environments](./environments.md)  
 - [Security](./security.md)  
 
-## Health
+## Cloudflare
 
-- API: `GET /health`  
-- Web/portal: HTTP 200 on home routes  
-- Compose: `docker compose -f docker/compose.yml ps`  
+See [cloudflare.md](./cloudflare.md) for zone onboarding, nested SSL (ACM), edge Worker, KV/D1/R2.
+
+Quick links:
+
+- Edge Worker: `apps/edge`
+- Zone script: `npm run cf:zone` (needs `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`)
+- Deploy edge: `npm run cf:deploy-edge` (needs `wrangler login`)

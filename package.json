@@ -13,7 +13,9 @@
     "build": "npm run build:packages && npm run build -w @nusa/api && npm run build -w @nusa/web && npm run build -w @nusa/portal",
     "seed": "npm run build:packages && npm run seed -w @nusa/db",
     "docker:up": "docker compose -f docker/compose.yml up -d",
-    "docker:down": "docker compose -f docker/compose.yml down"
+    "docker:down": "docker compose -f docker/compose.yml down",
+    "cf:zone": "node scripts/cloudflare-setup-zone.mjs",
+    "cf:deploy-edge": "npm install -w @nusa/edge && npm run deploy -w @nusa/edge"
   },
   "engines": {
     "node": ">=20"

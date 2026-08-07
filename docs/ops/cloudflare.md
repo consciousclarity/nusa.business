@@ -11,7 +11,7 @@ This runbook onboards **nusa.business** to Cloudflare: zone/DNS, SSL for nested 
 | KV `nusa-sessions` | Created — id `6f8099a68709471fb41dcb9e2faa073e` |
 | D1 `nusa` (APAC) | Created — id `3c833755-9e83-4bfd-951e-64864d2934b4` |
 | R2 | **Blocked** — enable R2 once in the [R2 dashboard](https://dash.cloudflare.com/?to=/:account/r2) |
-| Zone `nusa.business` | **Manual** — add domain in Cloudflare (API token for DNS not available via plugin) |
+| Zone `nusa.business` | **Added by you** — DNS origin = Hostinger (see below) |
 
 Code: [`apps/edge`](../../apps/edge) (`nusa-edge` Worker).
 
@@ -48,6 +48,61 @@ nusa.business
 Each `*.{island}.nusa.business` covers place hubs under that island. ACM allows up to 50 SANs per cert (apex counts as one).
 
 **Free alternative while prototyping:** keep public URLs as `bali.nusa.business` + path `/host/gianyar/...` until ACM is purchased.
+
+---
+
+## Hostinger + Cloudflare (your current setup)
+
+**Cloudflare** = DNS + CDN/proxy + SSL edge.  
+**Hostinger** = origin server (where the site files / VPS live).
+
+Do **not** keep Hostinger nameservers if the zone is on Cloudflare. Registrar (often Hostinger Domains) must use **Cloudflare nameservers** only.
+
+### 1. Confirm zone is Active
+
+Cloudflare → **nusa.business** → Overview → status **Active**.  
+If still Pending, copy the 2 Cloudflare nameservers into Hostinger → Domains → `nusa.business` → Nameservers → change from Hostinger NS to Cloudflare NS.
+
+### 2. Get Hostinger origin IP
+
+Hostinger hPanel → **Hosting** → your plan → **Details** / **IP address**  
+(VPS: use the VPS public IPv4.)
+
+### 3. DNS records in Cloudflare (not in Hostinger DNS)
+
+Cloudflare → **DNS** → **Records**. Delete conflicting Hostinger parking records if Cloudflare imported junk.
+
+| Type | Name | Content | Proxy |
+|---|---|---|---|
+| A | `@` | *Hostinger IPv4* | Proxied (orange cloud) |
+| A | `www` | *same IP* | Proxied |
+| A | `*` | *same IP* | Proxied |
+| A | `*.bali` | *same IP* | Proxied |
+| A | `*.jawa` | *same IP* | Proxied |
+| A | `*.lombok` | *same IP* | Proxied |
+| … | `*.{island}` | *same IP* | Proxied for each launch island |
+
+- `@` + `*` → `nusa.business` and `bali.nusa.business`  
+- `*.bali` → `gianyar.bali.nusa.business`, `uluwatu.bali.nusa.business`, …
+
+Mail: keep MX/TXT **DNS only** (grey cloud) if you use Hostinger email.
+
+### 4. SSL/TLS in Cloudflare
+
+**SSL/TLS** → Overview → **Full** (or **Full (strict)** if Hostinger has a valid cert for the hostnames).
+
+Start with **Full** if Hostinger only has a cert for the apex.
+
+Place-level HTTPS (`*.bali.nusa.business`) still needs ACM / Total TLS as in the certificate section above — Free Universal SSL alone is not enough for two-level subdomains.
+
+### 5. Hostinger panel
+
+- Shared hosting: add aliases / parked domains for hosts you use, or a catch-all if offered. Node (Astro/Hono) usually needs **VPS** or **Cloudflare Workers**, not classic shared PHP hosting.  
+- VPS: run Docker/Node there; open 80/443; point the A records at the VPS IP; Caddy/Nginx terminates origin TLS.
+
+### 6. Skip Wrangler for now (optional)
+
+`wrangler login` / `cf:deploy-edge` is only if you want the Cloudflare Worker front door. With Hostinger as origin, DNS A → Hostinger is enough to go live; the edge Worker can come later.
 
 ---
 

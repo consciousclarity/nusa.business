@@ -40,5 +40,6 @@ docker/caddy-config/
 
 # Cursor local (keep shared skills/rules)
 .cursor/plans/
+.cursor/settings.json
 !.cursor/skills/
 !.cursor/rules/

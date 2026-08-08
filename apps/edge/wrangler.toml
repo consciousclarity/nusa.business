@@ -31,4 +31,5 @@ database_id = "3c833755-9e83-4bfd-951e-64864d2934b4"
 # Temporary origin until apps move fully onto Workers
 # ORIGIN_WEB = "https://YOUR_ORIGIN"
 # ORIGIN_API = "https://api.YOUR_ORIGIN"
+# Hostinger VPS origin (when proxying): 62.72.7.218
 ENVIRONMENT = "bootstrap"

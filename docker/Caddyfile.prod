@@ -1,0 +1,47 @@
+# Origin behind Cloudflare (SSL/TLS mode: Full).
+# Self-signed/internal certs are fine with Full; use Full (strict) only with public/origin CA certs.
+
+{
+	auto_https disable_redirects
+}
+
+# Nation + island hosts (one DNS label under nusa.business)
+nusa.business, www.nusa.business, *.nusa.business {
+	tls internal
+
+	@api host api.nusa.business
+	handle @api {
+		reverse_proxy api:8787
+	}
+
+	@portal host portal.nusa.business
+	handle @portal {
+		reverse_proxy portal:80
+	}
+
+	handle {
+		reverse_proxy web:4321
+	}
+}
+
+# Place hosts: gianyar.bali.nusa.business (two labels under nusa.business)
+*.*.nusa.business {
+	tls internal
+	reverse_proxy web:4321
+}
+
+:80 {
+	@api host api.nusa.business
+	handle @api {
+		reverse_proxy api:8787
+	}
+
+	@portal host portal.nusa.business
+	handle @portal {
+		reverse_proxy portal:80
+	}
+
+	handle {
+		reverse_proxy web:4321
+	}
+}

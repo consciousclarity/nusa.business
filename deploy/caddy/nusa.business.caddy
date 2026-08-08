@@ -1,0 +1,123 @@
+# nusa.business — site blocks for the HOST Caddy on 62.72.7.218
+#
+# This is NOT loaded by Docker. The VPS runs a single systemd Caddy that owns
+# :80/:443 for every site on the box (gustale.com, komputer.shop, n8n, …).
+# Append these blocks to /etc/caddy/Caddyfile, replacing the existing
+# nusa.business stanza, then `systemctl reload caddy`.
+#
+# Upstreams are published by docker/compose.prod.yml on loopback only:
+#   127.0.0.1:4101  api
+#   127.0.0.1:4321  web (Astro)
+#   127.0.0.1:4103  portal
+#
+# ── TLS: nusa.business is PROXIED through Cloudflare (orange cloud) ────────
+# Cloudflare terminates TLS for visitors, so the origin certificate only has
+# to satisfy Cloudflare, not browsers. These blocks therefore use
+# `tls internal` (Caddy's own local CA) rather than Let's Encrypt:
+# ACME challenges are unreliable behind an orange cloud — TLS-ALPN-01 cannot
+# reach the origin at all, and HTTP-01 is at the proxy's mercy.
+#
+# REQUIRES Cloudflare SSL/TLS mode = Full. Under "Full (strict)" Cloudflare
+# rejects a self-signed origin certificate — switch to Full, or replace
+# `tls internal` with a Cloudflare Origin CA certificate:
+#     tls /etc/caddy/certs/nusa-origin.pem /etc/caddy/certs/nusa-origin.key
+#
+# The other sites on this host keep their public Let's Encrypt certificates;
+# nothing here changes gustale.com, komputer.shop or n8n.
+#
+# ── The nested-host problem is at the EDGE, not here ───────────────────────
+# gianyar.bali.nusa.business is two labels deep. A wildcard certificate covers
+# exactly one label, and no CA — including Cloudflare — issues
+# `*.*.nusa.business`. Cloudflare Universal SSL therefore does NOT cover
+# nested hosts, and this file cannot fix that. Pick one at the edge:
+#
+#   a) Advanced Certificate Manager, enumerating one wildcard per island:
+#        nusa.business, *.nusa.business,
+#        *.bali.nusa.business, *.java.nusa.business, …   (50 SAN limit)
+#   b) Set the nested DNS records to DNS-only (grey cloud), and give those
+#      hosts real certificates here — swap `tls internal` for on-demand
+#      Let's Encrypt, which is why /v1/tls-check exists.
+#
+# Global options — merge into the existing top-level { } block in
+# /etc/caddy/Caddyfile, do not add a second one:
+#
+#     {
+#         email alex_aguilar@gmx.ch
+#         on_demand_tls {
+#             ask http://127.0.0.1:4101/v1/tls-check
+#         }
+#     }
+
+(nusa_headers) {
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	encode gzip zstd
+}
+
+api.nusa.business {
+	tls internal
+	reverse_proxy 127.0.0.1:4101
+	import nusa_headers
+
+	log {
+		output file /var/log/caddy/api.nusa.business.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+	}
+}
+
+portal.nusa.business {
+	tls internal
+	reverse_proxy 127.0.0.1:4103
+	import nusa_headers
+}
+
+# Nation + single-label tenants: nusa.business, bali.nusa.business.
+# Covered by a normal certificate (one wildcard level).
+nusa.business, www.nusa.business, *.nusa.business {
+	tls internal
+	reverse_proxy 127.0.0.1:4321
+	import nusa_headers
+
+	log {
+		output file /var/log/caddy/nusa.business.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+	}
+}
+
+# Nested tenants: gianyar.bali.nusa.business ({place}.{island}).
+# Certificates are issued per hostname, on demand, only for hosts the API
+# confirms exist. Keep this block LAST — it is a catch-all for :443.
+#
+# The pattern spells out both labels rather than using a {2,} quantifier:
+# the Caddyfile parser reads `{...}` as placeholder syntax. Two labels is also
+# exactly what parseHost() in packages/shared supports — anything deeper is
+# `kind: "unknown"` — so this matcher and the app agree on what a tenant is.
+https:// {
+	# Proxied (current): Cloudflare terminates for visitors; the origin only
+	# needs a certificate Cloudflare accepts under SSL mode "Full".
+	# If these hosts move to DNS-only, drop `internal` to get real
+	# Let's Encrypt certificates instead — /v1/tls-check gates issuance
+	# either way.
+	tls internal {
+		on_demand
+	}
+
+	@nusa_nested host_regexp ^[a-z0-9-]+\.[a-z0-9-]+\.nusa\.business$
+	handle @nusa_nested {
+		reverse_proxy 127.0.0.1:4321
+		import nusa_headers
+	}
+
+	# Anything else reaching the origin by IP or stray DNS gets nothing.
+	respond 404
+}

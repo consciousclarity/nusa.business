@@ -12,8 +12,8 @@ import {
   getIslandBySlug,
   getPlace,
   getStore,
-  getUser,
   getVendorByBusinessId,
+  hashStoredPasswords,
   getVendorById,
   listBookings,
   listBusinesses,
@@ -27,8 +27,15 @@ import {
   upsertVendor,
 } from "@nusa/db";
 import { CATEGORIES, parseHost, toSlug } from "@nusa/shared";
+import {
+  type AuthVariables,
+  issueToken,
+  ownsOrAdmin,
+  requireAuth,
+  requireRole,
+} from "./auth.js";
 
-const app = new Hono();
+const app = new Hono<{ Variables: AuthVariables }>();
 
 app.use(
   "*",
@@ -40,11 +47,54 @@ app.use(
 
 app.get("/health", (c) => c.json({ ok: true, service: "nusa-api" }));
 
+function filterByOwner<T extends { ownerUserId?: string }>(
+  rows: T[],
+  ownerId?: string,
+): T[] {
+  return ownerId ? rows.filter((row) => row.ownerUserId === ownerId) : rows;
+}
+
 app.get("/v1/meta/categories", (c) => c.json({ categories: CATEGORIES }));
 
 app.get("/v1/host", (c) => {
   const host = c.req.header("x-forwarded-host") || c.req.header("host") || "";
   return c.json({ host, context: parseHost(host) });
+});
+
+/** Subdomains that route to their own service rather than a geo tenant. */
+const RESERVED_HOSTS = new Set([
+  "nusa.business",
+  "www.nusa.business",
+  "api.nusa.business",
+  "portal.nusa.business",
+]);
+
+/**
+ * Caddy `on_demand_tls` ask endpoint.
+ *
+ * Nested hosts (gianyar.bali.nusa.business) can't be covered by a wildcard
+ * certificate, so Caddy issues one per hostname on first request. This gates
+ * that: 200 means "real tenant, go ahead", anything else means Caddy refuses,
+ * so a stranger pointing DNS at the origin can't burn our issuance quota.
+ */
+app.get("/v1/tls-check", (c) => {
+  const domain = (c.req.query("domain") || "").toLowerCase().trim();
+  if (!domain) return c.json({ error: "domain required" }, 400);
+  if (RESERVED_HOSTS.has(domain)) return c.json({ ok: true });
+
+  const context = parseHost(domain);
+  if (context.kind === "nation") return c.json({ ok: true });
+  if (context.kind === "island") {
+    return getIslandBySlug(context.island)
+      ? c.json({ ok: true })
+      : c.json({ error: "Unknown island" }, 404);
+  }
+  if (context.kind === "place") {
+    return getPlace(context.island, context.place)
+      ? c.json({ ok: true })
+      : c.json({ error: "Unknown place" }, 404);
+  }
+  return c.json({ error: "Unknown host" }, 404);
 });
 
 app.get("/v1/islands", (c) => c.json({ islands: listIslands() }));
@@ -104,27 +154,26 @@ app.get("/v1/search", (c) => {
 
 app.post("/v1/auth/login", async (c) => {
   const body = await c.req.json<{ email: string; password: string }>();
-  const user = authenticate(body.email, body.password);
+  if (!body?.email || !body?.password) {
+    return c.json({ error: "email and password required" }, 400);
+  }
+  const user = await authenticate(body.email, body.password);
   if (!user) return c.json({ error: "Invalid credentials" }, 401);
   const { password: _, ...safe } = user;
-  return c.json({ user: safe, token: `dev.${user.id}` });
+  return c.json({ user: safe, token: issueToken(user) });
 });
 
-app.get("/v1/me", (c) => {
-  const auth = c.req.header("authorization") || "";
-  const id = auth.replace(/^Bearer\s+dev\./, "");
-  const user = getUser(id);
-  if (!user) return c.json({ error: "Unauthorized" }, 401);
-  const { password: _, ...safe } = user;
-  return c.json({ user: safe });
-});
+app.get("/v1/me", requireAuth, (c) => c.json({ user: c.get("user") }));
 
-app.get("/v1/portal/listings", (c) => {
-  const ownerId = c.req.query("ownerId");
+app.get("/v1/portal/listings", requireAuth, (c) => {
+  const user = c.get("user");
   const store = getStore();
-  const businesses = ownerId
-    ? store.businesses.filter((b) => b.ownerUserId === ownerId)
-    : store.businesses;
+  // Admins may list everything (optionally filtered); everyone else is
+  // restricted to their own listings regardless of what they ask for.
+  const businesses =
+    user.role === "admin"
+      ? filterByOwner(store.businesses, c.req.query("ownerId"))
+      : store.businesses.filter((b) => b.ownerUserId === user.id);
   return c.json({
     businesses: businesses.map((b) => ({
       business: b,
@@ -133,67 +182,96 @@ app.get("/v1/portal/listings", (c) => {
   });
 });
 
-app.post("/v1/portal/listings", async (c) => {
-  const body = await c.req.json<{
-    placeId: string;
-    name: string;
-    summary: string;
-    description: string;
-    categories: string[];
-    address?: string;
-    phone?: string;
-    whatsapp?: string;
-    bookingMode?: "none" | "service" | "rental" | "event";
-    ownerUserId?: string;
-    status?: "draft" | "published" | "claimed";
-  }>();
-  const business = createBusiness({
-    placeId: body.placeId,
-    slug: toSlug(body.name),
-    name: body.name,
-    summary: body.summary,
-    description: body.description,
-    categories: body.categories,
-    address: body.address,
-    phone: body.phone,
-    whatsapp: body.whatsapp,
-    bookingMode: body.bookingMode ?? "none",
-    ownerUserId: body.ownerUserId,
-    status: body.status ?? "published",
-    gallery: [],
-    openingHours: [],
-    faq: [],
-  });
-  return c.json({ business }, 201);
-});
+app.post(
+  "/v1/portal/listings",
+  requireRole("owner", "vendor", "field_agent", "admin"),
+  async (c) => {
+    const user = c.get("user");
+    const body = await c.req.json<{
+      placeId: string;
+      name: string;
+      summary: string;
+      description: string;
+      categories: string[];
+      address?: string;
+      phone?: string;
+      whatsapp?: string;
+      bookingMode?: "none" | "service" | "rental" | "event";
+      ownerUserId?: string;
+      status?: "draft" | "published" | "claimed";
+    }>();
+    const business = createBusiness({
+      placeId: body.placeId,
+      slug: toSlug(body.name),
+      name: body.name,
+      summary: body.summary,
+      description: body.description,
+      categories: body.categories,
+      address: body.address,
+      phone: body.phone,
+      whatsapp: body.whatsapp,
+      bookingMode: body.bookingMode ?? "none",
+      // Only an admin may create a listing on someone else's behalf.
+      ownerUserId:
+        user.role === "admin" ? (body.ownerUserId ?? user.id) : user.id,
+      status: body.status ?? "published",
+      gallery: [],
+      openingHours: [],
+      faq: [],
+    });
+    return c.json({ business }, 201);
+  },
+);
 
-app.patch("/v1/portal/listings/:id", async (c) => {
+app.patch("/v1/portal/listings/:id", requireAuth, async (c) => {
   const existing = getBusinessById(c.req.param("id"));
   if (!existing) return c.json({ error: "Not found" }, 404);
+  if (!ownsOrAdmin(c.get("user"), existing.ownerUserId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
   const body = await c.req.json<Partial<typeof existing>>();
   const updated = upsertBusiness({
     ...existing,
     ...body,
+    // Identity and ownership are not client-editable.
     id: existing.id,
+    ownerUserId: existing.ownerUserId,
     updatedAt: new Date().toISOString(),
   });
   return c.json({ business: updated });
 });
 
-app.post("/v1/claims", async (c) => {
-  const body = await c.req.json<{
-    businessId: string;
-    claimantUserId: string;
-    note?: string;
-  }>();
-  const claim = addClaim(body);
+app.post("/v1/claims", requireAuth, async (c) => {
+  const user = c.get("user");
+  const body = await c.req.json<{ businessId: string; note?: string }>();
+  if (!getBusinessById(body.businessId)) {
+    return c.json({ error: "Business not found" }, 404);
+  }
+  // The claimant is always the caller — never taken from the request body.
+  const claim = addClaim({
+    businessId: body.businessId,
+    claimantUserId: user.id,
+    note: body.note,
+  });
   return c.json({ claim }, 201);
 });
 
-app.get("/v1/claims", (c) => c.json({ claims: listClaims() }));
+app.get("/v1/claims", requireAuth, (c) => {
+  const user = c.get("user");
+  const claims = listClaims();
+  return c.json({
+    claims:
+      user.role === "admin"
+        ? claims
+        : claims.filter((claim) => claim.claimantUserId === user.id),
+  });
+});
 
-app.post("/v1/claims/:id/decide", async (c) => {
+app.post("/v1/claims/:id/decide", requireRole("admin"), async (c) => {
   const body = await c.req.json<{ status: "approved" | "rejected" }>();
+  if (body.status !== "approved" && body.status !== "rejected") {
+    return c.json({ error: "status must be approved or rejected" }, 400);
+  }
   const claim = updateClaim(c.req.param("id"), body.status);
   if (!claim) return c.json({ error: "Not found" }, 404);
   return c.json({ claim });
@@ -249,15 +327,24 @@ app.post("/v1/businesses/:id/bookings", async (c) => {
   return c.json({ booking }, 201);
 });
 
-app.get("/v1/bookings", (c) => {
+app.get("/v1/bookings", requireAuth, (c) => {
+  const user = c.get("user");
   const businessId = c.req.query("businessId") || undefined;
-  return c.json({ bookings: listBookings(businessId) });
+  const bookings = listBookings(businessId);
+  if (user.role === "admin") return c.json({ bookings });
+  // Owners only ever see bookings for businesses they own.
+  const owned = new Set(
+    getStore()
+      .businesses.filter((b) => b.ownerUserId === user.id)
+      .map((b) => b.id),
+  );
+  return c.json({ bookings: bookings.filter((b) => owned.has(b.businessId)) });
 });
 
 /** Field-ops: register a business on the ground */
-app.post("/v1/field/register", async (c) => {
+app.post("/v1/field/register", requireRole("field_agent", "admin"), async (c) => {
+  const agent = c.get("user");
   const body = await c.req.json<{
-    agentId: string;
     islandSlug: string;
     placeSlug: string;
     name: string;
@@ -269,10 +356,6 @@ app.post("/v1/field/register", async (c) => {
     address?: string;
     bookingMode?: "none" | "service" | "rental" | "event";
   }>();
-  const agent = getUser(body.agentId);
-  if (!agent || (agent.role !== "field_agent" && agent.role !== "admin")) {
-    return c.json({ error: "Field agent required" }, 403);
-  }
   const place = getPlace(body.islandSlug, body.placeSlug);
   if (!place) return c.json({ error: "Place not found" }, 404);
 
@@ -336,7 +419,7 @@ app.get("/v1/marketplace/vendors/:id", (c) => {
   });
 });
 
-app.post("/v1/marketplace/vendors", async (c) => {
+app.post("/v1/marketplace/vendors", requireAuth, async (c) => {
   const body = await c.req.json<{
     businessId: string;
     name: string;
@@ -344,6 +427,9 @@ app.post("/v1/marketplace/vendors", async (c) => {
   }>();
   const business = getBusinessById(body.businessId);
   if (!business) return c.json({ error: "Business not found" }, 404);
+  if (!ownsOrAdmin(c.get("user"), business.ownerUserId)) {
+    return c.json({ error: "Forbidden" }, 403);
+  }
   const vendor = upsertVendor({
     id: `vnd-${crypto.randomUUID().slice(0, 8)}`,
     businessId: business.id,
@@ -363,5 +449,13 @@ app.get("/v1/places", (c) => {
 });
 
 const port = Number(process.env.PORT || 8787);
+
+// Never leave the store at rest with readable passwords, including a store
+// seeded before hashing existed.
+const upgraded = await hashStoredPasswords();
+if (upgraded > 0) {
+  console.log(`Hashed ${upgraded} plaintext password(s) in the store`);
+}
+
 console.log(`Nusa API listening on http://localhost:${port}`);
 serve({ fetch: app.fetch, port });

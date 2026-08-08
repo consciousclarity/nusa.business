@@ -1,5 +1,9 @@
 # Production stack for Hostinger VPS 62.72.7.218
-# Cloudflare proxies HTTPS → this host (SSL mode: Full)
+#
+# TLS and :80/:443 are owned by the host's systemd Caddy (shared with
+# gustale.com, komputer.shop, n8n). This stack therefore publishes only to
+# 127.0.0.1 and never binds a public port — see deploy/caddy/nusa.business.caddy
+# for the site blocks the host Caddy needs.
 
 services:
   api:
@@ -8,12 +12,15 @@ services:
       dockerfile: apps/api/Dockerfile
     restart: unless-stopped
     environment:
+      NODE_ENV: production
       PORT: "8787"
       NUSA_DATA_DIR: /data
+      # Required. Deploy aborts if unset — see docs/ops/vps-deploy.md.
+      NUSA_AUTH_SECRET: ${NUSA_AUTH_SECRET:?NUSA_AUTH_SECRET must be set}
     volumes:
       - api_data:/data
-    expose:
-      - "8787"
+    ports:
+      - "127.0.0.1:4101:8787"
 
   web:
     build:
@@ -25,8 +32,8 @@ services:
       PORT: "4321"
       PUBLIC_API_URL: "https://api.nusa.business"
       PUBLIC_PORTAL_URL: "https://portal.nusa.business"
-    expose:
-      - "4321"
+    ports:
+      - "127.0.0.1:4321:4321"
     depends_on:
       - api
 
@@ -35,25 +42,8 @@ services:
       context: ..
       dockerfile: apps/portal/Dockerfile
     restart: unless-stopped
-    expose:
-      - "80"
-
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - web
-      - api
-      - portal
+      - "127.0.0.1:4103:80"
 
 volumes:
   api_data:
-  caddy_data:
-  caddy_config:

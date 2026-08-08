@@ -1,5 +1,5 @@
 name: Feature request
-description: New capability toward Listeo/Dokan parity or geo platform
+description: New capability for the directory, marketplace or geo platform
 title: "[feat] "
 labels: ["enhancement"]
 body:
@@ -20,9 +20,9 @@ body:
     attributes:
       label: Parity map
       options:
-        - Listeo directory
-        - Listeo booking
-        - Dokan / Mercur marketplace
+        - Directory
+        - Booking
+        - Marketplace
         - Geo / tenancy
         - Field ops
         - Other / net-new

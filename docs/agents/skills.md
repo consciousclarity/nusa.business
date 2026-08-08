@@ -6,7 +6,7 @@
 |---|---|
 | `nusa-platform` | Default product/architecture orientation |
 | `nusa-geo-tenancy` | Hosts, DNS, `/host` routes, place model |
-| `nusa-listeo-dokan-parity` | Feature parity work |
+| `nusa-capability-map` | Feature parity work |
 | `nusa-field-ops` | Agent registration flows |
 
 Skills are project-scoped and travel with the repo.

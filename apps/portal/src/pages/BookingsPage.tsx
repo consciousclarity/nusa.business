@@ -29,7 +29,7 @@ export function BookingsPage() {
     <div>
       <h1>Bookings</h1>
       <p className="muted">
-        Listeo-parity modes: service (slots), rental (date range), event
+        Booking modes: service (slots), rental (date range), event
         (tickets). Created from public listing pages.
       </p>
       {bookings.length === 0 && (

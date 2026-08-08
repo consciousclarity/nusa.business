@@ -1,11 +1,11 @@
 # Roadmap
 
-Phased delivery toward full Listeo + Dokan parity.
+Phased delivery toward the full capability map.
 
 | Phase | Focus | Status |
 |---|---|---|
 | 1 Foundation | Monorepo, host parser, seed, Astro pages | Done (MVP) |
-| 2 Listeo core | Claim, reviews, owner CRUD, search API | Done (MVP) |
+| 2 Directory core | Claim, reviews, owner CRUD, search API | Done (MVP) |
 | 3 Field ops | Agent registration + recent strip | Done (MVP) |
 | 4 Booking | Service / rental / event | Done (MVP) |
 | 5 Marketplace | Local vendors + Mercur wiring | Partial |

@@ -8,7 +8,7 @@ Indonesia-wide local business directory with nested geo hosts:
 
 `nusa.business` → `{island}.nusa.business` → `{place}.{island}.nusa.business` → `/{business-slug}`
 
-Prototype product: [bali.business](https://bali.business) (Listeo/WordPress). This repo is a greenfield OSS rebuild (Listeo + Dokan *capability* parity — no WordPress).
+Prototype product: [bali.business](https://bali.business) (WordPress). This repo is a greenfield OSS rebuild — the same **capabilities**, none of the WordPress.
 
 ## Stack
 
@@ -22,7 +22,7 @@ Prototype product: [bali.business](https://bali.business) (Listeo/WordPress). Th
 
 ## Non-negotiables
 
-1. **Open source only** for first-party code (MIT). Do not vendor Listeo or proprietary themes.
+1. **Open source only** for first-party code (MIT). Do not vendor proprietary or commercially licensed themes.
 2. **Multi-level host tenancy** is a first-class design constraint — never flatten to a single WP-style site without an explicit ADR.
 3. **Free listings / 0% commission at launch** unless product explicitly changes monetization.
 4. Prefer **Astro for public pages** and **portal for authenticated mutations**.
@@ -42,7 +42,7 @@ Prototype product: [bali.business](https://bali.business) (Listeo/WordPress). Th
 
 ## Skills
 
-Project skills in [`.cursor/skills/`](.cursor/skills/) — use them for domain workflows (geo tenancy, field ops, Listeo/Dokan parity, release).
+Project skills in [`.cursor/skills/`](.cursor/skills/) — use them for domain workflows (geo tenancy, field ops, capability map, release).
 
 ## Commands
 

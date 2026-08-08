@@ -6,7 +6,7 @@ Indonesia’s nested local-business directory — greenfield open-source platfor
 nusa.business → bali.nusa.business → gianyar.bali.nusa.business → /babi-guling-pande-egi
 ```
 
-Listeo + Dokan **capability** parity without WordPress. Stack: **Astro** (public) · **React Router 7** (portal) · **Hono** (API).
+Directory, booking and multi-vendor marketplace capability — without WordPress. Stack: **Astro** (public) · **React Router 7** (portal) · **Hono** (API).
 
 ## Documentation
 

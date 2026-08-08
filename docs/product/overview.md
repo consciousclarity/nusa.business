@@ -9,7 +9,7 @@ Inspired by [bali.business](https://bali.business), expanded nationally under **
 ## What it is not
 
 - Not a government company-registration portal  
-- Not WordPress / Listeo / Dokan PHP  
+- Not a WordPress / PHP plugin stack  
 - Not a Vercel-only Next.js app  
 
 ## Value props (launch)
@@ -27,4 +27,4 @@ Inspired by [bali.business](https://bali.business), expanded nationally under **
 
 ## Relationship to bali.business
 
-bali.business remains the live Listeo prototype. Nusa reimplements capabilities and later absorbs Bali inventory via export + 301s ([migration-bali.md](./migration-bali.md)).
+bali.business remains the live WordPress prototype. Nusa reimplements capabilities and later absorbs Bali inventory via export + 301s ([migration-bali.md](./migration-bali.md)).

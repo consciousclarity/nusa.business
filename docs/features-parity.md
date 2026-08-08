@@ -1,8 +1,8 @@
-# Feature parity — Listeo + Dokan → Nusa.Business
+# Capability map
 
 Status key: **done** in this greenfield MVP · **partial** · **planned**
 
-## Listeo → Nusa Directory
+## Directory capabilities
 
 | Capability | Status | Where |
 |---|---|---|
@@ -22,7 +22,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | i18n en/id | partial | English UI; id routes next |
 | AI local guide | planned | Optional |
 
-## Dokan → Nusa Marketplace
+## Marketplace capabilities
 
 | Capability | Status | Where |
 |---|---|---|

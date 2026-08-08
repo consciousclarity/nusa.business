@@ -5,15 +5,15 @@
 
 ## Context
 
-Dokan provides multi-vendor stores on WordPress. Nusa needs OSS commerce without rebuilding checkout/payouts from zero.
+Multi-vendor stores are conventionally a WordPress plugin concern. Nusa needs OSS commerce without rebuilding checkout/payouts from zero.
 
 ## Decision
 
-1. Ship a **local vendor module** for Dokan-parity UX (stores, products, 0% commission).  
+1. Ship a **local vendor module** for multi-vendor UX (stores, products, 0% commission).  
 2. Integrate **Mercur** (MIT, on Medusa) for production cart, split orders, payouts.  
 3. Link `Business` ↔ Mercur vendor id one-to-one.  
 
-Booking (Listeo-style services) stays in Nusa core, not Medusa, unless selling SKUs.
+Booking (service scheduling) stays in Nusa core, not Medusa, unless selling SKUs.
 
 ## Consequences
 

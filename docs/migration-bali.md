@@ -1,13 +1,13 @@
 # bali.business → nusa.business migration
 
-Keep **bali.business** (Listeo/WordPress) live during the rebuild.
+Keep **bali.business** (WordPress) live during the rebuild.
 
 ## Export
 
-1. Export listings via WP REST (`/wp-json/wp/v2/job_listing` or Listeo CPT endpoint) or SQL dump of listing posts + meta.
+1. Export listings via WP REST (`/wp-json/wp/v2/job_listing` or the listings CPT endpoint) or SQL dump of listing posts + meta.
 2. Map fields:
 
-| Listeo / WP | Nusa |
+| Source (WP) | Nusa |
 |---|---|
 | post_title | `Business.name` |
 | post_name | `Business.slug` |

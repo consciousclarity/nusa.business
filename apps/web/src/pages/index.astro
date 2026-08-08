@@ -1,30 +1,35 @@
 ---
 import Base from "../layouts/Base.astro";
 import { api } from "../lib/api";
+import { publicUrl } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
 
-const { context, pathname } = resolveRequestContext(Astro.request, Astro.url);
+const { context } = resolveRequestContext(Astro.request, Astro.url);
 
-if (context.kind === "island") {
-  return Astro.redirect(`/host/${context.island}${pathname === "/" ? "" : pathname}`);
-}
-if (context.kind === "place") {
-  return Astro.redirect(
-    `/host/${context.place}.${context.island}${pathname === "/" ? "" : pathname}`,
-  );
+// Island/place hosts are rewritten to /host/... by middleware — nation only here.
+if (context.kind !== "nation") {
+  return Astro.redirect("/");
 }
 
 const data = await api<{
   islands: { slug: string; name: string; tagline: string; status: string }[];
 }>("/v1/islands");
 
-const host =
+const queryHost = (
   Astro.request.headers.get("x-forwarded-host") ||
   Astro.request.headers.get("host") ||
-  "nusa.business";
-const queryHost = host.split(":")[0]!.toLowerCase();
+  "nusa.business"
+)
+  .split(":")[0]!
+  .toLowerCase();
+const useRealHosts =
+  queryHost === "nusa.business" || queryHost.endsWith(".nusa.business");
 const active = data.islands.filter((i) => i.status === "active").length;
 const pending = data.islands.length - active;
+
+function islandHref(slug: string) {
+  return useRealHosts ? publicUrl({ island: slug }) : `/host/${slug}`;
+}
 ---
 <Base title="nusa.business — Local businesses across Indonesia">
   <section class="lede">
@@ -53,7 +58,7 @@ const pending = data.islands.length - active;
         <li>
           <div class="index-row">
             <span class="n">{String(i + 1).padStart(2, "0")}</span>
-            <a class="name" href={`/host/${island.slug}`}>{island.name}</a>
+            <a class="name" href={islandHref(island.slug)}>{island.name}</a>
             <span class="rhs">
               {island.status === "active" ? (
                 <span>{island.slug}.nusa.business</span>
@@ -68,7 +73,7 @@ const pending = data.islands.length - active;
     </ol>
     <p class="actions">
       <a class="cta" href="/claim">Claim a listing</a>
-      <a class="cta secondary" href="/host/bali">Open bali index</a>
+      <a class="cta secondary" href={islandHref("bali")}>Open bali index</a>
     </p>
   </section>
 </Base>

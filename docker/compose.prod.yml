@@ -30,7 +30,8 @@ services:
     environment:
       HOST: "0.0.0.0"
       PORT: "4321"
-      PUBLIC_API_URL: "https://api.nusa.business"
+      # Baked at image build for Astro SSR; must be reachable inside compose.
+      PUBLIC_API_URL: "http://api:8787"
       PUBLIC_PORTAL_URL: "https://portal.nusa.business"
     ports:
       - "127.0.0.1:4321:4321"

@@ -1,6 +1,6 @@
 # Nusa.Business documentation
 
-Indonesia’s nested local-business platform — greenfield OSS rebuild of the bali.business (Listeo) product model, with Dokan-parity marketplace capabilities, without WordPress.
+Indonesia’s nested local-business platform — greenfield OSS rebuild of the bali.business (WordPress) product model, with multi-vendor marketplace capabilities, without WordPress.
 
 ## Start here
 
@@ -20,7 +20,7 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 - [Overview & positioning](./product/overview.md)
 - [URL & geography model](./product/geography.md)
 - [Personas & journeys](./product/personas.md)
-- [Listeo + Dokan feature parity](./features-parity.md)
+- [Capability map](./features-parity.md)
 - [Roadmap](./product/roadmap.md)
 
 ### Architecture
@@ -32,6 +32,10 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 - [ADR-001: Greenfield stack](./architecture/adr/001-greenfield-stack.md)
 - [ADR-002: Hybrid places](./architecture/adr/002-hybrid-places.md)
 - [ADR-003: Marketplace via Mercur](./architecture/adr/003-marketplace-mercur.md)
+
+### Design
+
+- [Teletype — visual design spec](./design/teletype.md)
 
 ### Engineering
 

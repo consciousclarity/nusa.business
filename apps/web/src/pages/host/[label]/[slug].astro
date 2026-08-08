@@ -1,6 +1,7 @@
 ---
 import Base from "../../../layouts/Base.astro";
 import { api, API } from "../../../lib/api";
+import { tenantHref } from "../../../lib/links";
 
 const label = Astro.params.label!;
 const slug = Astro.params.slug!;
@@ -8,6 +9,7 @@ const parts = label.split(".");
 if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
 
 const [placeSlug, islandSlug] = parts;
+const req = Astro.request;
 const data = await api<{
   business: {
     id: string;
@@ -58,8 +60,11 @@ const stamp =
   title={`${data.business.name} — ${placeMeta.place.name}`}
   description={data.business.summary}
   crumb={[
-    { label: islandSlug!, href: `/host/${islandSlug}` },
-    { label: placeSlug!, href: `/host/${label}` },
+    { label: islandSlug!, href: tenantHref(req, { island: islandSlug! }) },
+    {
+      label: placeSlug!,
+      href: tenantHref(req, { island: islandSlug!, place: placeSlug! }),
+    },
     { label: data.business.slug },
   ]}
 >

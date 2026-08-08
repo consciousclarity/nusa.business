@@ -1,9 +1,11 @@
 ---
 import Base from "../../../layouts/Base.astro";
 import { api } from "../../../lib/api";
+import { tenantHref } from "../../../lib/links";
 
 const label = Astro.params.label!;
 const parts = label.split(".");
+const req = Astro.request;
 
 type IslandPayload = {
   island: { slug: string; name: string; tagline: string; status?: string };
@@ -95,7 +97,10 @@ const queryHost =
               <span class="n">{String(i + 1).padStart(2, "0")}</span>
               <a
                 class="name"
-                href={`/host/${place.slug}.${islandData!.island.slug}`}
+                href={tenantHref(req, {
+                  island: islandData!.island.slug,
+                  place: place.slug,
+                })}
               >
                 {place.name}
               </a>
@@ -120,7 +125,11 @@ const queryHost =
                   class="name"
                   href={
                     place
-                      ? `/host/${place.slug}.${islandData!.island.slug}/${b.slug}`
+                      ? tenantHref(req, {
+                          island: islandData!.island.slug,
+                          place: place.slug,
+                          slug: b.slug,
+                        })
                       : "#"
                   }
                 >
@@ -144,7 +153,7 @@ const queryHost =
     crumb={[
       {
         label: placeData.island.slug,
-        href: `/host/${placeData.island.slug}`,
+        href: tenantHref(req, { island: placeData.island.slug }),
       },
       { label: placeData.place.slug },
     ]}
@@ -181,7 +190,16 @@ const queryHost =
           <li>
             <div class="index-row">
               <span class="n">{String(i + 1).padStart(2, "0")}</span>
-              <a class="name" href={`/host/${label}/${b.slug}`}>{b.name}</a>
+              <a
+                class="name"
+                href={tenantHref(req, {
+                  island: placeData!.island.slug,
+                  place: placeData!.place.slug,
+                  slug: b.slug,
+                })}
+              >
+                {b.name}
+              </a>
               <span class="rhs">
                 {b.status === "draft" ? (
                   <span class="stamp">Unclaimed</span>

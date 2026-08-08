@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { migrateStore } from "./migrations.js";
 import { hashPassword, isHashed, verifyPassword } from "./password.js";
 import { createSeed } from "./seed-data.js";
 import type {
@@ -227,6 +228,20 @@ export function upsertVendor(vendor: VendorStore): VendorStore {
   }
   save(store);
   return vendor;
+}
+
+/**
+ * Bring an existing store up to date with the current data model.
+ *
+ * Seeding only happens when no store file exists, so changes to seed-data.ts
+ * never reach a deployed store on their own. Runs at API startup. Idempotent.
+ * Returns the ids of migrations that changed something.
+ */
+export function applyStoreMigrations(): string[] {
+  const store = ensureStore();
+  const applied = migrateStore(store);
+  if (applied.length > 0) save(store);
+  return applied;
 }
 
 /**

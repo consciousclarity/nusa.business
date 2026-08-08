@@ -177,8 +177,21 @@ Non-negotiable, and the reason for the aesthetic rather than a side effect:
 - **0 webfonts**, 0 external stylesheets, 0 external scripts.
 - **0 images in page chrome.** Photos appear only in listing galleries, below
   the fold, `loading="lazy"` with explicit `width`/`height`.
-- **0 client-side JavaScript on public pages.** Astro ships none by default —
-  do not add a framework island to the public surface without an ADR.
+- **No framework JavaScript on public pages.** Astro ships none by default — do
+  not add a hydrated island to the public surface without an ADR. No JavaScript
+  may be required to render or read a page.
+
+  **One exception, which stays:** the small vanilla `<script>` on the record
+  page that submits the review and booking forms
+  (`apps/web/src/pages/host/[label]/[slug].astro`). It is progressive
+  enhancement, not a framework, and removing it would break both forms. Restyle
+  the forms freely, but leave the script's behaviour and its `apiBase` wiring
+  alone. Any replacement must keep working submission — a native form `POST`
+  to an endpoint that redirects back would be an acceptable alternative, but
+  that is an API change and out of scope for a design pass.
+
+  This matches `.cursor/rules/nusa-web-astro.mdc`: *"minimize client JS (islands
+  only when needed)"* — minimise, not eliminate.
 - Total CSS under ~8 KB uncompressed. The current file is 136 lines; this should
   land in the same order of magnitude.
 
@@ -219,13 +232,17 @@ authenticated tool with different needs. Align it in a later pass.
 - The auth layer (`apps/api/src/auth.ts`) or the `authorization` header wiring
   in `apps/portal/src/api.ts`.
 - `packages/db/src/seed-data.ts`.
-- The client-side script block in `[slug].astro` may be restyled but its
-  `apiBase` behaviour must not change.
+- The client-side script block in `[slug].astro`. The forms it drives may be
+  restyled freely, but the script must not be deleted or rewritten — see the
+  exception under **Performance budget**. Deleting it silently breaks review and
+  booking submission.
 
 ## Acceptance
 
-- [ ] No `@import` of any font, and no external request in the network panel
-      beyond the document itself
+- [ ] No `@import` of any font, and no request to a third-party origin. First
+      render pulls only the document and its own stylesheet — no font, script or
+      stylesheet from anywhere else. Same-origin listing photos below the fold
+      are expected and do not count against this.
 - [ ] `npm run build` exits 0; `npm test` passes
 - [ ] Light and dark both legible, including with an explicit `data-theme`
       override in either direction

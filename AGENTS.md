@@ -42,7 +42,7 @@ Prototype product: [bali.business](https://bali.business) (WordPress). This repo
 
 ## Skills
 
-Project skills in [`.cursor/skills/`](.cursor/skills/) — use them for domain workflows (geo tenancy, field ops, capability parity, release).
+Project skills in [`.cursor/skills/`](.cursor/skills/) — use them for domain workflows (geo tenancy, field ops, capability map, release).
 
 ## Commands
 

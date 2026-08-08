@@ -5,7 +5,7 @@ Thanks for helping build Indonesia’s nested local-business platform.
 ## Before you start
 
 1. Read [AGENTS.md](../AGENTS.md) and [docs/README.md](../docs/README.md).
-2. Skim [docs/features-parity.md](../docs/features-parity.md) so changes map to capability parity consciously.
+2. Skim [docs/features-parity.md](../docs/features-parity.md) so changes map to the capability set consciously.
 3. Use Node 20+ (22 recommended).
 
 ## Local setup

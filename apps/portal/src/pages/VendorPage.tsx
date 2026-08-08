@@ -58,7 +58,7 @@ export function VendorPage({ user }: { user: User }) {
 
   return (
     <div>
-      <h1>Vendor shop (multi-vendor marketplace)</h1>
+      <h1>Vendor shop</h1>
       <p className="muted">
         Signed in as {user.email}. Local marketplace module provides vendor
         stores. When Mercur/Medusa is deployed, replace vendor ids with

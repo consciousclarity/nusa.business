@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { hashPassword, isHashed, verifyPassword } from "./password.js";
 import { createSeed } from "./seed-data.js";
 import type {
   Booking,
@@ -228,10 +229,41 @@ export function upsertVendor(vendor: VendorStore): VendorStore {
   return vendor;
 }
 
-export function authenticate(email: string, password: string) {
-  return getStore().users.find(
-    (u) => u.email === email && u.password === password,
-  );
+/**
+ * Hash any plaintext passwords in the store, in place.
+ *
+ * Called at API startup and after seeding, so a store is never left at rest
+ * with readable passwords. Returns how many entries were upgraded.
+ */
+export async function hashStoredPasswords(): Promise<number> {
+  const store = ensureStore();
+  let upgraded = 0;
+  for (const user of store.users) {
+    if (!isHashed(user.password)) {
+      user.password = await hashPassword(user.password);
+      upgraded++;
+    }
+  }
+  if (upgraded > 0) save(store);
+  return upgraded;
+}
+
+export async function authenticate(email: string, password: string) {
+  const store = ensureStore();
+  const user = store.users.find((u) => u.email === email);
+  if (!user) {
+    // Hash anyway so a missing account costs the same as a wrong password.
+    await hashPassword(password);
+    return undefined;
+  }
+  if (!(await verifyPassword(password, user.password))) return undefined;
+
+  // Upgrade a legacy plaintext entry now that we know the password is right.
+  if (!isHashed(user.password)) {
+    user.password = await hashPassword(password);
+    save(store);
+  }
+  return user;
 }
 
 export function getUser(id: string) {

@@ -72,9 +72,35 @@ from client input. A non-admin sending `ownerUserId` for someone else has it
 silently replaced with their own id; only an admin may act on another user's
 behalf.
 
+## Password storage
+
+Passwords are hashed with **scrypt** (`packages/db/src/password.ts`) — memory-
+hard, in Node's standard library, so no dependency and no native build step.
+
+```
+scrypt$<N>$<r>$<p>$<salt-base64>$<hash-base64>
+```
+
+Parameters are Node's defaults (N=16384, r=8, p=1, 64-byte key) with a random
+16-byte salt per user, and verification uses `timingSafeEqual`. The cost
+parameters are stored *in* the hash, so they can be raised later without
+invalidating existing entries.
+
+Two things keep an existing store from sitting at rest in plaintext:
+
+- `hashStoredPasswords()` runs at API startup and after `npm run seed`, hashing
+  anything still plaintext.
+- `authenticate()` upgrades a legacy plaintext entry in place on the next
+  successful login, as a backstop.
+
+A login for an unknown email still performs one hash, so a missing account and
+a wrong password take comparable time.
+
+The demo credentials in `seed-data.ts` remain readable on purpose — they are
+fixtures, and they are hashed as soon as they reach the store.
+
 ## Still to do before public launch
 
-- **Password hashing** — seeds store plaintext. Move to Argon2/bcrypt.
 - **Rate limiting** on `/v1/auth/login` and the public review/booking routes.
 - Consider HTTP-only cookies scoped to `.nusa.business` for SSO across
   subdomains, instead of `localStorage`.

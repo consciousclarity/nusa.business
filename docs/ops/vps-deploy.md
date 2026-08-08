@@ -26,15 +26,46 @@ on `127.0.0.1:8090`, `shared-postgres` on `127.0.0.1:5432`).
 ## Nested subdomains and TLS
 
 The directory is nested: `gianyar.bali.nusa.business`. This is the one part of
-the deploy that needs care.
+the deploy that needs care, and it is **not** solved in the Caddyfile.
 
-A wildcard certificate covers **exactly one** label, and no CA — Let's Encrypt
-included — issues `*.*.nusa.business`. So nested hosts cannot be served from a
-wildcard at all.
+A wildcard certificate covers **exactly one** label. No CA issues
+`*.*.nusa.business` — not Let's Encrypt, not Cloudflare. So nested hosts cannot
+be served from a wildcard anywhere in the chain.
 
-Instead Caddy uses **on-demand TLS**: it issues a certificate per concrete
-hostname the first time that host is requested. To stop a stranger pointing DNS
-at the origin and burning the issuance quota, Caddy asks the API first:
+`nusa.business` is **proxied** through Cloudflare (orange cloud), so there are
+two independent certificates to think about.
+
+### Edge (Cloudflare → visitor)
+
+Universal SSL covers `nusa.business` and `*.nusa.business` only. Nested hosts
+are **not** covered and will fail in the browser. Two ways out:
+
+| Option | Cost | Notes |
+|---|---|---|
+| **Advanced Certificate Manager** | ~$10/mo | Add one wildcard *per island*: `*.bali.nusa.business`, `*.java.nusa.business`, … Up to 50 SANs per certificate, so ~48 islands fit. Must be extended when an island launches. |
+| **Grey-cloud the nested records** | free | Set `*.bali` etc. to DNS-only. Those hosts bypass Cloudflare — no CDN, no DDoS shield — and Caddy issues real Let's Encrypt certificates for them. |
+
+ACM is the better fit if the CDN matters; grey-clouding is fine while the
+directory is small.
+
+### Origin (Caddy → Cloudflare)
+
+Because Cloudflare terminates TLS for visitors, the origin certificate only has
+to satisfy Cloudflare. The site blocks use `tls internal` (Caddy's own CA):
+ACME is unreliable behind an orange cloud — TLS-ALPN-01 can't reach the origin
+at all, and HTTP-01 depends on the proxy.
+
+> **Requires Cloudflare SSL/TLS mode = Full.** Under *Full (strict)* Cloudflare
+> rejects a self-signed origin certificate. Either switch to Full, or install a
+> free Cloudflare Origin CA certificate and point `tls` at it.
+
+The other sites on this host keep their public Let's Encrypt certificates —
+nothing here affects gustale.com, komputer.shop or n8n.
+
+### The ask endpoint
+
+For any host served with on-demand TLS, Caddy asks the API before issuing, so a
+stranger pointing DNS at the origin can't trigger certificate generation:
 
 ```
 GET http://127.0.0.1:4101/v1/tls-check?domain=gianyar.bali.nusa.business
@@ -42,18 +73,8 @@ GET http://127.0.0.1:4101/v1/tls-check?domain=gianyar.bali.nusa.business
 → 404  unknown host                 → Caddy refuses
 ```
 
-Let's Encrypt allows ~50 certificates per week per registered domain. That is
-comfortable at launch. If the directory grows to hundreds of live place
-subdomains, move to Cloudflare Advanced Certificate Manager (which does support
-two-level wildcards) and switch the origin to `tls internal`.
-
-### Cloudflare mode
-
-| Mode | Works with nested hosts? |
-|---|---|
-| DNS-only (grey cloud) | Yes — Caddy gets real certs via on-demand TLS. **Recommended at launch.** |
-| Proxied (orange) + Universal SSL | No — same one-level wildcard limit at the edge |
-| Proxied + Advanced Certificate Manager | Yes — then origin can use `tls internal` |
+This matters most in the grey-cloud option, where issuance is real Let's
+Encrypt and subject to a ~50 certificates/week limit per registered domain.
 
 ## Prerequisites
 

@@ -13,6 +13,7 @@ import {
   getPlace,
   getStore,
   getVendorByBusinessId,
+  hashStoredPasswords,
   getVendorById,
   listBookings,
   listBusinesses,
@@ -153,7 +154,10 @@ app.get("/v1/search", (c) => {
 
 app.post("/v1/auth/login", async (c) => {
   const body = await c.req.json<{ email: string; password: string }>();
-  const user = authenticate(body.email, body.password);
+  if (!body?.email || !body?.password) {
+    return c.json({ error: "email and password required" }, 400);
+  }
+  const user = await authenticate(body.email, body.password);
   if (!user) return c.json({ error: "Invalid credentials" }, 401);
   const { password: _, ...safe } = user;
   return c.json({ user: safe, token: issueToken(user) });
@@ -445,5 +449,13 @@ app.get("/v1/places", (c) => {
 });
 
 const port = Number(process.env.PORT || 8787);
+
+// Never leave the store at rest with readable passwords, including a store
+// seeded before hashing existed.
+const upgraded = await hashStoredPasswords();
+if (upgraded > 0) {
+  console.log(`Hashed ${upgraded} plaintext password(s) in the store`);
+}
+
 console.log(`Nusa API listening on http://localhost:${port}`);
 serve({ fetch: app.fetch, port });

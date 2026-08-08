@@ -78,24 +78,24 @@ Cloudflare → **DNS** → **Records**. Delete conflicting Hostinger parking rec
 | A | `@` | `62.72.7.218` | Proxied (orange cloud) |
 | A | `www` | `62.72.7.218` | Proxied |
 | A | `*` | `62.72.7.218` | Proxied |
-| A | `*.bali` | `62.72.7.218` | Proxied |
-| A | `*.jawa` | `62.72.7.218` | Proxied |
-| A | `*.lombok` | `62.72.7.218` | Proxied |
-| A | `*.sumatera` | `62.72.7.218` | Proxied |
-| A | `*.sulawesi` | `62.72.7.218` | Proxied |
-| A | `*.kalimantan` | `62.72.7.218` | Proxied |
-| A | `*.maluku` | `62.72.7.218` | Proxied |
-| A | `*.papua` | `62.72.7.218` | Proxied |
+| A | `*.bali` | `62.72.7.218` | **DNS-only (grey)** |
+| A | `*.jawa` | `62.72.7.218` | **DNS-only (grey)** |
+| A | `*.lombok` | `62.72.7.218` | **DNS-only (grey)** |
+| A | `*.sumatera` | `62.72.7.218` | **DNS-only (grey)** |
+| A | `*.sulawesi` | `62.72.7.218` | **DNS-only (grey)** |
+| A | `*.kalimantan` | `62.72.7.218` | **DNS-only (grey)** |
+| A | `*.maluku` | `62.72.7.218` | **DNS-only (grey)** |
+| A | `*.papua` | `62.72.7.218` | **DNS-only (grey)** |
 
-- `@` + `*` → `nusa.business` and `bali.nusa.business`  
-- `*.bali` → `gianyar.bali.nusa.business`, `uluwatu.bali.nusa.business`, …
+- `@` + `*` → `nusa.business` and `bali.nusa.business` (island hosts, orange)  
+- `*.bali` → `gianyar.bali.nusa.business`, … (place hosts, **grey** so origin can mint LE certs)
 
 Or with API token:
 
-```powershell
-$env:CLOUDFLARE_API_TOKEN="..."
-$env:CLOUDFLARE_ACCOUNT_ID="..."
-$env:ORIGIN_IPV4="62.72.7.218"
+```bash
+export CLOUDFLARE_API_TOKEN="..."
+export CLOUDFLARE_ACCOUNT_ID="..."
+export ORIGIN_IPV4="62.72.7.218"
 npm run cf:zone
 ```
 
@@ -103,11 +103,9 @@ Mail: keep MX/TXT **DNS only** (grey cloud) if you use Hostinger email.
 
 ### 4. SSL/TLS in Cloudflare
 
-**SSL/TLS** → Overview → **Full** (or **Full (strict)** if Hostinger has a valid cert for the hostnames).
+**SSL/TLS** → Overview → **Full** or **Full (strict)** once apex/api/portal have Let's Encrypt at the origin.
 
-Start with **Full** if Hostinger only has a cert for the apex.
-
-Place-level HTTPS (`*.bali.nusa.business`) still needs ACM / Total TLS as in the certificate section above — Free Universal SSL alone is not enough for two-level subdomains.
+Place-level HTTPS (`*.bali.nusa.business`) uses **grey-cloud DNS + Caddy on-demand LE** (gated by `/v1/tls-check`). Free Universal SSL does not cover two-label hosts when orange-clouded. ACM (~$10/mo) is the alternative if you want nested hosts behind the CDN later.
 
 ### 5. Hostinger VPS
 

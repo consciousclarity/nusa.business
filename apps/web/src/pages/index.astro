@@ -1,22 +1,31 @@
 ---
 import Base from "../layouts/Base.astro";
 import { api } from "../lib/api";
+import { publicUrl } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
 
-const { context, pathname } = resolveRequestContext(Astro.request, Astro.url);
+const { context } = resolveRequestContext(Astro.request, Astro.url);
 
-if (context.kind === "island") {
-  return Astro.redirect(`/host/${context.island}${pathname === "/" ? "" : pathname}`);
-}
-if (context.kind === "place") {
-  return Astro.redirect(
-    `/host/${context.place}.${context.island}${pathname === "/" ? "" : pathname}`,
-  );
+// Island/place hosts are rewritten to /host/... by middleware — nation only here.
+if (context.kind !== "nation") {
+  return Astro.redirect("/");
 }
 
 const data = await api<{ islands: { slug: string; name: string; tagline: string; status: string }[] }>(
   "/v1/islands",
 );
+
+const host = (
+  Astro.request.headers.get("x-forwarded-host") ||
+  Astro.request.headers.get("host") ||
+  ""
+).split(":")[0]?.toLowerCase() ?? "";
+const useRealHosts =
+  host === "nusa.business" || host.endsWith(".nusa.business");
+
+function islandHref(slug: string) {
+  return useRealHosts ? publicUrl({ island: slug }) : `/host/${slug}`;
+}
 ---
 <Base title="Nusa.Business — Local businesses across Indonesia">
   <section class="hero">
@@ -28,14 +37,14 @@ const data = await api<{ islands: { slug: string; name: string; tagline: string;
     </p>
     <p style="margin-top:1.25rem">
       <a class="cta" href="/claim">Claim your listing</a>
-      <a class="cta secondary" href="/host/bali">Explore Bali</a>
+      <a class="cta secondary" href={islandHref("bali")}>Explore Bali</a>
     </p>
   </section>
 
   <h2 style="font-family:var(--font-display)">Islands</h2>
   <div class="grid">
     {data.islands.map((island) => (
-      <a class="card" href={`/host/${island.slug}`}>
+      <a class="card" href={islandHref(island.slug)}>
         <h3>{island.name}</h3>
         <p>{island.tagline}</p>
         <p class="meta" style="margin-top:0.5rem">{island.status === "active" ? "Open" : "Coming soon"}</p>

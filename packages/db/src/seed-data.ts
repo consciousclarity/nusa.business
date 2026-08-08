@@ -14,9 +14,9 @@ export function createSeed(): DataStore {
       status: "active" as const,
     },
     {
-      id: "isl-jawa",
-      slug: "jawa",
-      name: "Jawa",
+      id: "isl-java",
+      slug: "java",
+      name: "Java",
       tagline: "Java’s cities, culture, and cuisine",
       status: "active" as const,
     },
@@ -163,7 +163,7 @@ export function createSeed(): DataStore {
     },
     {
       id: "pl-yogya",
-      islandId: "isl-jawa",
+      islandId: "isl-java",
       slug: "yogyakarta",
       name: "Yogyakarta",
       type: "kota" as const,
@@ -171,7 +171,7 @@ export function createSeed(): DataStore {
     },
     {
       id: "pl-bandung",
-      islandId: "isl-jawa",
+      islandId: "isl-java",
       slug: "bandung",
       name: "Bandung",
       type: "kota" as const,
@@ -179,7 +179,7 @@ export function createSeed(): DataStore {
     },
     {
       id: "pl-jakarta",
-      islandId: "isl-jawa",
+      islandId: "isl-java",
       slug: "jakarta",
       name: "Jakarta",
       type: "kota" as const,
@@ -187,7 +187,7 @@ export function createSeed(): DataStore {
     },
     {
       id: "pl-surabaya",
-      islandId: "isl-jawa",
+      islandId: "isl-java",
       slug: "surabaya",
       name: "Surabaya",
       type: "kota" as const,

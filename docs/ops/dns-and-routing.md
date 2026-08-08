@@ -8,8 +8,8 @@ Assuming DNS at Cloudflare:
 |---|---|---|---|---|
 | A | `@` | `62.72.7.218` | Proxied | `nusa.business` |
 | A | `www` | `62.72.7.218` | Proxied | `www.nusa.business` → redirect apex |
-| A | `*` | `62.72.7.218` | Proxied | `jawa.nusa.business`, `api…`, `portal…` |
-| A | `*.jawa` | `62.72.7.218` | **DNS-only** | `yogyakarta.jawa.nusa.business`, … |
+| A | `*` | `62.72.7.218` | Proxied | `java.nusa.business`, `api…`, `portal…` |
+| A | `*.java` | `62.72.7.218` | **DNS-only** | `yogyakarta.java.nusa.business`, … |
 | A | `*.bali` | `62.72.7.218` | **DNS-only** | `gianyar.bali.nusa.business`, … |
 | … | `*.{island}` | same IP | **DNS-only** | every place under that island |
 

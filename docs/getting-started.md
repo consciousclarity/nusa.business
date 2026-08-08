@@ -26,13 +26,20 @@ install steps above.
 
 Two things specific to Codespaces:
 
-- The portal is a browser-side SPA, so `VITE_API_URL` must be the **forwarded**
-  API URL, not `localhost:8787`. The bootstrap script detects `CODESPACE_NAME`
-  and writes the right value; port 8787 is forwarded as public so the browser
-  can reach it.
+- The portal is a browser-side SPA, so it cannot reach `localhost:8787` — the
+  container is not where the page runs. The portal's Vite dev server proxies
+  `/v1` and `/health` through to the API instead, and the bootstrap script
+  points `VITE_API_URL` at the portal's own forwarded origin. **No port is
+  forwarded publicly**: the seeded demo accounts below have published
+  passwords, so a public API port would hand an admin token to anyone who
+  learned the URL.
 - A Codespaces hostname (`*.app.github.dev`) parses as `kind: "unknown"` and
   falls through to the nation page. That is expected — browse tenants with the
   `/host/{label}` paths below rather than subdomains, exactly as on localhost.
+- Known gap: the review / booking widget on a listing page is browser-side and
+  reads `PUBLIC_API_URL`, which points at localhost for server-side rendering.
+  That one widget will not reach the API from a browser tab on Codespaces.
+  Everything else — browsing, search, the whole portal — works.
 
 ## Checks
 

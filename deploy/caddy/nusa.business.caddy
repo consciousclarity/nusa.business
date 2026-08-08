@@ -85,14 +85,15 @@ papua.nusa.business {
 # DNS is grey-clouded (*.{island}); certificates are on-demand LE, only for
 # hosts /v1/tls-check accepts. Keep this block LAST — catch-all for :443.
 #
-# Two labels spelled out (not {2,}): Caddyfile treats `{...}` as placeholders.
-# Matches parseHost() — anything deeper is kind: "unknown".
+# Stock Caddy has no host_regexp matcher. Use host with one `*` per DNS label
+# (RFC 1034): `*.*.nusa.business` matches place.island, not island alone and
+# not three+ labels. That matches parseHost() — deeper hosts are kind: unknown.
 https:// {
 	tls {
 		on_demand
 	}
 
-	@nusa_nested host_regexp ^[a-z0-9-]+\.[a-z0-9-]+\.nusa\.business$
+	@nusa_nested host *.*.nusa.business
 	handle @nusa_nested {
 		reverse_proxy 127.0.0.1:4321
 		import nusa_headers

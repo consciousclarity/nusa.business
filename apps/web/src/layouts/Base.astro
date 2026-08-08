@@ -16,32 +16,37 @@ const portalUrl = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description || "Local businesses across Indonesia"} />
+    <meta name="color-scheme" content="light dark" />
     <title>{title}</title>
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="/">Nusa.Business</a>
-      <nav>
+      <a class="brand" href="/">nusa<span class="tld">.business</span></a>
+      <nav aria-label="Primary">
         <a href="/claim">Claim</a>
         <a href={portalUrl}>Portal</a>
       </nav>
     </header>
-    {crumb.length > 0 && (
-      <nav class="crumbs" aria-label="Breadcrumb">
-        {crumb.map((c, i) => (
-          <span>
-            {i > 0 && <span class="sep">/</span>}
-            {c.href ? <a href={c.href}>{c.label}</a> : <span>{c.label}</span>}
-          </span>
-        ))}
-      </nav>
-    )}
+    <nav class="crumbs" aria-label="Path">
+      <a href="/">nusa.business</a>
+      {crumb.map((c) => (
+        <>
+          <span class="sep">/</span>
+          {c.href ? <a href={c.href}>{c.label}</a> : <span class="here">{c.label}</span>}
+        </>
+      ))}
+      {crumb.length > 0 && <span class="sep">/</span>}
+    </nav>
     <main>
       <slot />
     </main>
     <footer class="site-footer">
       <p>Free local listings across the archipelago. No registration fees. No commission at launch.</p>
-      <p><a href="https://bali.nusa.business/">bali.nusa.business</a> · <a href="https://gianyar.bali.nusa.business/">gianyar.bali</a> · <a href="/host/bali">Dev: /host/bali</a></p>
+      <p>
+        <a href="/host/bali">/host/bali</a>
+        · <a href="/host/gianyar.bali">/host/gianyar.bali</a>
+        · <a href="/host/uluwatu.bali">/host/uluwatu.bali</a>
+      </p>
     </footer>
   </body>
 </html>

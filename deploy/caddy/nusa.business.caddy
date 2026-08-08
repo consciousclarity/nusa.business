@@ -1,0 +1,103 @@
+# nusa.business — site blocks for the HOST Caddy on 62.72.7.218
+#
+# This is NOT loaded by Docker. The VPS runs a single systemd Caddy that owns
+# :80/:443 for every site on the box (gustale.com, komputer.shop, n8n, …).
+# Merge into /etc/caddy/Caddyfile, then `caddy validate` + `systemctl reload caddy`.
+#
+# Upstreams (docker/compose.prod.yml, loopback only):
+#   127.0.0.1:4101  api
+#   127.0.0.1:4321  web (Astro)
+#   127.0.0.1:4103  portal
+#
+# DNS (Cloudflare):
+#   @, www, *              → 62.72.7.218 proxied (orange)
+#   *.{island}             → 62.72.7.218 DNS-only (grey) for LE on-demand
+#
+# SSL:
+#   Orange hosts: Cloudflare edge + origin LE (Full / Full Strict)
+#   Grey nested place hosts: Caddy on-demand Let's Encrypt, gated by /v1/tls-check
+#
+# Global options — merge into the existing top-level { } block:
+#
+#     {
+#         email alex_aguilar@gmx.ch
+#         on_demand_tls {
+#             ask http://127.0.0.1:4101/v1/tls-check
+#         }
+#     }
+
+(nusa_headers) {
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	encode gzip zstd
+}
+
+www.nusa.business {
+	redir https://nusa.business{uri} permanent
+}
+
+api.nusa.business {
+	reverse_proxy 127.0.0.1:4101
+	import nusa_headers
+
+	log {
+		output file /var/log/caddy/api.nusa.business.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+	}
+}
+
+portal.nusa.business {
+	reverse_proxy 127.0.0.1:4103
+	import nusa_headers
+}
+
+# Nation + island hubs (one DNS label). Covered by Cloudflare Universal SSL
+# when orange-clouded, and by Let's Encrypt at the origin for Full Strict.
+nusa.business,
+bali.nusa.business,
+java.nusa.business,
+lombok.nusa.business,
+sumatra.nusa.business,
+sulawesi.nusa.business,
+kalimantan.nusa.business,
+maluku.nusa.business,
+papua.nusa.business {
+	reverse_proxy 127.0.0.1:4321
+	import nusa_headers
+
+	log {
+		output file /var/log/caddy/nusa.business.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+	}
+}
+
+# Nested tenants: yogyakarta.java.nusa.business ({place}.{island}).
+# DNS is grey-clouded (*.{island}); certificates are on-demand LE, only for
+# hosts /v1/tls-check accepts. Keep this block LAST — catch-all for :443.
+#
+# Stock Caddy has no host_regexp matcher. Use host with one `*` per DNS label
+# (RFC 1034): `*.*.nusa.business` matches place.island, not island alone and
+# not three+ labels. That matches parseHost() — deeper hosts are kind: unknown.
+https:// {
+	tls {
+		on_demand
+	}
+
+	@nusa_nested host *.*.nusa.business
+	handle @nusa_nested {
+		reverse_proxy 127.0.0.1:4321
+		import nusa_headers
+	}
+
+	respond 404
+}

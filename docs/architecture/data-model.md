@@ -35,7 +35,7 @@ Multi-criteria: `service`, `value`, `location`, `cleanliness` + comment.
 
 ### VendorStore
 
-Dokan-parity shop linked to a business; `commissionPercent` default `0`; `products[]`. Future: `mercurVendorId`.
+multi-vendor shop linked to a business; `commissionPercent` default `0`; `products[]`. Future: `mercurVendorId`.
 
 ## Invariants
 

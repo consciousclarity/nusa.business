@@ -1,0 +1,27 @@
+{
+  "name": "Nusa.Business",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [8787, 4321, 5173],
+  "portsAttributes": {
+    // Deliberately NOT public. The seed creates fixed demo accounts with
+    // published passwords, and /v1/auth/login is public by design, so a
+    // publicly forwarded API hands an admin token to anyone who learns the
+    // URL. Browser-side callers reach the API same-origin through the dev
+    // server proxy instead (see apps/portal/vite.config.ts).
+    "8787": { "label": "api (Hono)", "onAutoForward": "silent" },
+    "4321": { "label": "web (Astro)", "onAutoForward": "notify" },
+    "5173": { "label": "portal (React Router)", "onAutoForward": "notify" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["astro-build.astro-vscode", "dbaeumer.vscode-eslint"],
+      "settings": {
+        "editor.formatOnSave": false
+      }
+    }
+  },
+  "remoteEnv": {
+    "NODE_ENV": "development"
+  }
+}

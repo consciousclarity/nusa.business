@@ -15,7 +15,10 @@ export async function api<T>(
   if (init?.body && !headers.has("content-type")) {
     headers.set("content-type", "application/json");
   }
-  if (init?.token) headers.set("authorization", `Bearer ${init.token}`);
+  // Attach the stored session token by default so every call is authenticated;
+  // pass `token` explicitly to override (e.g. immediately after login).
+  const token = init?.token ?? loadSession()?.token;
+  if (token) headers.set("authorization", `Bearer ${token}`);
   const res = await fetch(`${API}${path}`, { ...init, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));

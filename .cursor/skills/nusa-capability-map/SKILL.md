@@ -1,20 +1,20 @@
 ---
-name: nusa-listeo-dokan-parity
+name: nusa-capability-map
 description: >-
-  Map Listeo directory/booking and Dokan marketplace features onto Nusa modules.
+  Map directory, booking and multi-vendor marketplace capabilities onto Nusa modules.
   Use when implementing claims, reviews, bookings, packages, vendor shops, or
   Mercur integration; keep docs/features-parity.md accurate.
 ---
 
-# Listeo + Dokan parity skill
+# Capability map skill
 
 ## Principle
 
 Reimplement **capabilities**, not PHP. Track status in `docs/features-parity.md`.
 
-## Listeo → Nusa
+## Directory capabilities
 
-| Listeo | Nusa |
+| Capability | Nusa |
 |---|---|
 | Listings / categories / regions | Island / Place / Business |
 | Claim | `/v1/claims` + portal `/claim` |
@@ -24,9 +24,9 @@ Reimplement **capabilities**, not PHP. Track status in `docs/features-parity.md`
 | Packages | planned — free tier default |
 | Messages / bookmarks | planned |
 
-## Dokan → Nusa
+## Marketplace capabilities
 
-| Dokan | Nusa |
+| Capability | Nusa |
 |---|---|
 | Vendor store | `/v1/marketplace/vendors` (+ listing Shop tab) |
 | Products | `VendorStore.products` |

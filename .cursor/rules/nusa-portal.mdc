@@ -6,7 +6,7 @@ alwaysApply: false
 
 # apps/portal
 
-- Authenticated Listeo-parity dashboards: listings, claim, field ops, bookings, vendor.
+- Authenticated directory dashboards: listings, claim, field ops, bookings, vendor.
 - Session is demo token in `localStorage` (`nusa.session`) until Better Auth lands.
 - Call API through `src/api.ts`; do not duplicate business rules in the UI.
 - Role gates: owner / field_agent / admin — match API checks.

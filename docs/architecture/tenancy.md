@@ -11,6 +11,9 @@ Parsed by `parseHost(hostHeader)`:
 | `gianyar.bali.nusa.business` | place=`gianyar`, island=`bali` |
 | other | unknown |
 
+Astro middleware rewrites island/place hosts to `/host/{label}/…` so the public
+URL stays on the subdomain (`https://java.nusa.business/` not `…/host/java`).
+
 ## Dev path fallback
 
 Astro `apps/web/src/pages/host/[label]/…`:
@@ -19,10 +22,10 @@ Astro `apps/web/src/pages/host/[label]/…`:
 - label `gianyar.bali` → place page  
 - `…/babi-guling-pande-egi` → listing  
 
-Nation `index.astro` redirects real subdomain requests into `/host/...` when developing against hosts that point at the Astro process.
+On the production apex, `/host/{label}` **301s** to the canonical nested host.
 
 ## Edge
 
-Caddyfile sketch in `docker/Caddyfile` routes `api.*` / `portal.*` / default to host ports. Production must terminate TLS for `*.nusa.business` and `*.*.nusa.business`.
-
-See [ops/dns-and-routing.md](../ops/dns-and-routing.md).
+Host Caddy (`deploy/caddy/nusa.business.caddy`) routes api / portal / nation +
+islands / nested on-demand TLS. DNS: orange `*` for islands, grey `*.{island}`
+for places — see [ops/dns-and-routing.md](../ops/dns-and-routing.md).

@@ -1,6 +1,7 @@
 ---
 import Base from "../../../layouts/Base.astro";
 import { api, API } from "../../../lib/api";
+import { tenantHref } from "../../../lib/links";
 
 const label = Astro.params.label!;
 const slug = Astro.params.slug!;
@@ -8,6 +9,7 @@ const parts = label.split(".");
 if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
 
 const [placeSlug, islandSlug] = parts;
+const req = Astro.request;
 const data = await api<{
   business: {
     id: string;
@@ -46,103 +48,176 @@ const placeMeta = await api<{
 }>(`/v1/islands/${islandSlug}/places/${placeSlug}`);
 
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
+const hostPath = `${placeSlug}.${islandSlug}.nusa.business/${slug}`;
+const stamp =
+  data.business.status === "draft"
+    ? "Unclaimed"
+    : data.business.status === "published"
+      ? null
+      : null;
 ---
 <Base
   title={`${data.business.name} — ${placeMeta.place.name}`}
   description={data.business.summary}
   crumb={[
-    { label: "Indonesia", href: "/" },
-    { label: placeMeta.island.name, href: `/host/${islandSlug}` },
-    { label: placeMeta.place.name, href: `/host/${label}` },
-    { label: data.business.name },
+    { label: islandSlug!, href: tenantHref(req, { island: islandSlug! }) },
+    {
+      label: placeSlug!,
+      href: tenantHref(req, { island: islandSlug!, place: placeSlug! }),
+    },
+    { label: data.business.slug },
   ]}
 >
-  <section class="hero">
+  <article class="record">
     <h1>{data.business.name}</h1>
-    <p>{data.business.summary}</p>
-    <p class="meta">
-      {placeSlug}.{islandSlug}.nusa.business/{slug} · {data.business.status}
-    </p>
-    <p style="margin-top:1rem">
-      <a class="cta" href={`${portal}/claim?businessId=${data.business.id}`}>Claim listing</a>
+    <p class="prose">{data.business.summary}</p>
+    {stamp && <span class="stamp">{stamp}</span>}
+
+    <dl class="kv">
+      <dt>Host</dt>
+      <dd>{hostPath}</dd>
+      <dt>Category</dt>
+      <dd>{data.business.categories.join(" · ") || "—"}</dd>
+      {data.business.address && (
+        <>
+          <dt>Address</dt>
+          <dd>{data.business.address}</dd>
+        </>
+      )}
+      {data.business.phone && (
+        <>
+          <dt>Phone</dt>
+          <dd>{data.business.phone}</dd>
+        </>
+      )}
+      {data.business.whatsapp && (
+        <>
+          <dt>WhatsApp</dt>
+          <dd>{data.business.whatsapp}</dd>
+        </>
+      )}
+      <dt>Booking</dt>
+      <dd>{data.business.bookingMode}</dd>
+      <dt>Status</dt>
+      <dd>{data.business.status}</dd>
+    </dl>
+
+    <p class="actions">
+      <a class="cta" href={`${portal}/claim?businessId=${data.business.id}`}>
+        Claim listing
+      </a>
       {data.business.bookingMode !== "none" && (
         <a class="cta secondary" href="#book">Book ({data.business.bookingMode})</a>
       )}
     </p>
-  </section>
+  </article>
 
   <div class="stack">
-    <article class="card">
-      <h2 style="font-family:var(--font-display);margin-top:0">Overview</h2>
-      <p>{data.business.description}</p>
-      {data.business.categories.map((c) => <span class="pill">{c}</span>)}
-      {data.business.address && <p class="meta" style="margin-top:0.75rem">{data.business.address}</p>}
-      {data.business.phone && <p class="meta">Phone: {data.business.phone}</p>}
-      {data.business.whatsapp && <p class="meta">WhatsApp: {data.business.whatsapp}</p>}
-    </article>
+    <section class="section">
+      <h2>Overview</h2>
+      <p class="prose">{data.business.description}</p>
+    </section>
 
     {data.business.openingHours?.length > 0 && (
-      <article class="card">
-        <h3 style="font-family:var(--font-display);margin-top:0">Opening hours</h3>
-        <ul>
-          {data.business.openingHours.map((h) => (
-            <li>
-              {h.day}: {h.closed ? "Closed" : `${h.open} – ${h.close}`}
-            </li>
-          ))}
-        </ul>
-      </article>
+      <section class="section">
+        <div class="table-wrap">
+          <table class="data">
+            <caption>Opening hours</caption>
+            <thead>
+              <tr>
+                <th scope="col">Day</th>
+                <th scope="col">Hours</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.business.openingHours.map((h) => (
+                <tr>
+                  <th scope="row">{h.day}</th>
+                  <td>{h.closed ? "Closed" : `${h.open} – ${h.close}`}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     )}
 
     {data.vendor && (
-      <article class="card">
-        <h3 style="font-family:var(--font-display);margin-top:0">Shop · {data.vendor.name}</h3>
-        <p>{data.vendor.description}</p>
-        <p class="meta">Mercur/Dokan-parity store · 0% commission</p>
-        <div class="grid" style="padding-top:0.75rem">
-          {data.vendor.products.map((p) => (
-            <div class="card">
-              <h3>{p.name}</h3>
-              <p>{p.description}</p>
-              <p class="meta">
-                {p.price.toLocaleString("id-ID")} {p.currency} · stock {p.stock}
-              </p>
-            </div>
+      <section class="section">
+        <h2>Shop · {data.vendor.name}</h2>
+        <p class="prose">{data.vendor.description}</p>
+        <p class="meta">Vendor store · 0% commission at launch</p>
+        <ol class="index-list">
+          {data.vendor.products.map((p, i) => (
+            <li>
+              <div class="index-row">
+                <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                <span class="name">{p.name}</span>
+                <span class="rhs">
+                  {p.price.toLocaleString("id-ID")} {p.currency} · stock {p.stock}
+                </span>
+              </div>
+              <p class="index-desc">{p.description}</p>
+            </li>
           ))}
-        </div>
-      </article>
+        </ol>
+      </section>
     )}
 
-    <article class="card" id="reviews">
-      <h3 style="font-family:var(--font-display);margin-top:0">Reviews</h3>
+    <section class="section" id="reviews">
+      <h2>Reviews</h2>
       {data.reviews.length === 0 && <p class="meta">No reviews yet.</p>}
-      {data.reviews.map((r) => (
-        <div style="margin-bottom:1rem">
-          <strong>{r.authorName}</strong>
-          <p class="meta">
-            Service {r.service}/5 · Value {r.value}/5 · Location {r.location}/5 · Cleanliness {r.cleanliness}/5
-          </p>
-          <p>{r.comment}</p>
+      {data.reviews.length > 0 && (
+        <div class="table-wrap">
+          <table class="data">
+            <caption>Review scores</caption>
+            <thead>
+              <tr>
+                <th scope="col">Author</th>
+                <th scope="col">Service</th>
+                <th scope="col">Value</th>
+                <th scope="col">Location</th>
+                <th scope="col">Cleanliness</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.reviews.map((r) => (
+                <tr>
+                  <th scope="row">{r.authorName}</th>
+                  <td>{r.service}/5</td>
+                  <td>{r.value}/5</td>
+                  <td>{r.location}/5</td>
+                  <td>{r.cleanliness}/5</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
+      )}
+      {data.reviews.map((r) => (
+        <p class="prose review-note">
+          <strong>{r.authorName}:</strong> {r.comment}
+        </p>
       ))}
 
       <form class="stack" method="POST" id="review-form">
-        <h3 style="font-family:var(--font-display)">Add review</h3>
+        <h3>Add review</h3>
         <label>Name <input name="authorName" required /></label>
         <label>Comment <textarea name="comment" required rows="3"></textarea></label>
         <label>Service <input type="number" name="service" min="1" max="5" value="5" /></label>
         <label>Value <input type="number" name="value" min="1" max="5" value="5" /></label>
         <label>Location <input type="number" name="location" min="1" max="5" value="5" /></label>
-        <label>Cleanliness <input type="number" name="cleanliness" min="1" max="5" value="5" /></label>
+        <label>
+          Cleanliness
+          <input type="number" name="cleanliness" min="1" max="5" value="5" />
+        </label>
         <button type="submit">Submit review</button>
       </form>
-    </article>
+    </section>
 
     {data.business.bookingMode !== "none" && (
-      <article class="card" id="book">
-        <h3 style="font-family:var(--font-display);margin-top:0">
-          Book · {data.business.bookingMode}
-        </h3>
+      <section class="section" id="book">
+        <h2>Book · {data.business.bookingMode}</h2>
         <form class="stack" id="booking-form">
           <label>Name <input name="customerName" required /></label>
           <label>Email <input type="email" name="customerEmail" required /></label>
@@ -159,7 +234,7 @@ const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
           <button type="submit">Request booking</button>
           <p class="meta" id="booking-msg"></p>
         </form>
-      </article>
+      </section>
     )}
   </div>
 </Base>

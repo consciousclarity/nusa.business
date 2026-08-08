@@ -1,19 +1,36 @@
 #!/usr/bin/env node
 /**
- * Create / inspect the nusa.business Cloudflare zone and bootstrap DNS.
+ * Create / inspect the nusa.business Cloudflare zone and upsert DNS.
  *
  * Requires:
  *   CLOUDFLARE_API_TOKEN  — Zone:Edit + DNS:Edit
  *   CLOUDFLARE_ACCOUNT_ID — from dashboard URL / overview
  *
  * Optional:
- *   ORIGIN_IPV4 — if set, creates proxied A records for @ and *
+ *   ORIGIN_IPV4 — if set, upserts A records (default 62.72.7.218 when set empty intentionally skip)
+ *   NUSA_ZONE   — default nusa.business
+ *
+ * Record policy (nested hosts without per-place DNS):
+ *   @, www, *           → ORIGIN, proxied (orange) — apex + island hosts
+ *   *.{island}          → ORIGIN, DNS-only (grey) — place hosts need LE at origin
  */
 
 const token = process.env.CLOUDFLARE_API_TOKEN;
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
 const originIp = process.env.ORIGIN_IPV4;
 const zoneName = process.env.NUSA_ZONE || "nusa.business";
+
+/** Seed islands — keep in sync with packages/db/src/seed-data.ts */
+const ISLANDS = [
+  "bali",
+  "java",
+  "lombok",
+  "sumatra",
+  "sulawesi",
+  "kalimantan",
+  "maluku",
+  "papua",
+];
 
 if (!token || !accountId) {
   console.error(`Missing credentials.
@@ -23,13 +40,10 @@ Permissions: Zone → Zone:Edit, Zone → DNS:Edit (include zone nusa.business o
 
 Then:
 
-  $env:CLOUDFLARE_API_TOKEN="..."
-  $env:CLOUDFLARE_ACCOUNT_ID="..."
-  node scripts/cloudflare-setup-zone.mjs
-
-Optional origin:
-
-  $env:ORIGIN_IPV4="x.x.x.x"
+  export CLOUDFLARE_API_TOKEN="..."
+  export CLOUDFLARE_ACCOUNT_ID="..."
+  export ORIGIN_IPV4="62.72.7.218"
+  npm run cf:zone
 `);
   process.exit(1);
 }
@@ -50,6 +64,42 @@ async function cf(path, init = {}) {
     throw new Error(JSON.stringify(data.errors || data, null, 2));
   }
   return data.result;
+}
+
+/**
+ * Upsert an A record by name: PATCH if one exists, else POST.
+ */
+async function upsertA(zoneId, { name, content, proxied }) {
+  const existing = await cf(
+    `/zones/${zoneId}/dns_records?type=A&name=${encodeURIComponent(name)}`,
+  );
+  const body = { type: "A", name, content, proxied, ttl: 1 };
+  if (existing[0]) {
+    const updated = await cf(`/zones/${zoneId}/dns_records/${existing[0].id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+    console.log(
+      "DNS ~",
+      updated.name,
+      "→",
+      content,
+      proxied ? "proxied" : "dns-only",
+    );
+    return updated;
+  }
+  const created = await cf(`/zones/${zoneId}/dns_records`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+  console.log(
+    "DNS +",
+    created.name,
+    "→",
+    content,
+    proxied ? "proxied" : "dns-only",
+  );
+  return created;
 }
 
 async function main() {
@@ -77,47 +127,41 @@ async function main() {
   for (const ns of zone.name_servers || []) console.log(" -", ns);
 
   if (originIp) {
-    const records = [
-      { type: "A", name: zoneName, content: originIp, proxied: true },
-      { type: "A", name: `*.${zoneName}`, content: originIp, proxied: true },
-    ];
-    for (const island of [
-      "bali",
-      "jawa",
-      "lombok",
-      "sumatera",
-      "sulawesi",
-      "kalimantan",
-      "maluku",
-      "papua",
-    ]) {
-      records.push({
-        type: "A",
+    // Apex + www + single-label wildcard (islands, api, portal, …)
+    await upsertA(zone.id, {
+      name: zoneName,
+      content: originIp,
+      proxied: true,
+    });
+    await upsertA(zone.id, {
+      name: `www.${zoneName}`,
+      content: originIp,
+      proxied: true,
+    });
+    await upsertA(zone.id, {
+      name: `*.${zoneName}`,
+      content: originIp,
+      proxied: true,
+    });
+
+    // Place-level wildcards — grey cloud so Caddy can issue real LE certs
+    for (const island of ISLANDS) {
+      await upsertA(zone.id, {
         name: `*.${island}.${zoneName}`,
         content: originIp,
-        proxied: true,
+        proxied: false,
       });
-    }
-
-    for (const rec of records) {
-      try {
-        await cf(`/zones/${zone.id}/dns_records`, {
-          method: "POST",
-          body: JSON.stringify({ ...rec, ttl: 1 }),
-        });
-        console.log("DNS +", rec.type, rec.name);
-      } catch (err) {
-        console.warn("DNS skip/fail", rec.name, String(err.message || err));
-      }
     }
   } else {
     console.log(
-      "\nNo ORIGIN_IPV4 set — skipping A records. Prefer Workers Custom Domains for nusa-edge, or re-run with ORIGIN_IPV4.",
+      "\nNo ORIGIN_IPV4 set — skipping A records. Re-run with ORIGIN_IPV4=62.72.7.218.",
     );
   }
 
   console.log(`\nDashboard: https://dash.cloudflare.com/${accountId}/${zone.id}`);
-  console.log("Next: docs/ops/cloudflare.md (ACM certs + wrangler deploy)");
+  console.log(
+    "Nested place hosts (*.{island}) are DNS-only — see docs/ops/cloudflare.md",
+  );
 }
 
 main().catch((err) => {

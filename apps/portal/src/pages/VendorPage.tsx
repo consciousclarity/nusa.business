@@ -58,10 +58,10 @@ export function VendorPage({ user }: { user: User }) {
 
   return (
     <div>
-      <h1>Vendor shop (Dokan / Mercur parity)</h1>
+      <h1>Vendor shop</h1>
       <p className="muted">
-        Signed in as {user.email}. Local marketplace module mirrors Dokan
-        vendor stores. When Mercur/Medusa is deployed, replace vendor ids with
+        Signed in as {user.email}. Local marketplace module provides vendor
+        stores. When Mercur/Medusa is deployed, replace vendor ids with
         Mercur vendor UUIDs — commission defaults to 0%.
       </p>
 

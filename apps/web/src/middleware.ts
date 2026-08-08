@@ -13,7 +13,7 @@ function isLocalHost(host: string): boolean {
 
 /**
  * Production tenancy:
- * - Real hosts (jawa.nusa.business, yogyakarta.jawa.nusa.business) rewrite
+ * - Real hosts (java.nusa.business, yogyakarta.java.nusa.business) rewrite
  *   invisibly to /host/{label}/… so the public URL stays on the subdomain.
  * - On the nation apex, /host/{label} 301s to the canonical nested host.
  * Localhost keeps /host/... paths as the primary surface.

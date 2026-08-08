@@ -1,0 +1,59 @@
+# Production stack for Hostinger VPS 62.72.7.218
+# Cloudflare proxies HTTPS → this host (SSL mode: Full)
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      PORT: "8787"
+      NUSA_DATA_DIR: /data
+    volumes:
+      - api_data:/data
+    expose:
+      - "8787"
+
+  web:
+    build:
+      context: ..
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "4321"
+      PUBLIC_API_URL: "https://api.nusa.business"
+      PUBLIC_PORTAL_URL: "https://portal.nusa.business"
+    expose:
+      - "4321"
+    depends_on:
+      - api
+
+  portal:
+    build:
+      context: ..
+      dockerfile: apps/portal/Dockerfile
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+      - portal
+
+volumes:
+  api_data:
+  caddy_data:
+  caddy_config:

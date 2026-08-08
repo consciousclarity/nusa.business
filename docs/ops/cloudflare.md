@@ -65,8 +65,9 @@ If still Pending, copy the 2 Cloudflare nameservers into Hostinger → Domains �
 
 ### 2. Get Hostinger origin IP
 
-Hostinger hPanel → **Hosting** → your plan → **Details** / **IP address**  
-(VPS: use the VPS public IPv4.)
+**Current Nusa VPS (Hostinger):** `62.72.7.218`
+
+(Confirm anytime in hPanel → VPS → IP address if it changes.)
 
 ### 3. DNS records in Cloudflare (not in Hostinger DNS)
 
@@ -74,16 +75,29 @@ Cloudflare → **DNS** → **Records**. Delete conflicting Hostinger parking rec
 
 | Type | Name | Content | Proxy |
 |---|---|---|---|
-| A | `@` | *Hostinger IPv4* | Proxied (orange cloud) |
-| A | `www` | *same IP* | Proxied |
-| A | `*` | *same IP* | Proxied |
-| A | `*.bali` | *same IP* | Proxied |
-| A | `*.jawa` | *same IP* | Proxied |
-| A | `*.lombok` | *same IP* | Proxied |
-| … | `*.{island}` | *same IP* | Proxied for each launch island |
+| A | `@` | `62.72.7.218` | Proxied (orange cloud) |
+| A | `www` | `62.72.7.218` | Proxied |
+| A | `*` | `62.72.7.218` | Proxied |
+| A | `*.bali` | `62.72.7.218` | Proxied |
+| A | `*.jawa` | `62.72.7.218` | Proxied |
+| A | `*.lombok` | `62.72.7.218` | Proxied |
+| A | `*.sumatera` | `62.72.7.218` | Proxied |
+| A | `*.sulawesi` | `62.72.7.218` | Proxied |
+| A | `*.kalimantan` | `62.72.7.218` | Proxied |
+| A | `*.maluku` | `62.72.7.218` | Proxied |
+| A | `*.papua` | `62.72.7.218` | Proxied |
 
 - `@` + `*` → `nusa.business` and `bali.nusa.business`  
 - `*.bali` → `gianyar.bali.nusa.business`, `uluwatu.bali.nusa.business`, …
+
+Or with API token:
+
+```powershell
+$env:CLOUDFLARE_API_TOKEN="..."
+$env:CLOUDFLARE_ACCOUNT_ID="..."
+$env:ORIGIN_IPV4="62.72.7.218"
+npm run cf:zone
+```
 
 Mail: keep MX/TXT **DNS only** (grey cloud) if you use Hostinger email.
 
@@ -95,14 +109,18 @@ Start with **Full** if Hostinger only has a cert for the apex.
 
 Place-level HTTPS (`*.bali.nusa.business`) still needs ACM / Total TLS as in the certificate section above — Free Universal SSL alone is not enough for two-level subdomains.
 
-### 5. Hostinger panel
+### 5. Hostinger VPS
 
-- Shared hosting: add aliases / parked domains for hosts you use, or a catch-all if offered. Node (Astro/Hono) usually needs **VPS** or **Cloudflare Workers**, not classic shared PHP hosting.  
-- VPS: run Docker/Node there; open 80/443; point the A records at the VPS IP; Caddy/Nginx terminates origin TLS.
+On `62.72.7.218`:
+
+- Open **80/443** (and SSH) in the Hostinger firewall / UFW  
+- Run the Nusa stack (Docker Compose or Node processes) behind **Caddy/Nginx**  
+- Origin should answer for `nusa.business` and nested hosts (or a default vhost that accepts all `*.nusa.business`)  
+- Prefer Caddy on-demand TLS **or** Cloudflare Full + origin cert later  
 
 ### 6. Skip Wrangler for now (optional)
 
-`wrangler login` / `cf:deploy-edge` is only if you want the Cloudflare Worker front door. With Hostinger as origin, DNS A → Hostinger is enough to go live; the edge Worker can come later.
+`wrangler login` / `cf:deploy-edge` is only if you want the Cloudflare Worker front door. With this VPS as origin, DNS A → `62.72.7.218` is enough to go live; the edge Worker can come later.
 
 ---
 

@@ -26,7 +26,11 @@ COPY --from=build /app/apps/api ./apps/api
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./
 COPY apps/api/docker-entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh && mkdir -p /data
+# Run as the unprivileged built-in "node" user. /data must be owned by it so
+# the entrypoint can seed the store; a named volume inherits this ownership on
+# first creation.
+RUN chmod +x /entrypoint.sh && mkdir -p /data && chown -R node:node /data
 VOLUME ["/data"]
 EXPOSE 8787
+USER node
 ENTRYPOINT ["/entrypoint.sh"]

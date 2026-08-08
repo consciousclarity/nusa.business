@@ -16,7 +16,7 @@ nusa.business, www.nusa.business, *.nusa.business {
 
 	@portal host portal.nusa.business
 	handle @portal {
-		reverse_proxy portal:80
+		reverse_proxy portal:8080
 	}
 
 	handle {
@@ -38,7 +38,7 @@ nusa.business, www.nusa.business, *.nusa.business {
 
 	@portal host portal.nusa.business
 	handle @portal {
-		reverse_proxy portal:80
+		reverse_proxy portal:8080
 	}
 
 	handle {

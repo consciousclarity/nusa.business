@@ -32,4 +32,7 @@ COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./
 EXPOSE 4321
+# Drop root: the SSR server only reads app files and writes sessions to the
+# system temp dir, both fine for the unprivileged built-in "node" user.
+USER node
 CMD ["node", "apps/web/dist/server/entry.mjs"]

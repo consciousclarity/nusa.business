@@ -2,7 +2,7 @@
 name: nusa-platform
 description: >-
   Core product and architecture guidance for Nusa.Business — nested geo
-  directory, Listeo/Dokan parity without WordPress, Astro+portal+Hono stack.
+  directory, full directory/marketplace capability without WordPress, Astro+portal+Hono stack.
   Use when building features, reviewing PRs, or deciding where code belongs.
 ---
 
@@ -17,7 +17,7 @@ Nusa.Business is an Indonesia-wide **local business directory** with nested host
 - `{place}.{island}.nusa.business` — place hub (e.g. `gianyar.bali`)
 - `/{slug}` — business listing
 
-Prototype: bali.business (Listeo). Rebuild is greenfield OSS — **do not** add WordPress, Listeo PHP, or proprietary themes.
+Prototype: bali.business (WordPress). Rebuild is greenfield OSS — **do not** add WordPress, PHP plugin stacks, or proprietary themes.
 
 ## Stack map
 
@@ -37,7 +37,7 @@ Prototype: bali.business (Listeo). Rebuild is greenfield OSS — **do not** add 
 3. Business slugs are unique **per place**, not globally.
 4. Launch monetization: free listings, **0%** marketplace commission unless product changes.
 5. Dev path tenants: `/host/{island}` and `/host/{place}.{island}/{slug}` (never `/_host/` — Astro private folders).
-6. Update `docs/features-parity.md` when closing Listeo/Dokan gaps.
+6. Update `docs/features-parity.md` when closing capability gaps.
 
 ## When unsure
 

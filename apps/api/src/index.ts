@@ -405,7 +405,7 @@ app.get("/v1/field/recent", (c) => {
   });
 });
 
-/** Dokan/Mercur-parity marketplace endpoints (OSS stub ready for Mercur link) */
+/** multi-vendor marketplace endpoints (OSS stub ready for Mercur link) */
 app.get("/v1/marketplace/vendors/:id", (c) => {
   const vendor = getVendorById(c.req.param("id"));
   if (!vendor) return c.json({ error: "Vendor not found" }, 404);

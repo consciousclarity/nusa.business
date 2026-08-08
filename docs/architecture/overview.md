@@ -23,7 +23,7 @@
 1. **SEO-first public pages** (Astro, minimal JS)  
 2. **Self-host friendly** (Docker + Caddy/Nginx, no Vercel lock-in)  
 3. **Nested tenancy** that WordPress Multisite cannot express cleanly  
-4. **Parity** with Listeo directory/booking and Dokan vendor commerce via OSS modules  
+4. **Parity** with directory/booking and vendor commerce via OSS modules  
 
 ## Trust boundaries
 

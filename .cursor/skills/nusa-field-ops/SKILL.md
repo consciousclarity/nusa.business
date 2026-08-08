@@ -14,7 +14,7 @@ description: >-
 2. Registers business with photos / WhatsApp / address.  
 3. Listing publishes as `published` with `registeredByAgentId`.  
 4. Owner later **claims for free**.  
-5. Optional: enable vendor shop (Dokan/Mercur parity).
+5. Optional: enable vendor shop (multi-vendor marketplace).
 
 ## API
 

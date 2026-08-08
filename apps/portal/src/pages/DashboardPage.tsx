@@ -6,8 +6,8 @@ export function DashboardPage({ user }: { user: User }) {
       <h1>Welcome, {user.name}</h1>
       <p className="muted">Role: {user.role}</p>
       <p>
-        Listeo-parity owner tools live here: manage listings, claims, bookings,
-        and Dokan-parity vendor shops. Public SEO pages stay on Astro
+        directory owner tools live here: manage listings, claims, bookings,
+        and multi-vendor vendor shops. Public SEO pages stay on Astro
         (nusa.business / place.island.nusa.business).
       </p>
       <ul>

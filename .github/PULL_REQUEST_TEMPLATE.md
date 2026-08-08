@@ -20,4 +20,4 @@
 
 ## Parity notes
 
-<!-- Listeo / Dokan / geo impact, if any -->
+<!-- Directory / marketplace / geo impact, if any -->

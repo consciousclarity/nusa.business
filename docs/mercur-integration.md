@@ -1,6 +1,6 @@
 # Mercur / Medusa integration notes
 
-Nusa ships a **local marketplace module** that mirrors Dokan vendor stores (vendor linked 1:1 to a `Business`, products, 0% commission).
+Nusa ships a **local marketplace module** providing vendor stores (vendor linked 1:1 to a `Business`, products, 0% commission).
 
 ## Production path
 
@@ -9,4 +9,4 @@ Nusa ships a **local marketplace module** that mirrors Dokan vendor stores (vend
 3. Portal “Vendor shop” deep-links to Mercur Vendor Panel for product/order/payout management.
 4. Public Astro listing “Shop” tab can call Mercur storefront APIs for live catalog/checkout.
 
-Until Mercur is up, seeded vendors (Celuk Silver, Gianyar Batik, Malioboro Batik) demonstrate Dokan-parity UX end-to-end.
+Until Mercur is up, seeded vendors (Celuk Silver, Gianyar Batik, Malioboro Batik) demonstrate multi-vendor UX end-to-end.

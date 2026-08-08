@@ -1,0 +1,94 @@
+# nusa.business — site blocks for the HOST Caddy on 62.72.7.218
+#
+# This is NOT loaded by Docker. The VPS runs a single systemd Caddy that owns
+# :80/:443 for every site on the box (gustale.com, komputer.shop, n8n, …).
+# Append these blocks to /etc/caddy/Caddyfile, replacing the existing
+# nusa.business stanza, then `systemctl reload caddy`.
+#
+# Upstreams are published by docker/compose.prod.yml on loopback only:
+#   127.0.0.1:4101  api
+#   127.0.0.1:4321  web (Astro)
+#   127.0.0.1:4103  portal
+#
+# ── Why the extra catch-all block ──────────────────────────────────────────
+# The directory is nested: gianyar.bali.nusa.business. A wildcard certificate
+# covers exactly one label, and no CA issues `*.*.nusa.business`, so nested
+# hosts cannot be served by a wildcard at all. Instead Caddy issues a
+# certificate per concrete hostname on first request (on-demand TLS), gated by
+# the API's /v1/tls-check so only real tenants can trigger issuance.
+#
+# Global options — merge into the existing top-level { } block in
+# /etc/caddy/Caddyfile, do not add a second one:
+#
+#     {
+#         email alex_aguilar@gmx.ch
+#         on_demand_tls {
+#             ask http://127.0.0.1:4101/v1/tls-check
+#         }
+#     }
+
+(nusa_headers) {
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "geolocation=(), microphone=(), camera=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+	encode gzip zstd
+}
+
+api.nusa.business {
+	reverse_proxy 127.0.0.1:4101
+	import nusa_headers
+
+	log {
+		output file /var/log/caddy/api.nusa.business.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+	}
+}
+
+portal.nusa.business {
+	reverse_proxy 127.0.0.1:4103
+	import nusa_headers
+}
+
+# Nation + single-label tenants: nusa.business, bali.nusa.business.
+# Covered by a normal certificate (one wildcard level).
+nusa.business, www.nusa.business, *.nusa.business {
+	reverse_proxy 127.0.0.1:4321
+	import nusa_headers
+
+	log {
+		output file /var/log/caddy/nusa.business.log {
+			roll_size 100mb
+			roll_keep 5
+		}
+	}
+}
+
+# Nested tenants: gianyar.bali.nusa.business ({place}.{island}).
+# Certificates are issued per hostname, on demand, only for hosts the API
+# confirms exist. Keep this block LAST — it is a catch-all for :443.
+#
+# The pattern spells out both labels rather than using a {2,} quantifier:
+# the Caddyfile parser reads `{...}` as placeholder syntax. Two labels is also
+# exactly what parseHost() in packages/shared supports — anything deeper is
+# `kind: "unknown"` — so this matcher and the app agree on what a tenant is.
+https:// {
+	tls {
+		on_demand
+	}
+
+	@nusa_nested host_regexp ^[a-z0-9-]+\.[a-z0-9-]+\.nusa\.business$
+	handle @nusa_nested {
+		reverse_proxy 127.0.0.1:4321
+		import nusa_headers
+	}
+
+	# Anything else reaching the origin by IP or stray DNS gets nothing.
+	respond 404
+}

@@ -30,8 +30,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   const hostPath = parseDevHostPath(pathname);
   if (hostPath && !local) {
-    const ctx = hostPath.context;
-    if (ctx.kind === "island" || ctx.kind === "place") {
+    const apex = parseHost(hostHeader);
+    // Only canonicalize on the nation apex — island/place hosts rewrite
+    // into /host/... and must not 301 back out (redirect loop).
+    if (
+      apex.kind === "nation" &&
+      (hostPath.context.kind === "island" || hostPath.context.kind === "place")
+    ) {
+      const ctx = hostPath.context;
       const target = publicUrl({
         island: ctx.island,
         place: ctx.kind === "place" ? ctx.place : undefined,

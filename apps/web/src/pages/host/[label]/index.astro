@@ -6,7 +6,7 @@ const label = Astro.params.label!;
 const parts = label.split(".");
 
 type IslandPayload = {
-  island: { slug: string; name: string; tagline: string };
+  island: { slug: string; name: string; tagline: string; status?: string };
   places: { id: string; slug: string; name: string; summary: string; type: string }[];
   businesses: {
     id: string;
@@ -15,6 +15,7 @@ type IslandPayload = {
     name: string;
     summary: string;
     categories: string[];
+    status?: string;
   }[];
 };
 
@@ -26,6 +27,7 @@ type PlacePayload = {
     name: string;
     summary: string;
     categories: string[];
+    status?: string;
     registeredByAgentId?: string;
   }[];
 };
@@ -51,95 +53,147 @@ const placeById = islandData
   : {};
 const recent =
   placeData?.businesses.filter((b) => b.registeredByAgentId).slice(0, 5) ?? [];
+
+const queryHost =
+  mode === "island" && islandData
+    ? `${islandData.island.slug}.nusa.business`
+    : mode === "place" && placeData
+      ? `${placeData.place.slug}.${placeData.island.slug}.nusa.business`
+      : label;
 ---
 
 {mode === "island" && islandData && (
   <Base
-    title={`${islandData.island.name} — Nusa.Business`}
+    title={`${islandData.island.name} — nusa.business`}
     description={islandData.island.tagline}
-    crumb={[{ label: "Indonesia", href: "/" }, { label: islandData.island.name }]}
+    crumb={[{ label: islandData.island.slug }]}
   >
-    <section class="hero">
+    <section class="lede">
       <h1>{islandData.island.name}</h1>
-      <p>{islandData.island.tagline}</p>
-      <p class="meta">{islandData.island.slug}.nusa.business</p>
+      <p class="prose">{islandData.island.tagline}</p>
     </section>
 
-    <h2 style="font-family:var(--font-display)">Places</h2>
-    <div class="grid">
-      {islandData.places.map((place) => (
-        <a class="card" href={`/host/${place.slug}.${islandData!.island.slug}`}>
-          <h3>{place.name}</h3>
-          <p>{place.summary}</p>
-          <span class="pill">{place.type.replaceAll("_", " ")}</span>
-        </a>
-      ))}
-    </div>
+    <aside class="resolver" aria-label="Host resolver">
+      <dl>
+        <dt>Query</dt>
+        <dd>{queryHost}</dd>
+        <dt>Resolved</dt>
+        <dd>island={islandData.island.slug}</dd>
+        <dt>Records</dt>
+        <dd>
+          {islandData.places.length} places · {islandData.businesses.length} listings
+        </dd>
+      </dl>
+    </aside>
 
-    <h2 style="font-family:var(--font-display)">Featured listings</h2>
-    <div class="grid">
-      {islandData.businesses.slice(0, 9).map((b) => {
-        const place = placeById[b.placeId];
-        return (
-          <a
-            class="card"
-            href={
-              place
-                ? `/host/${place.slug}.${islandData!.island.slug}/${b.slug}`
-                : "#"
-            }
-          >
-            <h3>{b.name}</h3>
-            <p>{b.summary}</p>
-            {place && <p class="meta">{place.name}</p>}
-            {b.categories.map((c) => (
-              <span class="pill">{c}</span>
-            ))}
-          </a>
-        );
-      })}
-    </div>
+    <section class="section">
+      <h2>Places</h2>
+      <ol class="index-list">
+        {islandData.places.map((place, i) => (
+          <li>
+            <div class="index-row">
+              <span class="n">{String(i + 1).padStart(2, "0")}</span>
+              <a
+                class="name"
+                href={`/host/${place.slug}.${islandData!.island.slug}`}
+              >
+                {place.name}
+              </a>
+              <span class="rhs">{place.type.replaceAll("_", " ")}</span>
+            </div>
+            <p class="index-desc">{place.summary}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section class="section">
+      <h2>Featured listings</h2>
+      <ol class="index-list">
+        {islandData.businesses.slice(0, 9).map((b, i) => {
+          const place = placeById[b.placeId];
+          return (
+            <li>
+              <div class="index-row">
+                <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                <a
+                  class="name"
+                  href={
+                    place
+                      ? `/host/${place.slug}.${islandData!.island.slug}/${b.slug}`
+                      : "#"
+                  }
+                >
+                  {b.name}
+                </a>
+                <span class="rhs">{place?.name ?? ""}</span>
+              </div>
+              <p class="index-desc">{b.summary}</p>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
   </Base>
 )}
 
 {mode === "place" && placeData && (
   <Base
-    title={`${placeData.place.name}, ${placeData.island.name} — Nusa.Business`}
+    title={`${placeData.place.name}, ${placeData.island.name} — nusa.business`}
     description={placeData.place.summary}
     crumb={[
-      { label: "Indonesia", href: "/" },
-      { label: placeData.island.name, href: `/host/${placeData.island.slug}` },
-      { label: placeData.place.name },
+      {
+        label: placeData.island.slug,
+        href: `/host/${placeData.island.slug}`,
+      },
+      { label: placeData.place.slug },
     ]}
   >
-    <section class="hero">
+    <section class="lede">
       <h1>{placeData.place.name}</h1>
-      <p>{placeData.place.summary}</p>
-      <p class="meta">
-        {placeData.place.slug}.{placeData.island.slug}.nusa.business
-      </p>
+      <p class="prose">{placeData.place.summary}</p>
     </section>
+
+    <aside class="resolver" aria-label="Host resolver">
+      <dl>
+        <dt>Query</dt>
+        <dd>{queryHost}</dd>
+        <dt>Resolved</dt>
+        <dd>
+          island={placeData.island.slug} · place={placeData.place.slug} · type=
+          {placeData.place.type}
+        </dd>
+        <dt>Records</dt>
+        <dd>{placeData.businesses.length} published</dd>
+      </dl>
+    </aside>
 
     {recent.length > 0 && (
       <div class="banner">
-        <strong>Just registered by field team:</strong>{" "}
-        {recent.map((b) => b.name).join(" · ")}
+        Just registered by field team: {recent.map((b) => b.name).join(" · ")}
       </div>
     )}
 
-    <h2 style="font-family:var(--font-display)">
-      Businesses in {placeData.place.name}
-    </h2>
-    <div class="grid">
-      {placeData.businesses.map((b) => (
-        <a class="card" href={`/host/${label}/${b.slug}`}>
-          <h3>{b.name}</h3>
-          <p>{b.summary}</p>
-          {b.categories.map((c) => (
-            <span class="pill">{c}</span>
-          ))}
-        </a>
-      ))}
-    </div>
+    <section class="section">
+      <h2>Businesses in {placeData.place.name}</h2>
+      <ol class="index-list">
+        {placeData.businesses.map((b, i) => (
+          <li>
+            <div class="index-row">
+              <span class="n">{String(i + 1).padStart(2, "0")}</span>
+              <a class="name" href={`/host/${label}/${b.slug}`}>{b.name}</a>
+              <span class="rhs">
+                {b.status === "draft" ? (
+                  <span class="stamp">Unclaimed</span>
+                ) : (
+                  b.categories[0] ?? ""
+                )}
+              </span>
+            </div>
+            <p class="index-desc">{b.summary}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
   </Base>
 )}

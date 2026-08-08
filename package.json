@@ -15,7 +15,9 @@
     "docker:up": "docker compose -f docker/compose.yml up -d",
     "docker:down": "docker compose -f docker/compose.yml down",
     "cf:zone": "node scripts/cloudflare-setup-zone.mjs",
-    "cf:deploy-edge": "npm install -w @nusa/edge && npm run deploy -w @nusa/edge"
+    "cf:deploy-edge": "npm install -w @nusa/edge && npm run deploy -w @nusa/edge",
+    "pretest": "npm run build:packages && npm run build -w @nusa/api",
+    "test": "node --test tests/*.test.mjs"
   },
   "engines": {
     "node": ">=20"

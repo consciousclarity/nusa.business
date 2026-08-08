@@ -14,32 +14,61 @@ if (context.kind === "place") {
   );
 }
 
-const data = await api<{ islands: { slug: string; name: string; tagline: string; status: string }[] }>(
-  "/v1/islands",
-);
+const data = await api<{
+  islands: { slug: string; name: string; tagline: string; status: string }[];
+}>("/v1/islands");
+
+const host =
+  Astro.request.headers.get("x-forwarded-host") ||
+  Astro.request.headers.get("host") ||
+  "nusa.business";
+const queryHost = host.split(":")[0]!.toLowerCase();
+const active = data.islands.filter((i) => i.status === "active").length;
+const pending = data.islands.length - active;
 ---
-<Base title="Nusa.Business — Local businesses across Indonesia">
-  <section class="hero">
-    <h1>Nusa.Business</h1>
-    <p>
-      Indonesia’s local business directory — island by island, place by place.
-      Built for the nested map of the archipelago: bali.nusa.business,
-      gianyar.bali.nusa.business, and every listing in between.
-    </p>
-    <p style="margin-top:1.25rem">
-      <a class="cta" href="/claim">Claim your listing</a>
-      <a class="cta secondary" href="/host/bali">Explore Bali</a>
+<Base title="nusa.business — Local businesses across Indonesia">
+  <section class="lede">
+    <h1>Indonesia</h1>
+    <p class="prose">
+      Local business directory indexed by nested geography — nation, island,
+      place, record. Free listings. No commission at launch.
     </p>
   </section>
 
-  <h2 style="font-family:var(--font-display)">Islands</h2>
-  <div class="grid">
-    {data.islands.map((island) => (
-      <a class="card" href={`/host/${island.slug}`}>
-        <h3>{island.name}</h3>
-        <p>{island.tagline}</p>
-        <p class="meta" style="margin-top:0.5rem">{island.status === "active" ? "Open" : "Coming soon"}</p>
-      </a>
-    ))}
-  </div>
+  <aside class="resolver" aria-label="Host resolver">
+    <dl>
+      <dt>Query</dt>
+      <dd>{queryHost}</dd>
+      <dt>Resolved</dt>
+      <dd>kind=nation</dd>
+      <dt>Records</dt>
+      <dd>{active} active islands · {pending} pending</dd>
+    </dl>
+  </aside>
+
+  <section class="section">
+    <h2>Islands</h2>
+    <ol class="index-list">
+      {data.islands.map((island, i) => (
+        <li>
+          <div class="index-row">
+            <span class="n">{String(i + 1).padStart(2, "0")}</span>
+            <a class="name" href={`/host/${island.slug}`}>{island.name}</a>
+            <span class="rhs">
+              {island.status === "active" ? (
+                <span>{island.slug}.nusa.business</span>
+              ) : (
+                <span class="stamp">Coming soon</span>
+              )}
+            </span>
+          </div>
+          <p class="index-desc">{island.tagline}</p>
+        </li>
+      ))}
+    </ol>
+    <p class="actions">
+      <a class="cta" href="/claim">Claim a listing</a>
+      <a class="cta secondary" href="/host/bali">Open bali index</a>
+    </p>
+  </section>
 </Base>

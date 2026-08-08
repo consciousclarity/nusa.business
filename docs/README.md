@@ -33,6 +33,10 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 - [ADR-002: Hybrid places](./architecture/adr/002-hybrid-places.md)
 - [ADR-003: Marketplace via Mercur](./architecture/adr/003-marketplace-mercur.md)
 
+### Design
+
+- [Teletype — visual design spec](./design/teletype.md)
+
 ### Engineering
 
 - [Monorepo layout](./engineering/monorepo.md)

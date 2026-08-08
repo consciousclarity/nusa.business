@@ -1,0 +1,14 @@
+# Rootless static file server for the portal SPA build.
+# Runs unprivileged: no admin API, no on-demand TLS, no config persistence, and
+# a high port so it needs no elevated privileges. TLS/ports are terminated
+# upstream by the host Caddy (see deploy/caddy/nusa.business.caddy).
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+:8080 {
+	root * /usr/share/caddy
+	file_server
+}

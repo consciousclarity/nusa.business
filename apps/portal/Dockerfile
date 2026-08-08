@@ -12,4 +12,8 @@ RUN npm run build -w @nusa/shared && npm run build -w @nusa/portal
 
 FROM caddy:2-alpine
 COPY --from=build /app/apps/portal/dist /usr/share/caddy
-EXPOSE 80
+COPY apps/portal/Caddyfile /etc/caddy/Caddyfile
+# Keep any transient Caddy state off root-owned paths, then drop privileges.
+ENV XDG_CONFIG_HOME=/tmp XDG_DATA_HOME=/tmp
+EXPOSE 8080
+USER 1000:1000

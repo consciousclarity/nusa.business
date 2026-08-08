@@ -18,6 +18,31 @@ npm run seed
 
 `--ignore-scripts` avoids sandbox/`allowScripts` friction on some environments; add lifecycle scripts later if packages require them.
 
+## Or use a devcontainer / Codespace
+
+`.devcontainer/` installs, builds, seeds and writes `.env` for you — open the
+repo in a GitHub Codespace or "Reopen in Container" locally, and skip the
+install steps above.
+
+Two things specific to Codespaces:
+
+- The portal is a browser-side SPA, so `VITE_API_URL` must be the **forwarded**
+  API URL, not `localhost:8787`. The bootstrap script detects `CODESPACE_NAME`
+  and writes the right value; port 8787 is forwarded as public so the browser
+  can reach it.
+- A Codespaces hostname (`*.app.github.dev`) parses as `kind: "unknown"` and
+  falls through to the nation page. That is expected — browse tenants with the
+  `/host/{label}` paths below rather than subdomains, exactly as on localhost.
+
+## Checks
+
+```bash
+npm run build   # all five workspaces
+npm test        # Node built-in test runner, see docs/engineering/testing.md
+```
+
+These are what CI runs.
+
 ## Run (three terminals)
 
 ```bash

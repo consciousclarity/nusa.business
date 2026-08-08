@@ -25,3 +25,9 @@ jobs:
         run: npm run build -w @nusa/portal
       - name: Build web
         run: npm run build -w @nusa/web
+      - name: Test
+        # Packages and the API are already built above; pretest is a no-op
+        # rebuild that keeps `npm test` self-sufficient for humans too.
+        run: npm test
+      - name: Seed smoke check
+        run: npm run seed

@@ -15,11 +15,19 @@ function legacyStore() {
     islands: [
       { id: "isl-bali", slug: "bali", name: "Bali", tagline: "", status: "active" },
       { id: "isl-jawa", slug: "jawa", name: "Jawa", tagline: "", status: "active" },
+      {
+        id: "isl-sumatera",
+        slug: "sumatera",
+        name: "Sumatera",
+        tagline: "",
+        status: "active",
+      },
     ],
     places: [
       { id: "plc-yogyakarta", islandId: "isl-jawa", slug: "yogyakarta" },
       { id: "plc-bandung", islandId: "isl-jawa", slug: "bandung" },
       { id: "plc-gianyar", islandId: "isl-bali", slug: "gianyar" },
+      { id: "plc-medan", islandId: "isl-sumatera", slug: "medan" },
     ],
     businesses: [],
     reviews: [],
@@ -35,7 +43,10 @@ describe("store migrations", () => {
     const store = legacyStore();
     const applied = migrateStore(store);
 
-    assert.deepEqual(applied, ["2026-08-rename-jawa-to-java"]);
+    assert.deepEqual(applied, [
+      "2026-08-rename-jawa-to-java",
+      "2026-08-rename-sumatera-to-sumatra",
+    ]);
     const island = store.islands.find((i) => i.slug === "java");
     assert.ok(island, "expected an island with slug java");
     assert.equal(island.id, "isl-java");
@@ -58,6 +69,20 @@ describe("store migrations", () => {
     assert.deepEqual(
       moved.map((p) => p.slug).sort(),
       ["bandung", "yogyakarta"],
+    );
+  });
+
+  it("renames Sumatera to Sumatra and repoints its place", () => {
+    const store = legacyStore();
+    migrateStore(store);
+
+    const island = store.islands.find((i) => i.slug === "sumatra");
+    assert.ok(island, "expected an island with slug sumatra");
+    assert.equal(island.id, "isl-sumatra");
+    assert.equal(island.name, "Sumatra");
+    assert.equal(
+      store.places.find((p) => p.slug === "medan").islandId,
+      "isl-sumatra",
     );
   });
 
@@ -91,8 +116,16 @@ describe("store migrations", () => {
       tagline: "",
       status: "active",
     };
+    store.islands[2] = {
+      id: "isl-sumatra",
+      slug: "sumatra",
+      name: "Sumatra",
+      tagline: "",
+      status: "active",
+    };
     for (const p of store.places) {
       if (p.islandId === "isl-jawa") p.islandId = "isl-java";
+      if (p.islandId === "isl-sumatera") p.islandId = "isl-sumatra";
     }
     assert.deepEqual(migrateStore(store), []);
   });

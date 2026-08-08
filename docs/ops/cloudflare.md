@@ -38,7 +38,7 @@ nusa.business
 *.bali.nusa.business
 *.java.nusa.business
 *.lombok.nusa.business
-*.sumatera.nusa.business
+*.sumatra.nusa.business
 *.sulawesi.nusa.business
 *.kalimantan.nusa.business
 *.maluku.nusa.business
@@ -81,7 +81,7 @@ Cloudflare → **DNS** → **Records**. Delete conflicting Hostinger parking rec
 | A | `*.bali` | `62.72.7.218` | **DNS-only (grey)** |
 | A | `*.java` | `62.72.7.218` | **DNS-only (grey)** |
 | A | `*.lombok` | `62.72.7.218` | **DNS-only (grey)** |
-| A | `*.sumatera` | `62.72.7.218` | **DNS-only (grey)** |
+| A | `*.sumatra` | `62.72.7.218` | **DNS-only (grey)** |
 | A | `*.sulawesi` | `62.72.7.218` | **DNS-only (grey)** |
 | A | `*.kalimantan` | `62.72.7.218` | **DNS-only (grey)** |
 | A | `*.maluku` | `62.72.7.218` | **DNS-only (grey)** |

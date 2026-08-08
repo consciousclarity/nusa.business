@@ -25,7 +25,7 @@ const ISLANDS = [
   "bali",
   "java",
   "lombok",
-  "sumatera",
+  "sumatra",
   "sulawesi",
   "kalimantan",
   "maluku",

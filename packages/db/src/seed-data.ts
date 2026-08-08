@@ -28,9 +28,9 @@ export function createSeed(): DataStore {
       status: "active" as const,
     },
     {
-      id: "isl-sumatera",
-      slug: "sumatera",
-      name: "Sumatera",
+      id: "isl-sumatra",
+      slug: "sumatra",
+      name: "Sumatra",
       tagline: "From Medan to the highlands",
       status: "active" as const,
     },
@@ -211,11 +211,11 @@ export function createSeed(): DataStore {
     },
     {
       id: "pl-medan",
-      islandId: "isl-sumatera",
+      islandId: "isl-sumatra",
       slug: "medan",
       name: "Medan",
       type: "kota" as const,
-      summary: "Sumatera’s largest city and food capital.",
+      summary: "Sumatra’s largest city and food capital.",
     },
     {
       id: "pl-makassar",

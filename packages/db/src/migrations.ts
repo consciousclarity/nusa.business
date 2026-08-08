@@ -55,6 +55,15 @@ const MIGRATIONS: Migration[] = [
         { id: "isl-java", slug: "java", name: "Java" },
       ),
   },
+  {
+    id: "2026-08-rename-sumatera-to-sumatra",
+    apply: (store) =>
+      renameIsland(
+        store,
+        { id: "isl-sumatera", slug: "sumatera" },
+        { id: "isl-sumatra", slug: "sumatra", name: "Sumatra" },
+      ),
+  },
 ];
 
 /**

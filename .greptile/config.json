@@ -1,0 +1,9 @@
+{
+  "strictness": 2,
+  "commentTypes": ["logic", "syntax", "style", "info"],
+  "triggerOnUpdates": true,
+  "statusCheck": true,
+  "summarySection": { "included": true },
+  "confidenceScoreSection": { "included": true },
+  "issuesTableSection": { "included": true }
+}

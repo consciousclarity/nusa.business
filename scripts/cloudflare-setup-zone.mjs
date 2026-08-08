@@ -23,9 +23,9 @@ const zoneName = process.env.NUSA_ZONE || "nusa.business";
 /** Seed islands — keep in sync with packages/db/src/seed-data.ts */
 const ISLANDS = [
   "bali",
-  "jawa",
+  "java",
   "lombok",
-  "sumatera",
+  "sumatra",
   "sulawesi",
   "kalimantan",
   "maluku",

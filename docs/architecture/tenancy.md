@@ -12,7 +12,7 @@ Parsed by `parseHost(hostHeader)`:
 | other | unknown |
 
 Astro middleware rewrites island/place hosts to `/host/{label}/…` so the public
-URL stays on the subdomain (`https://jawa.nusa.business/` not `…/host/jawa`).
+URL stays on the subdomain (`https://java.nusa.business/` not `…/host/java`).
 
 ## Dev path fallback
 

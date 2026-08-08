@@ -63,9 +63,9 @@ portal.nusa.business {
 # when orange-clouded, and by Let's Encrypt at the origin for Full Strict.
 nusa.business,
 bali.nusa.business,
-jawa.nusa.business,
+java.nusa.business,
 lombok.nusa.business,
-sumatera.nusa.business,
+sumatra.nusa.business,
 sulawesi.nusa.business,
 kalimantan.nusa.business,
 maluku.nusa.business,
@@ -81,7 +81,7 @@ papua.nusa.business {
 	}
 }
 
-# Nested tenants: yogyakarta.jawa.nusa.business ({place}.{island}).
+# Nested tenants: yogyakarta.java.nusa.business ({place}.{island}).
 # DNS is grey-clouded (*.{island}); certificates are on-demand LE, only for
 # hosts /v1/tls-check accepts. Keep this block LAST — catch-all for :443.
 #

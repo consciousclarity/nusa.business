@@ -12,6 +12,7 @@ import {
   getIslandBySlug,
   getPlace,
   getStore,
+  applyStoreMigrations,
   getVendorByBusinessId,
   hashStoredPasswords,
   getVendorById,
@@ -449,6 +450,14 @@ app.get("/v1/places", (c) => {
 });
 
 const port = Number(process.env.PORT || 8787);
+
+// An existing store is never re-seeded, so bring it up to date first —
+// slugs are routing keys, and a stale one breaks host resolution and TLS
+// issuance, not just a page.
+const migrated = applyStoreMigrations();
+if (migrated.length > 0) {
+  console.log(`Applied store migration(s): ${migrated.join(", ")}`);
+}
 
 // Never leave the store at rest with readable passwords, including a store
 // seeded before hashing existed.

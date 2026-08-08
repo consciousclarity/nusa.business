@@ -1,9 +1,11 @@
 ---
 import Base from "../../../layouts/Base.astro";
 import { api } from "../../../lib/api";
+import { tenantHref } from "../../../lib/links";
 
 const label = Astro.params.label!;
 const parts = label.split(".");
+const req = Astro.request;
 
 type IslandPayload = {
   island: { slug: string; name: string; tagline: string };
@@ -68,7 +70,13 @@ const recent =
     <h2 style="font-family:var(--font-display)">Places</h2>
     <div class="grid">
       {islandData.places.map((place) => (
-        <a class="card" href={`/host/${place.slug}.${islandData!.island.slug}`}>
+        <a
+          class="card"
+          href={tenantHref(req, {
+            island: islandData!.island.slug,
+            place: place.slug,
+          })}
+        >
           <h3>{place.name}</h3>
           <p>{place.summary}</p>
           <span class="pill">{place.type.replaceAll("_", " ")}</span>
@@ -85,7 +93,11 @@ const recent =
             class="card"
             href={
               place
-                ? `/host/${place.slug}.${islandData!.island.slug}/${b.slug}`
+                ? tenantHref(req, {
+                    island: islandData!.island.slug,
+                    place: place.slug,
+                    slug: b.slug,
+                  })
                 : "#"
             }
           >
@@ -108,7 +120,10 @@ const recent =
     description={placeData.place.summary}
     crumb={[
       { label: "Indonesia", href: "/" },
-      { label: placeData.island.name, href: `/host/${placeData.island.slug}` },
+      {
+        label: placeData.island.name,
+        href: tenantHref(req, { island: placeData.island.slug }),
+      },
       { label: placeData.place.name },
     ]}
   >
@@ -132,7 +147,14 @@ const recent =
     </h2>
     <div class="grid">
       {placeData.businesses.map((b) => (
-        <a class="card" href={`/host/${label}/${b.slug}`}>
+        <a
+          class="card"
+          href={tenantHref(req, {
+            island: placeData!.island.slug,
+            place: placeData!.place.slug,
+            slug: b.slug,
+          })}
+        >
           <h3>{b.name}</h3>
           <p>{b.summary}</p>
           {b.categories.map((c) => (

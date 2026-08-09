@@ -59,6 +59,14 @@ portal.nusa.business {
 	import nusa_headers
 }
 
+# Legacy island slugs (pre-rename). Keep DNS A records until they can be removed.
+jawa.nusa.business {
+	redir https://java.nusa.business{uri} permanent
+}
+sumatera.nusa.business {
+	redir https://sumatra.nusa.business{uri} permanent
+}
+
 # Nation + island hubs (one DNS label). Covered by Cloudflare Universal SSL
 # when orange-clouded, and by Let's Encrypt at the origin for Full Strict.
 nusa.business,

@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { canonicalizeIslandSlug } from "@nusa/shared";
 import { migrateStore } from "./migrations.js";
 import { hashPassword, isHashed, verifyPassword } from "./password.js";
 import { createSeed } from "./seed-data.js";
@@ -47,13 +48,14 @@ export function listIslands() {
 }
 
 export function getIslandBySlug(slug: string) {
-  return getStore().islands.find((i) => i.slug === slug);
+  const canonical = canonicalizeIslandSlug(slug);
+  return getStore().islands.find((i) => i.slug === canonical);
 }
 
 export function listPlaces(islandSlug?: string) {
   const store = getStore();
   if (!islandSlug) return store.places;
-  const island = store.islands.find((i) => i.slug === islandSlug);
+  const island = getIslandBySlug(islandSlug);
   if (!island) return [];
   return store.places.filter((p) => p.islandId === island.id);
 }

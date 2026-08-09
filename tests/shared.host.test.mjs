@@ -36,6 +36,27 @@ describe("parseHost", () => {
     });
   });
 
+  it("canonicalizes legacy island slugs (jawa→java, sumatera→sumatra)", () => {
+    assert.deepEqual(parseHost("java.nusa.business"), {
+      kind: "island",
+      island: "java",
+    });
+    assert.deepEqual(parseHost("jawa.nusa.business"), {
+      kind: "island",
+      island: "java",
+    });
+    assert.deepEqual(parseHost("yogyakarta.jawa.nusa.business"), {
+      kind: "place",
+      place: "yogyakarta",
+      island: "java",
+    });
+    assert.deepEqual(parseHost("medan.sumatera.nusa.business"), {
+      kind: "place",
+      place: "medan",
+      island: "sumatra",
+    });
+  });
+
   it("strips the port", () => {
     assert.deepEqual(parseHost("bali.localhost:4321"), {
       kind: "island",

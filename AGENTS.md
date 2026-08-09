@@ -52,6 +52,9 @@ npm run seed
 npm run dev:api
 npm run dev:web
 npm run dev:portal
+
+npm run build   # all five workspaces
+npm test        # what CI gates on, alongside the builds
 ```
 
 ## Docs entry
@@ -65,7 +68,7 @@ Dependencies are refreshed automatically on VM startup by the update script (`np
 - **No database, no Docker needed for dev.** Persistence is a JSON file store under `.data/` (override with `NUSA_DATA_DIR`), auto-created from seed data. The Postgres/Redis/Meilisearch/MinIO/Caddy services in `docker/compose.yml` are future/aspirational infra and are **not wired into app code** — do not start them to run or test the product.
 - **Three dev services** (run each in its own tmux session): `npm run dev:api` (8787), `npm run dev:web` (4321), `npm run dev:portal` (5173). Both frontends default to the API at `http://localhost:8787`. API health: `http://localhost:8787/health`.
 - **`@nusa/shared` and `@nusa/db` are compiled to `dist/` and consumed by the apps.** After editing either package you must rebuild it (`npm run build:packages`) for the API/web/portal to pick up the change — the apps do not hot-reload `packages/*` source. `dev:api` and `dev:portal` rebuild shared on startup, but not on subsequent edits.
-- **"Lint"/checks = TypeScript builds.** There is no ESLint config and no automated test suite. CI (`.github/workflows/ci.yml`) only runs `npm run build:packages` then `npm run build -w @nusa/api`, `-w @nusa/portal`, `-w @nusa/web`. Run those to validate changes the way CI does.
+- **Checks = TypeScript builds plus the test suite.** There is no ESLint config, so "lint" means the strict TypeScript builds. CI (`.github/workflows/ci.yml`) runs `npm run build:packages`, then `npm run build -w @nusa/api`, `-w @nusa/portal`, `-w @nusa/web`, then `npm test` (Node's built-in runner over `tests/*.test.mjs` — see [docs/engineering/testing.md](docs/engineering/testing.md)) and a `npm run seed` smoke check. Locally that is `npm run build && npm test && npm run seed`. Tests import the **built** packages, so rebuild after touching `packages/*` or you are testing stale `dist/`.
 - **`apps/api` dev uses `npx --yes tsx@4.19.3`**, which may fetch tsx on the very first run.
 - **Demo accounts** (portal at `/login`): `admin@nusa.business`/`admin123`, `agent@nusa.business`/`agent123`, `owner@example.com`/`owner123`.
 - **Dev tenant browsing** uses `/host/{label}` paths, e.g. `http://localhost:4321/host/gianyar.bali` (Astro treats `_`-prefixed folders as private, so never use `/_host/...`).

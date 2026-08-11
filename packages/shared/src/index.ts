@@ -21,6 +21,21 @@ export type HostContext =
 
 const ROOT_SUFFIXES = ["nusa.business", "localhost", "127.0.0.1"];
 
+/**
+ * Legacy island slugs kept working after renames (DNS/Caddy may still serve
+ * the old label while `*.{new}` wildcards are grey-clouded for LE).
+ */
+const ISLAND_SLUG_ALIASES: Record<string, string> = {
+  jawa: "java",
+  sumatera: "sumatra",
+};
+
+/** Map legacy island slugs to the canonical store/routing slug. */
+export function canonicalizeIslandSlug(slug: string): string {
+  const s = slug.toLowerCase().trim();
+  return ISLAND_SLUG_ALIASES[s] ?? s;
+}
+
 /** Lowercase kebab-case slug, strip diacritics-ish chars. */
 export function toSlug(input: string): string {
   return input
@@ -47,9 +62,18 @@ export function parseHost(hostHeader: string): HostContext {
     if (host.endsWith(`.${suffix}`)) {
       const sub = host.slice(0, -(suffix.length + 1));
       const parts = sub.split(".").filter(Boolean);
-      if (parts.length === 1) return { kind: "island", island: parts[0]! };
+      if (parts.length === 1) {
+        return {
+          kind: "island",
+          island: canonicalizeIslandSlug(parts[0]!),
+        };
+      }
       if (parts.length === 2) {
-        return { kind: "place", place: parts[0]!, island: parts[1]! };
+        return {
+          kind: "place",
+          place: parts[0]!,
+          island: canonicalizeIslandSlug(parts[1]!),
+        };
       }
       return { kind: "unknown", host };
     }
@@ -69,11 +93,21 @@ export function parseDevHostPath(pathname: string): {
   const rest = match[2] || "/";
   const parts = label.split(".").filter(Boolean);
   if (parts.length === 1) {
-    return { context: { kind: "island", island: parts[0]! }, pathname: rest };
+    return {
+      context: {
+        kind: "island",
+        island: canonicalizeIslandSlug(parts[0]!),
+      },
+      pathname: rest,
+    };
   }
   if (parts.length === 2) {
     return {
-      context: { kind: "place", place: parts[0]!, island: parts[1]! },
+      context: {
+        kind: "place",
+        place: parts[0]!,
+        island: canonicalizeIslandSlug(parts[1]!),
+      },
       pathname: rest,
     };
   }

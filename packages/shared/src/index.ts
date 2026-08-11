@@ -97,6 +97,22 @@ export function publicUrl(opts: {
   return base.toString().replace(/\/$/, opts.slug ? "" : "/");
 }
 
+/**
+ * Href for the brand / breadcrumb label "nusa.business".
+ * On real nested hosts this must be the nation apex — never "/" (which would
+ * keep the visitor on java.nusa.business or jakarta.java.nusa.business).
+ * Local/dev keeps a same-origin "/".
+ */
+export function nationHomeHref(
+  hostHeader: string,
+  root = "https://nusa.business",
+): string {
+  const host = hostHeader.split(":")[0]?.toLowerCase().trim() ?? "";
+  const useReal = host === "nusa.business" || host.endsWith(".nusa.business");
+  if (!useReal) return "/";
+  return root.endsWith("/") ? root : `${root}/`;
+}
+
 export const CATEGORIES = [
   "Accommodation",
   "Food & Drink",

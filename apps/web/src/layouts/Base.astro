@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { nationHref } from "../lib/links";
 
 interface Props {
   title: string;
@@ -9,6 +10,7 @@ interface Props {
 
 const { title, description, crumb = [] } = Astro.props;
 const portalUrl = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
+const homeHref = nationHref(Astro.request);
 ---
 <!doctype html>
 <html lang="en">
@@ -21,14 +23,14 @@ const portalUrl = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="/">nusa<span class="tld">.business</span></a>
+      <a class="brand" href={homeHref}>nusa<span class="tld">.business</span></a>
       <nav aria-label="Primary">
         <a href="/claim">Claim</a>
         <a href={portalUrl}>Portal</a>
       </nav>
     </header>
     <nav class="crumbs" aria-label="Path">
-      <a href="/">nusa.business</a>
+      <a href={homeHref}>nusa.business</a>
       {crumb.map((c) => (
         <>
           <span class="sep">/</span>

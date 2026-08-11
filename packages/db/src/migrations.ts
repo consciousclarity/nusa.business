@@ -13,6 +13,11 @@ import type { DataStore } from "./types.js";
  * `/v1/tls-check` refuses the host, which means Caddy never issues a
  * certificate for it — a TLS failure, not just a missing page.
  *
+ * The inverse also breaks production: if the store (and seed) say `java` but
+ * Cloudflare still only has a grey-cloud `*.jawa` wildcard, place hosts under
+ * `*.java.nusa.business` fall through to the orange `*` record and HTTPS
+ * handshake-fails. Re-run `npm run cf:zone` after every island slug rename.
+ *
  * Each migration is idempotent: running it twice is a no-op, so it is safe to
  * apply on every boot.
  */

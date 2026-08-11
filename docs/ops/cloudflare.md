@@ -107,6 +107,8 @@ Mail: keep MX/TXT **DNS only** (grey cloud) if you use Hostinger email.
 
 Place-level HTTPS (`*.bali.nusa.business`) uses **grey-cloud DNS + Caddy on-demand LE** (gated by `/v1/tls-check`). Free Universal SSL does not cover two-label hosts when orange-clouded. ACM (~$10/mo) is the alternative if you want nested hosts behind the CDN later.
 
+After renaming an island slug in seed/migrations (`jawa` → `java`, `sumatera` → `sumatra`), re-run `npm run cf:zone`. Otherwise place hosts under the new slug fall through to the orange `*` record and HTTPS handshake-fails (the failure mode behind https://jakarta.java.nusa.business/ before `*.java` was upserted). The zone script also deletes obsolete `*.jawa` / `*.sumatera` wildcards.
+
 ### 5. Hostinger VPS
 
 On `62.72.7.218`:

@@ -42,7 +42,14 @@ done
 
 echo
 echo "== tls ask endpoint =="
-for probe in "nusa.business:200" "gianyar.bali.nusa.business:200" "nope.invalid:404"; do
+# Include a Java place host: after jawa→java, a missing DNS wildcard made
+# /v1/tls-check look fine while public HTTPS handshake-failed at Cloudflare.
+for probe in \
+  "nusa.business:200" \
+  "gianyar.bali.nusa.business:200" \
+  "jakarta.java.nusa.business:200" \
+  "nope.invalid:404"
+do
   domain="${probe%:*}"
   want="${probe##*:}"
   code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
@@ -69,7 +76,15 @@ fi
 
 echo
 echo "== public endpoints =="
-for url in "https://nusa.business/" "https://api.nusa.business/health" "https://portal.nusa.business/"; do
+# Place hosts must be grey-cloud + origin LE. If *.java is missing, this URL
+# fails TLS at Cloudflare even though the origin serves the page correctly.
+for url in \
+  "https://nusa.business/" \
+  "https://api.nusa.business/health" \
+  "https://portal.nusa.business/" \
+  "https://gianyar.bali.nusa.business/" \
+  "https://jakarta.java.nusa.business/"
+do
   code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$url" 2>/dev/null)
   case "$code" in
     200 | 301 | 302) pass "$url → $code" ;;

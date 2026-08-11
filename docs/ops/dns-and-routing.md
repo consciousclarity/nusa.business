@@ -17,6 +17,8 @@ You do **not** create one DNS record per place. One `*.{island}` wildcard covers
 
 Nested place hosts are **grey-clouded** so Caddy can issue real Let's Encrypt certificates (Free Universal SSL only covers one wildcard label). Island hosts stay orange under `*`.
 
+**After an island slug rename** (e.g. `jawa` → `java`), re-run `cf:zone`. A missing `*.java` record makes `jakarta.java.nusa.business` fall through to the orange `*` wildcard — DNS resolves, but TLS handshake fails. The script also deletes obsolete wildcards (`*.jawa`, `*.sumatera`).
+
 Upsert with:
 
 ```bash

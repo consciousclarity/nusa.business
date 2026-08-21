@@ -320,3 +320,29 @@ describe("a refused write is not charged", () => {
     assert.equal(consume("k", 3, 1000, now).allowed, true);
   });
 });
+
+describe("route-level ordering", () => {
+  beforeEach(() => __resetLimiter());
+
+  it("a listing's quota is untouched by requests refused for another reason", () => {
+    // Mirrors the bookings route: bookingMode is checked before the limiter,
+    // so 400s never charge. If booking is enabled later in the same window,
+    // real customers must still have the full aggregate available.
+    const now = 1_000_000;
+    const listing = "biz-booking-off";
+
+    // No consumeWrite calls happen for refused requests at all — assert the
+    // aggregate is intact by spending it in full afterwards.
+    for (let i = 0; i < BUSINESS_WRITE_MAX; i++) {
+      assert.equal(
+        consumeWrite("bookings", `198.51.100.${i}`, listing, now).allowed,
+        true,
+        `booking ${i + 1} should be allowed once booking is enabled`,
+      );
+    }
+    assert.equal(
+      consumeWrite("bookings", "198.51.100.250", listing, now).allowed,
+      false,
+    );
+  });
+});

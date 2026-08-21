@@ -358,11 +358,15 @@ app.post(
     const business = getBusinessById(c.req.param("id"));
     if (!business) return c.json({ error: "Not found" }, 404);
 
-    const limited = consumeWrite("bookings", resolveClientIp(c), business.id);
-    if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
+    // Booking-disabled is checked first: a request refused for that reason
+    // never touched the booking resource, and the owner can enable booking
+    // mid-window — charging it would leave real customers blocked afterwards.
     if (business.bookingMode === "none") {
       return c.json({ error: "Booking not enabled" }, 400);
     }
+
+    const limited = consumeWrite("bookings", resolveClientIp(c), business.id);
+    if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
     const body = await c.req.json<{
       customerName: string;
       customerEmail: string;

@@ -139,13 +139,40 @@ export type Decision = {
  * Record a hit against `bucket` and decide whether it is allowed.
  * Exported so the behaviour can be tested without an HTTP server.
  */
-export function consume(
+/**
+ * Would this bucket admit one more hit? Does not mutate anything.
+ *
+ * Separated from recording so a check spanning several limits can be
+ * all-or-nothing: a request refused by a later limit must not have been
+ * charged against an earlier one.
+ */
+export function peek(
   bucket: string,
   limit: number,
   windowMs: number,
   now: number = Date.now(),
 ): Decision {
   if (DISABLED) return { allowed: true, retryAfter: 0 };
+
+  const cutoff = now - windowMs;
+  const hits = (buckets.get(bucket)?.hits ?? []).filter((t) => t > cutoff);
+  if (hits.length < limit) return { allowed: true, retryAfter: 0 };
+
+  const oldest = hits[0]!;
+  return {
+    allowed: false,
+    retryAfter: Math.max(1, Math.ceil((oldest + windowMs - now) / 1000)),
+  };
+}
+
+/** Charge one hit against `bucket`. Call only after every relevant peek passed. */
+function record(
+  bucket: string,
+  limit: number,
+  windowMs: number,
+  now: number = Date.now(),
+): void {
+  if (DISABLED) return;
 
   if (++writesSinceSweep >= SWEEP_EVERY || buckets.size > MAX_BUCKETS) {
     writesSinceSweep = 0;
@@ -154,20 +181,26 @@ export function consume(
 
   const cutoff = now - windowMs;
   const hits = (buckets.get(bucket)?.hits ?? []).filter((t) => t > cutoff);
-
-  if (hits.length >= limit) {
-    const oldest = hits[0]!;
-    buckets.set(bucket, { hits, limit });
-    return {
-      allowed: false,
-      retryAfter: Math.max(1, Math.ceil((oldest + windowMs - now) / 1000)),
-    };
-  }
-
   hits.push(now);
   buckets.set(bucket, { hits, limit });
   enforceCeiling(now);
-  return { allowed: true, retryAfter: 0 };
+}
+
+/**
+ * Check one limit and charge it if it passes.
+ *
+ * A refused request is never charged, so repeated rejections cannot deepen the
+ * hole the caller is already in.
+ */
+export function consume(
+  bucket: string,
+  limit: number,
+  windowMs: number,
+  now: number = Date.now(),
+): Decision {
+  const decision = peek(bucket, limit, windowMs, now);
+  if (decision.allowed) record(bucket, limit, windowMs, now);
+  return decision;
 }
 
 /**
@@ -274,17 +307,23 @@ export function consumeWrite(
   routeId: string,
   ip: string,
   businessId: string,
+  now: number = Date.now(),
 ): Decision {
-  const perClient = consume(
-    `${routeId}:${ip}:${businessId}`,
-    WRITE_MAX,
-    WRITE_WINDOW_MS,
-  );
+  const clientKey = `${routeId}:${ip}:${businessId}`;
+  const listingKey = `${routeId}-listing:${businessId}`;
+
+  // Both limits are checked before either is charged. Charging the first and
+  // then failing the second would mean a refused request still burned the
+  // caller's quota — so once a listing hit its aggregate cap, visitors retrying
+  // would exhaust their own (client, listing) allowance on requests that were
+  // never served, and stay blocked after aggregate capacity returned.
+  const perClient = peek(clientKey, WRITE_MAX, WRITE_WINDOW_MS, now);
   if (!perClient.allowed) return perClient;
 
-  return consume(
-    `${routeId}-listing:${businessId}`,
-    BUSINESS_WRITE_MAX,
-    WRITE_WINDOW_MS,
-  );
+  const perListing = peek(listingKey, BUSINESS_WRITE_MAX, WRITE_WINDOW_MS, now);
+  if (!perListing.allowed) return perListing;
+
+  record(clientKey, WRITE_MAX, WRITE_WINDOW_MS, now);
+  record(listingKey, BUSINESS_WRITE_MAX, WRITE_WINDOW_MS, now);
+  return { allowed: true, retryAfter: 0 };
 }

@@ -167,6 +167,14 @@ by keying on something narrower:
 The listing id is verified to exist before it is used as a key; an unchecked id
 would let an attacker mint unlimited distinct keys.
 
+Where a request is subject to more than one limit, all of them are checked
+before any is charged. Charging the first and then failing the second would mean
+a **refused** request still consumed the caller's quota — so once a listing hit
+its aggregate cap, visitors retrying would burn their own (client, listing)
+allowance on requests that were never served, and remain blocked after aggregate
+capacity returned. `peek()` decides, `record()` charges, and `consume()` is the
+two composed for the single-limit case.
+
 The complete fix is to make `CF-Connecting-IP` trustworthy, which means Caddy
 matching the peer against Cloudflare's published ranges (`remote_ip` in the site
 block) and stripping the header otherwise. That is a Caddyfile change and is not

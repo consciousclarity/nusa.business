@@ -6,7 +6,9 @@ const {
   LOGIN_EMAIL_SLOTS,
   MAX_BUCKETS,
   WRITE_MAX,
+  WRITE_WINDOW_MS,
   consumeWrite,
+  peek,
   __bucketCount,
   __resetLimiter,
   consume,
@@ -271,5 +273,50 @@ describe("loginEmailKey", () => {
   it("does not throw on a non-string", () => {
     assert.equal(typeof loginEmailKey(undefined), "string");
     assert.equal(typeof loginEmailKey(42), "string");
+  });
+});
+
+describe("a refused write is not charged", () => {
+  beforeEach(() => __resetLimiter());
+
+  it("does not burn client quota when the listing cap rejects", () => {
+    const now = 1_000_000;
+    const listing = "biz-popular";
+
+    // Fill the listing's aggregate cap using many distinct clients, so no
+    // single client bucket is near its own limit.
+    for (let i = 0; i < BUSINESS_WRITE_MAX; i++) {
+      assert.equal(
+        consumeWrite("reviews", `198.51.100.${i}`, listing, now).allowed,
+        true,
+      );
+    }
+
+    // A fresh visitor retries repeatedly while the listing is capped.
+    const visitor = "203.0.113.7";
+    for (let i = 0; i < WRITE_MAX + 10; i++) {
+      assert.equal(
+        consumeWrite("reviews", visitor, listing, now).allowed,
+        false,
+        "listing cap should reject",
+      );
+    }
+
+    // Once the aggregate window passes, that visitor must still have their
+    // full allowance — their refused attempts were never served.
+    const later = now + WRITE_WINDOW_MS + 1;
+    for (let i = 0; i < WRITE_MAX; i++) {
+      assert.equal(
+        consumeWrite("reviews", visitor, listing, later).allowed,
+        true,
+        `attempt ${i + 1} after the window should be allowed`,
+      );
+    }
+  });
+
+  it("peek does not mutate state", () => {
+    const now = 1_000_000;
+    for (let i = 0; i < 30; i++) peek("k", 3, 1000, now);
+    assert.equal(consume("k", 3, 1000, now).allowed, true);
   });
 });

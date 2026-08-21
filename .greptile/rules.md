@@ -64,5 +64,7 @@ that erodes them, even subtly.
 
 ## Docs
 
-- When a PR closes a capability gap, `docs/features-parity.md` must be updated
-  in the same PR.
+- When a PR closes a **directory or marketplace capability** gap — something
+  with a row in `docs/features-parity.md` — that file must be updated in the
+  same PR. Infrastructure and security hardening (auth, rate limiting, deploy,
+  CI) is not tracked there; those belong in `docs/api/` or `docs/ops/`.

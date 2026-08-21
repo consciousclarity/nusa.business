@@ -47,6 +47,12 @@ export const LOGIN_MAX = envInt("NUSA_RATELIMIT_LOGIN_MAX", 30);
 export const LOGIN_WINDOW_MS = envInt("NUSA_RATELIMIT_LOGIN_WINDOW_MS", 15 * 60 * 1000);
 export const LOGIN_EMAIL_MAX = envInt("NUSA_RATELIMIT_LOGIN_EMAIL_MAX", 5);
 export const WRITE_MAX = envInt("NUSA_RATELIMIT_WRITE_MAX", 20);
+/**
+ * Cap on writes to a single listing from all clients combined, so a listing
+ * cannot be flooded from many addresses at once. Higher than WRITE_MAX because
+ * it aggregates every legitimate visitor to that listing.
+ */
+export const BUSINESS_WRITE_MAX = envInt("NUSA_RATELIMIT_BUSINESS_WRITE_MAX", 60);
 export const WRITE_WINDOW_MS = envInt("NUSA_RATELIMIT_WRITE_WINDOW_MS", 60 * 60 * 1000);
 
 /** Hard ceiling on tracked keys, so a high-cardinality flood cannot exhaust memory. */
@@ -208,4 +214,40 @@ export function rateLimit(options: RateLimitOptions): MiddlewareHandler {
 /** Login throttle keyed on the account, capping a distributed attack on one user. */
 export function loginEmailKey(email: unknown): string {
   return typeof email === "string" ? email.trim().toLowerCase() : "unknown";
+}
+
+
+/**
+ * Limits for a public write against one listing.
+ *
+ * Scoped to (client, listing) rather than client alone. With CF-Connecting-IP
+ * untrusted, proxied traffic keys on a Cloudflare edge address shared by many
+ * real users — a client-only key would let one attacker exhaust the quota and
+ * 429 every unrelated visitor behind that same edge. Including the listing
+ * narrows the blast radius to people acting on the *same* listing the attacker
+ * targeted; everyone reviewing or booking anything else is unaffected.
+ *
+ * The second, client-independent cap stops a listing being flooded from many
+ * edges at once, which the first check alone would permit.
+ *
+ * `businessId` must be verified to exist before calling: an unchecked id would
+ * let an attacker mint unlimited distinct keys.
+ */
+export function consumeWrite(
+  routeId: string,
+  ip: string,
+  businessId: string,
+): Decision {
+  const perClient = consume(
+    `${routeId}:${ip}:${businessId}`,
+    WRITE_MAX,
+    WRITE_WINDOW_MS,
+  );
+  if (!perClient.allowed) return perClient;
+
+  return consume(
+    `${routeId}-listing:${businessId}`,
+    BUSINESS_WRITE_MAX,
+    WRITE_WINDOW_MS,
+  );
 }

@@ -107,9 +107,11 @@ fixtures, and they are hashed as soon as they reach the store.
 |---|---|---|
 | `POST /v1/auth/login` | 30 / 15 min | client address |
 | `POST /v1/auth/login` | 5 / 15 min | normalised email |
-| `POST /v1/businesses/:id/reviews` | 20 / hour | client address |
-| `POST /v1/businesses/:id/bookings` | 20 / hour | client address |
-| `POST /v1/claims` | 20 / hour | client address |
+| `POST /v1/businesses/:id/reviews` | 20 / hour | client address **+ listing** |
+| `POST /v1/businesses/:id/reviews` | 60 / hour | listing (all clients) |
+| `POST /v1/businesses/:id/bookings` | 20 / hour | client address **+ listing** |
+| `POST /v1/businesses/:id/bookings` | 60 / hour | listing (all clients) |
+| `POST /v1/claims` | 20 / hour | **authenticated account** |
 
 Exceeding a limit returns `429` with a `Retry-After` header in seconds. The two
 login limits are deliberate: the per-address one stops a single attacker, and
@@ -142,10 +144,33 @@ limit entirely.
 
 Enable the flag only once direct-to-origin access is impossible: the origin
 firewalled to Cloudflare's published ranges, or authenticated origin pulls.
-Until then, Cloudflare-proxied traffic keys on a Cloudflare edge address shared
-by many real users — which is why the per-address login limit is loose (30) and
-the **per-account limit (5) is the control that actually stops credential
-attacks**. It does not depend on addresses at all.
+
+### Why the keys are not just addresses
+
+Until that flag can be turned on, Cloudflare-proxied traffic keys on an edge
+address shared by many real users. A limit keyed on the address alone would
+therefore be a denial-of-service vector: one attacker exhausts the quota and
+every unrelated visitor behind the same edge gets a 429. Each route avoids that
+by keying on something narrower:
+
+- **Login** — the per-account limit (5) is the control that actually stops
+  credential attacks, and it never depended on addresses. The per-address limit
+  is loose (30) precisely because it is coarse.
+- **Reviews and bookings** — keyed on **(client, listing)**, so an attacker can
+  only exhaust the quota for the listing they targeted. Anyone acting on a
+  different listing behind the same edge is unaffected. A second,
+  client-independent cap (60/hour per listing) stops one listing being flooded
+  from many edges at once.
+- **Claims** — authenticated, so it keys on the **account id**. There is no
+  reason to involve addresses at all when a real identity is available.
+
+The listing id is verified to exist before it is used as a key; an unchecked id
+would let an attacker mint unlimited distinct keys.
+
+The complete fix is to make `CF-Connecting-IP` trustworthy, which means Caddy
+matching the peer against Cloudflare's published ranges (`remote_ip` in the site
+block) and stripping the header otherwise. That is a Caddyfile change and is not
+in this branch.
 
 ### Never rate limited
 
@@ -162,7 +187,8 @@ accident.
 
 Override via `.env`: `NUSA_RATELIMIT_LOGIN_MAX`, `NUSA_RATELIMIT_LOGIN_WINDOW_MS`,
 `NUSA_RATELIMIT_LOGIN_EMAIL_MAX`, `NUSA_RATELIMIT_WRITE_MAX`,
-`NUSA_RATELIMIT_WRITE_WINDOW_MS`, `NUSA_RATELIMIT_MAX_BUCKETS`,
+`NUSA_RATELIMIT_WRITE_WINDOW_MS`, `NUSA_RATELIMIT_BUSINESS_WRITE_MAX`,
+`NUSA_RATELIMIT_MAX_BUCKETS`,
 `NUSA_TRUST_CF_CONNECTING_IP`. `NUSA_RATELIMIT_DISABLED=1` turns it off for
 local development.
 

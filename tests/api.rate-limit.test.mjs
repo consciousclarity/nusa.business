@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 
 const {
+  BUSINESS_WRITE_MAX,
   MAX_BUCKETS,
+  WRITE_MAX,
+  consumeWrite,
   __bucketCount,
   __resetLimiter,
   consume,
@@ -176,5 +179,50 @@ describe("bucket reclamation", () => {
       assert.equal(consume("real", 3, 60_000, now).allowed, true);
     }
     assert.equal(consume("real", 3, 60_000, now).allowed, false);
+  });
+});
+
+describe("public write limits are scoped to the listing", () => {
+  beforeEach(() => __resetLimiter());
+
+  it("does not let one attacker 429 a bystander on a different listing", () => {
+    // With CF-Connecting-IP untrusted, proxied clients share a Cloudflare edge
+    // address. A client-only key would make this a denial-of-service vector.
+    const edge = "203.0.113.7";
+    for (let i = 0; i < WRITE_MAX; i++) {
+      assert.equal(consumeWrite("reviews", edge, "biz-target").allowed, true);
+    }
+    assert.equal(
+      consumeWrite("reviews", edge, "biz-target").allowed,
+      false,
+      "attacker's own listing should be capped",
+    );
+    assert.equal(
+      consumeWrite("reviews", edge, "biz-other").allowed,
+      true,
+      "a bystander behind the same edge, on another listing, must be unaffected",
+    );
+  });
+
+  it("still caps a single listing flooded from many addresses", () => {
+    let allowed = 0;
+    for (let i = 0; i < BUSINESS_WRITE_MAX + 20; i++) {
+      // A fresh address each time — only the per-listing cap can stop this.
+      if (consumeWrite("reviews", `198.51.100.${i}`, "biz-target").allowed) {
+        allowed++;
+      }
+    }
+    assert.equal(allowed, BUSINESS_WRITE_MAX);
+  });
+
+  it("keeps routes independent", () => {
+    const edge = "203.0.113.7";
+    for (let i = 0; i < WRITE_MAX; i++) consumeWrite("reviews", edge, "biz-a");
+    assert.equal(consumeWrite("reviews", edge, "biz-a").allowed, false);
+    assert.equal(
+      consumeWrite("bookings", edge, "biz-a").allowed,
+      true,
+      "booking quota must not be consumed by reviews",
+    );
   });
 });

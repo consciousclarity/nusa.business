@@ -1,5 +1,6 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { cors } from "hono/cors";
 import {
   addBooking,
@@ -42,11 +43,19 @@ import {
   WRITE_MAX,
   WRITE_WINDOW_MS,
   consume,
+  consumeWrite,
   loginEmailKey,
   rateLimit,
+  resolveClientIp,
 } from "./rate-limit.js";
 
 const app = new Hono<{ Variables: AuthVariables }>();
+
+/** Uniform 429 so callers cannot tell which limit they hit. */
+function tooManyRequests(c: Context, retryAfter: number) {
+  c.header("Retry-After", String(retryAfter));
+  return c.json({ error: "Too many requests" }, 429);
+}
 
 app.use(
   "*",
@@ -273,8 +282,15 @@ app.patch("/v1/portal/listings/:id", requireAuth, async (c) => {
 
 app.post(
   "/v1/claims",
-  rateLimit({ id: "claims", limit: WRITE_MAX, windowMs: WRITE_WINDOW_MS }),
   requireAuth,
+  // Keyed on the authenticated account, not the address: this route has a real
+  // identity, so there is no reason to punish everyone behind a shared proxy.
+  rateLimit({
+    id: "claims",
+    limit: WRITE_MAX,
+    windowMs: WRITE_WINDOW_MS,
+    key: (c) => c.get("user").id,
+  }),
   async (c) => {
   const user = c.get("user");
   const body = await c.req.json<{ businessId: string; note?: string }>();
@@ -313,8 +329,15 @@ app.post("/v1/claims/:id/decide", requireRole("admin"), async (c) => {
 
 app.post(
   "/v1/businesses/:id/reviews",
-  rateLimit({ id: "reviews", limit: WRITE_MAX, windowMs: WRITE_WINDOW_MS }),
   async (c) => {
+    // Verified before limiting: an unchecked id would both create orphan
+    // reviews and let an attacker mint unlimited distinct rate-limit keys.
+    const business = getBusinessById(c.req.param("id"));
+    if (!business) return c.json({ error: "Not found" }, 404);
+
+    const limited = consumeWrite("reviews", resolveClientIp(c), business.id);
+    if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
+
     const body = await c.req.json<{
       authorName: string;
       authorEmail?: string;
@@ -324,17 +347,19 @@ app.post(
       cleanliness: number;
       comment: string;
     }>();
-    const review = addReview({ ...body, businessId: c.req.param("id") });
+    const review = addReview({ ...body, businessId: business.id });
     return c.json({ review }, 201);
   },
 );
 
 app.post(
   "/v1/businesses/:id/bookings",
-  rateLimit({ id: "bookings", limit: WRITE_MAX, windowMs: WRITE_WINDOW_MS }),
   async (c) => {
     const business = getBusinessById(c.req.param("id"));
     if (!business) return c.json({ error: "Not found" }, 404);
+
+    const limited = consumeWrite("bookings", resolveClientIp(c), business.id);
+    if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
     if (business.bookingMode === "none") {
       return c.json({ error: "Booking not enabled" }, 400);
     }

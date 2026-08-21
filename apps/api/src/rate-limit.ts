@@ -13,6 +13,22 @@ import type { Context, MiddlewareHandler } from "hono";
 
 const DISABLED = process.env.NUSA_RATELIMIT_DISABLED === "1";
 
+/**
+ * Whether to believe `CF-Connecting-IP`.
+ *
+ * OFF by default, and that default is load-bearing. The origin is publicly
+ * reachable — it has to be, because grey-clouded place hosts get their
+ * certificates by direct ACME — so anyone can connect straight to it with a
+ * `Host:` header and an invented `CF-Connecting-IP`. Caddy passes the header
+ * through untouched, so trusting it would let an attacker rotate a header and
+ * mint a fresh bucket per request: no limit at all.
+ *
+ * Only enable this once direct-to-origin access is impossible — the origin
+ * firewalled to Cloudflare's published ranges, or authenticated origin pulls.
+ * Until then the Caddy-observed peer is the only address a client cannot forge.
+ */
+const TRUST_CF_HEADER = process.env.NUSA_TRUST_CF_CONNECTING_IP === "1";
+
 function envInt(name: string, fallback: number): number {
   const raw = process.env[name];
   if (!raw) return fallback;
@@ -20,18 +36,75 @@ function envInt(name: string, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-export const LOGIN_MAX = envInt("NUSA_RATELIMIT_LOGIN_MAX", 10);
+/**
+ * The per-address login limit is deliberately loose. With CF-Connecting-IP
+ * untrusted, proxied traffic keys on a Cloudflare edge address shared by many
+ * real users, so a tight limit here would lock out bystanders. The per-account
+ * limit below is the control that actually stops credential attacks, and it
+ * does not depend on addresses at all.
+ */
+export const LOGIN_MAX = envInt("NUSA_RATELIMIT_LOGIN_MAX", 30);
 export const LOGIN_WINDOW_MS = envInt("NUSA_RATELIMIT_LOGIN_WINDOW_MS", 15 * 60 * 1000);
 export const LOGIN_EMAIL_MAX = envInt("NUSA_RATELIMIT_LOGIN_EMAIL_MAX", 5);
 export const WRITE_MAX = envInt("NUSA_RATELIMIT_WRITE_MAX", 20);
 export const WRITE_WINDOW_MS = envInt("NUSA_RATELIMIT_WRITE_WINDOW_MS", 60 * 60 * 1000);
 
-/** Timestamps of recent hits, per bucket. */
+/** Hard ceiling on tracked keys, so a high-cardinality flood cannot exhaust memory. */
+export const MAX_BUCKETS = envInt("NUSA_RATELIMIT_MAX_BUCKETS", 20_000);
+
+/** Timestamps of recent hits, per bucket. Insertion-ordered, which eviction relies on. */
 const buckets = new Map<string, number[]>();
 
-/** Test hook — clears all counters. */
+/** Sweep every N writes rather than on a timer — no handle to leak, no clock to stub. */
+const SWEEP_EVERY = 500;
+let writesSinceSweep = 0;
+
+/** Test hooks. */
 export function __resetLimiter(): void {
   buckets.clear();
+  writesSinceSweep = 0;
+}
+export function __bucketCount(): number {
+  return buckets.size;
+}
+
+function longestWindowMs(): number {
+  return Math.max(LOGIN_WINDOW_MS, WRITE_WINDOW_MS);
+}
+
+/**
+ * Drop buckets whose most recent hit has aged out, then evict oldest-first if
+ * still over the ceiling.
+ *
+ * Without this the Map grows for the process's lifetime: every distinct client
+ * address, and — worse — every distinct email submitted to the login route,
+ * which an attacker controls outright.
+ */
+export function sweepBuckets(now: number = Date.now()): void {
+  const cutoff = now - longestWindowMs();
+  for (const [key, hits] of buckets) {
+    const newest = hits[hits.length - 1];
+    if (newest === undefined || newest <= cutoff) buckets.delete(key);
+  }
+  enforceCeiling();
+}
+
+/**
+ * Evict oldest-first until the ceiling holds. Map preserves insertion order,
+ * so the front is the least recently created key.
+ *
+ * Under a flood this can drop a bucket that still had counts, which resets that
+ * key's limit — inherent to any bounded cache, and far preferable to unbounded
+ * growth driven by attacker-supplied keys.
+ */
+function enforceCeiling(): void {
+  if (buckets.size <= MAX_BUCKETS) return;
+  const excess = buckets.size - MAX_BUCKETS;
+  let removed = 0;
+  for (const key of buckets.keys()) {
+    buckets.delete(key);
+    if (++removed >= excess) break;
+  }
 }
 
 export type Decision = {
@@ -52,6 +125,11 @@ export function consume(
 ): Decision {
   if (DISABLED) return { allowed: true, retryAfter: 0 };
 
+  if (++writesSinceSweep >= SWEEP_EVERY || buckets.size > MAX_BUCKETS) {
+    writesSinceSweep = 0;
+    sweepBuckets(now);
+  }
+
   const cutoff = now - windowMs;
   const hits = (buckets.get(bucket) ?? []).filter((t) => t > cutoff);
 
@@ -66,6 +144,7 @@ export function consume(
 
   hits.push(now);
   buckets.set(bucket, hits);
+  enforceCeiling();
   return { allowed: true, retryAfter: 0 };
 }
 
@@ -77,16 +156,15 @@ export function consume(
  *
  * Caddy *appends* to X-Forwarded-For, and a client may send that header itself
  * — so the LEFTMOST entry is attacker-controlled and must never be used. The
- * rightmost entry is the one our own Caddy appended.
- *
- * For Cloudflare-proxied hosts (apex, www, island hubs) Caddy's peer is
- * Cloudflare, so the rightmost entry is a Cloudflare address and the real
- * client is CF-Connecting-IP. Nested place hosts are grey-clouded and have no
- * such header, which is why it is a preference rather than a requirement.
+ * RIGHTMOST entry is the address our own Caddy observed, which a client cannot
+ * forge. That is the only trustworthy identifier available here, which is why
+ * CF-Connecting-IP is opt-in (see TRUST_CF_HEADER).
  */
 export function resolveClientIp(c: Context): string {
-  const cf = c.req.header("cf-connecting-ip")?.trim();
-  if (cf) return cf;
+  if (TRUST_CF_HEADER) {
+    const cf = c.req.header("cf-connecting-ip")?.trim();
+    if (cf) return cf;
+  }
 
   const xff = c.req.header("x-forwarded-for");
   if (xff) {
@@ -105,7 +183,7 @@ export type RateLimitOptions = {
   id: string;
   limit: number;
   windowMs: number;
-  /** Defaults to the client IP. */
+  /** Defaults to the client address. */
   key?: (c: Context) => string | Promise<string>;
 };
 

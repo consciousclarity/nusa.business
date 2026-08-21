@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
 
 const {
+  MAX_BUCKETS,
+  __bucketCount,
   __resetLimiter,
   consume,
   loginEmailKey,
   resolveClientIp,
+  sweepBuckets,
 } = await import("../apps/api/dist/rate-limit.js");
 
 /** Minimal stand-in for a Hono Context — resolveClientIp only reads headers. */
@@ -59,14 +62,34 @@ describe("consume", () => {
 });
 
 describe("resolveClientIp", () => {
-  it("prefers CF-Connecting-IP on Cloudflare-proxied hosts", () => {
+  it("does NOT trust CF-Connecting-IP by default", () => {
+    // The origin is publicly reachable (grey-clouded place hosts need direct
+    // ACME), so anyone can connect straight to it and invent this header.
+    // Caddy passes it through untouched. Trusting it would hand an attacker a
+    // fresh bucket per request.
     const ip = resolveClientIp(
       ctx({
         "CF-Connecting-IP": "203.0.113.9",
         "X-Forwarded-For": "198.51.100.1, 172.16.0.1",
       }),
     );
-    assert.equal(ip, "203.0.113.9");
+    assert.equal(ip, "172.16.0.1", "must use the Caddy-observed peer");
+    assert.notEqual(ip, "203.0.113.9");
+  });
+
+  it("cannot be escaped by rotating CF-Connecting-IP", () => {
+    const keys = new Set(
+      ["a", "b", "c", "d"].map((n) =>
+        resolveClientIp(
+          ctx({
+            "CF-Connecting-IP": `10.0.0.${n.charCodeAt(0)}`,
+            "X-Forwarded-For": "203.0.113.7",
+          }),
+        ),
+      ),
+    );
+    // Four different spoofed headers, one real peer — one bucket.
+    assert.deepEqual([...keys], ["203.0.113.7"]);
   });
 
   it("takes the RIGHTMOST X-Forwarded-For entry", () => {
@@ -108,5 +131,50 @@ describe("loginEmailKey", () => {
   it("does not throw on a non-string", () => {
     assert.equal(loginEmailKey(undefined), "unknown");
     assert.equal(loginEmailKey(42), "unknown");
+  });
+});
+
+describe("bucket reclamation", () => {
+  beforeEach(() => __resetLimiter());
+
+  it("drops buckets whose hits have aged out", () => {
+    const now = 1_000_000;
+    for (let i = 0; i < 50; i++) consume(`ip:${i}`, 5, 1000, now);
+    assert.equal(__bucketCount(), 50);
+
+    // Longest configured window is the write window (1h by default), so sweep
+    // past it rather than past the 1000ms limit used above.
+    sweepBuckets(now + 1000 * 60 * 60 * 2);
+    assert.equal(__bucketCount(), 0, "expired buckets must be reclaimed");
+  });
+
+  it("keeps buckets that are still inside the window", () => {
+    const now = 1_000_000;
+    consume("ip:live", 5, 1000, now);
+    sweepBuckets(now + 1000);
+    assert.equal(__bucketCount(), 1);
+  });
+
+  it("stays bounded under a high-cardinality flood", () => {
+    // The login route keys partly on a client-supplied email, so an attacker
+    // can mint unlimited distinct keys. Memory must not grow with them.
+    const now = 1_000_000;
+    const flood = MAX_BUCKETS + 5_000;
+    for (let i = 0; i < flood; i++) {
+      consume(`login-email:user${i}@example.com`, 5, 60_000, now);
+    }
+    assert.ok(
+      __bucketCount() <= MAX_BUCKETS,
+      `expected <= ${MAX_BUCKETS}, got ${__bucketCount()}`,
+    );
+  });
+
+  it("still limits correctly while sweeping runs", () => {
+    const now = 1_000_000;
+    for (let i = 0; i < 600; i++) consume(`noise:${i}`, 5, 60_000, now);
+    for (let i = 0; i < 3; i++) {
+      assert.equal(consume("real", 3, 60_000, now).allowed, true);
+    }
+    assert.equal(consume("real", 3, 60_000, now).allowed, false);
   });
 });

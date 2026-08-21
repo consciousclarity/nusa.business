@@ -105,7 +105,7 @@ fixtures, and they are hashed as soon as they reach the store.
 
 | Route | Limit | Keyed on |
 |---|---|---|
-| `POST /v1/auth/login` | 10 / 15 min | client address |
+| `POST /v1/auth/login` | 30 / 15 min | client address |
 | `POST /v1/auth/login` | 5 / 15 min | normalised email |
 | `POST /v1/businesses/:id/reviews` | 20 / hour | client address |
 | `POST /v1/businesses/:id/bookings` | 20 / hour | client address |
@@ -120,14 +120,32 @@ here because the demo passwords are published in this repo and
 ### Identifying the caller
 
 The API listens on loopback behind the host Caddy, so the socket peer is always
-`127.0.0.1`. Caddy **appends** to `X-Forwarded-For`, and a client can send that
-header itself — so the **leftmost entry is attacker-controlled and must never
-be used as a key**. `resolveClientIp()` reads, in order:
+`127.0.0.1` and useless as a key. Everything else arrives in headers, and a
+header is only trustworthy if a client cannot set it.
 
-1. `CF-Connecting-IP` — set for Cloudflare-proxied hosts (apex, `www`, island
-   hubs). Nested place hosts are grey-clouded and have no such header.
-2. The **rightmost** `X-Forwarded-For` entry — the one our own Caddy appended.
-3. `"unknown"`.
+Caddy **appends** to `X-Forwarded-For`, so the **rightmost** entry is the address
+Caddy itself observed — the one identifier here that cannot be forged. The
+leftmost entry is whatever the client sent, and must never be used as a key.
+
+**`CF-Connecting-IP` is not trusted by default.** The origin is publicly
+reachable — it has to be, because grey-clouded place hosts obtain certificates
+by direct ACME — so anyone can connect straight to `62.72.7.218` with a `Host:`
+header and an invented `CF-Connecting-IP`. Caddy passes it through untouched.
+Trusting it would let an attacker mint a fresh bucket per request and defeat the
+limit entirely.
+
+`resolveClientIp()` therefore reads:
+
+1. `CF-Connecting-IP` — **only** when `NUSA_TRUST_CF_CONNECTING_IP=1`
+2. The **rightmost** `X-Forwarded-For` entry
+3. `"unknown"`
+
+Enable the flag only once direct-to-origin access is impossible: the origin
+firewalled to Cloudflare's published ranges, or authenticated origin pulls.
+Until then, Cloudflare-proxied traffic keys on a Cloudflare edge address shared
+by many real users — which is why the per-address login limit is loose (30) and
+the **per-account limit (5) is the control that actually stops credential
+attacks**. It does not depend on addresses at all.
 
 ### Never rate limited
 
@@ -144,8 +162,15 @@ accident.
 
 Override via `.env`: `NUSA_RATELIMIT_LOGIN_MAX`, `NUSA_RATELIMIT_LOGIN_WINDOW_MS`,
 `NUSA_RATELIMIT_LOGIN_EMAIL_MAX`, `NUSA_RATELIMIT_WRITE_MAX`,
-`NUSA_RATELIMIT_WRITE_WINDOW_MS`. `NUSA_RATELIMIT_DISABLED=1` turns it off for
+`NUSA_RATELIMIT_WRITE_WINDOW_MS`, `NUSA_RATELIMIT_MAX_BUCKETS`,
+`NUSA_TRUST_CF_CONNECTING_IP`. `NUSA_RATELIMIT_DISABLED=1` turns it off for
 local development.
+
+**Memory is bounded.** The login route keys partly on a client-supplied email,
+so an attacker can mint unlimited distinct keys. Buckets whose hits have aged
+out are swept every 500 writes, and a hard ceiling of `MAX_BUCKETS` (20,000)
+evicts oldest-first beyond that. Eviction can reset a key's counter under a
+flood — inherent to a bounded cache, and preferable to unbounded growth.
 
 **State is per-process and resets on restart.** That is correct for the single
 `api` service in `docker/compose.prod.yml`, and wrong the moment there is a

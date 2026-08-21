@@ -3,6 +3,7 @@ import { beforeEach, describe, it } from "node:test";
 
 const {
   BUSINESS_WRITE_MAX,
+  LOGIN_EMAIL_SLOTS,
   MAX_BUCKETS,
   WRITE_MAX,
   consumeWrite,
@@ -126,16 +127,6 @@ describe("resolveClientIp", () => {
   });
 });
 
-describe("loginEmailKey", () => {
-  it("normalises case and whitespace so one account is one bucket", () => {
-    assert.equal(loginEmailKey("  Admin@Nusa.Business "), "admin@nusa.business");
-  });
-
-  it("does not throw on a non-string", () => {
-    assert.equal(loginEmailKey(undefined), "unknown");
-    assert.equal(loginEmailKey(42), "unknown");
-  });
-});
 
 describe("bucket reclamation", () => {
   beforeEach(() => __resetLimiter());
@@ -224,5 +215,61 @@ describe("public write limits are scoped to the listing", () => {
       true,
       "booking quota must not be consumed by reviews",
     );
+  });
+});
+
+describe("eviction cannot reset a protection", () => {
+  beforeEach(() => __resetLimiter());
+
+  it("never evicts a bucket that is actively throttling", () => {
+    const now = 1_000_000;
+    // The account we care about is throttled.
+    const target = `login-email:${loginEmailKey("admin@nusa.business")}`;
+    for (let i = 0; i < 5; i++) consume(target, 5, 900_000, now);
+    assert.equal(consume(target, 5, 900_000, now).allowed, false);
+
+    // An attacker floods far past the ceiling with distinct idle keys, trying
+    // to push the protective bucket out of the map.
+    for (let i = 0; i < MAX_BUCKETS + 5_000; i++) {
+      consume(`flood:${i}`, 5, 900_000, now);
+    }
+
+    assert.ok(__bucketCount() <= MAX_BUCKETS, "ceiling must still hold");
+    assert.equal(
+      consume(target, 5, 900_000, now).allowed,
+      false,
+      "the throttle on the targeted account must survive the flood",
+    );
+  });
+
+  it("still evicts idle buckets, so memory stays bounded", () => {
+    const now = 1_000_000;
+    for (let i = 0; i < MAX_BUCKETS + 2_000; i++) {
+      consume(`idle:${i}`, 5, 900_000, now);
+    }
+    assert.ok(__bucketCount() <= MAX_BUCKETS);
+  });
+});
+
+describe("loginEmailKey", () => {
+  it("folds addresses into a bounded slot space", () => {
+    const slots = new Set();
+    for (let i = 0; i < 50_000; i++) slots.add(loginEmailKey(`u${i}@example.com`));
+    assert.ok(
+      slots.size <= LOGIN_EMAIL_SLOTS,
+      `expected <= ${LOGIN_EMAIL_SLOTS} distinct keys, got ${slots.size}`,
+    );
+  });
+
+  it("is stable and case/whitespace insensitive", () => {
+    assert.equal(
+      loginEmailKey("  Admin@Nusa.Business "),
+      loginEmailKey("admin@nusa.business"),
+    );
+  });
+
+  it("does not throw on a non-string", () => {
+    assert.equal(typeof loginEmailKey(undefined), "string");
+    assert.equal(typeof loginEmailKey(42), "string");
   });
 });

@@ -192,11 +192,25 @@ Override via `.env`: `NUSA_RATELIMIT_LOGIN_MAX`, `NUSA_RATELIMIT_LOGIN_WINDOW_MS
 `NUSA_TRUST_CF_CONNECTING_IP`. `NUSA_RATELIMIT_DISABLED=1` turns it off for
 local development.
 
-**Memory is bounded.** The login route keys partly on a client-supplied email,
-so an attacker can mint unlimited distinct keys. Buckets whose hits have aged
-out are swept every 500 writes, and a hard ceiling of `MAX_BUCKETS` (20,000)
-evicts oldest-first beyond that. Eviction can reset a key's counter under a
-flood — inherent to a bounded cache, and preferable to unbounded growth.
+**Memory is bounded, and bounding it must not weaken the limits.**
+
+Buckets whose hits have aged out are swept every 500 writes, with a hard ceiling
+of `MAX_BUCKETS` (20,000) beyond that. Two rules keep the ceiling from becoming
+a bypass:
+
+- **An actively throttling bucket is never evicted.** Otherwise an attacker who
+  controls part of the key space could flood enough distinct keys to push the
+  bucket guarding a target account out of the map, then resume guessing against
+  it — turning a cache policy into a security hole. Eviction skips any bucket
+  currently at its limit; only idle ones are reclaimed.
+- **The login key space is bounded at source.** The submitted address is hashed
+  into `LOGIN_EMAIL_SLOTS` (4096) slots rather than used verbatim, so a client
+  cannot create unbounded keys at all. That number sits well below
+  `MAX_BUCKETS`, so this namespace can never drive eviction.
+
+Slot collisions mean two accounts occasionally share a throttle. That grants an
+attacker nothing: they can already throttle any account by attempting it
+directly, and the result is a temporary lockout, never extra attempts.
 
 **State is per-process and resets on restart.** That is correct for the single
 `api` service in `docker/compose.prod.yml`, and wrong the moment there is a

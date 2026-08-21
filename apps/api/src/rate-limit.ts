@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Context, MiddlewareHandler } from "hono";
 
 /**
@@ -58,8 +59,16 @@ export const WRITE_WINDOW_MS = envInt("NUSA_RATELIMIT_WRITE_WINDOW_MS", 60 * 60 
 /** Hard ceiling on tracked keys, so a high-cardinality flood cannot exhaust memory. */
 export const MAX_BUCKETS = envInt("NUSA_RATELIMIT_MAX_BUCKETS", 20_000);
 
-/** Timestamps of recent hits, per bucket. Insertion-ordered, which eviction relies on. */
-const buckets = new Map<string, number[]>();
+type Bucket = {
+  /** Timestamps of recent hits. */
+  hits: number[];
+  /** The limit this bucket was last checked against, so eviction can tell an
+   *  idle bucket from one that is actively throttling someone. */
+  limit: number;
+};
+
+/** Insertion-ordered, which eviction relies on. */
+const buckets = new Map<string, Bucket>();
 
 /** Sweep every N writes rather than on a timer — no handle to leak, no clock to stub. */
 const SWEEP_EVERY = 500;
@@ -88,26 +97,33 @@ function longestWindowMs(): number {
  */
 export function sweepBuckets(now: number = Date.now()): void {
   const cutoff = now - longestWindowMs();
-  for (const [key, hits] of buckets) {
-    const newest = hits[hits.length - 1];
+  for (const [key, bucket] of buckets) {
+    const newest = bucket.hits[bucket.hits.length - 1];
     if (newest === undefined || newest <= cutoff) buckets.delete(key);
   }
-  enforceCeiling();
+  enforceCeiling(now);
 }
 
 /**
- * Evict oldest-first until the ceiling holds. Map preserves insertion order,
- * so the front is the least recently created key.
+ * Evict oldest-first until the ceiling holds — but never evict a bucket that is
+ * currently at its limit.
  *
- * Under a flood this can drop a bucket that still had counts, which resets that
- * key's limit — inherent to any bounded cache, and far preferable to unbounded
- * growth driven by attacker-supplied keys.
+ * Evicting a throttling bucket would *reset a protection*, which an attacker
+ * who controls part of the key space could trigger deliberately: flood enough
+ * distinct keys to push the bucket guarding a target account out of the map,
+ * then resume guessing against it. Skipping active buckets makes eviction a
+ * cache concern rather than a security one.
+ *
+ * Idle buckets are always available to evict in practice, because a bucket only
+ * becomes throttling after `limit` hits inside the window.
  */
-function enforceCeiling(): void {
+function enforceCeiling(now: number = Date.now()): void {
   if (buckets.size <= MAX_BUCKETS) return;
   const excess = buckets.size - MAX_BUCKETS;
   let removed = 0;
-  for (const key of buckets.keys()) {
+  for (const [key, bucket] of buckets) {
+    const live = bucket.hits.filter((t) => t > now - longestWindowMs());
+    if (live.length >= bucket.limit) continue; // actively throttling — keep
     buckets.delete(key);
     if (++removed >= excess) break;
   }
@@ -137,11 +153,11 @@ export function consume(
   }
 
   const cutoff = now - windowMs;
-  const hits = (buckets.get(bucket) ?? []).filter((t) => t > cutoff);
+  const hits = (buckets.get(bucket)?.hits ?? []).filter((t) => t > cutoff);
 
   if (hits.length >= limit) {
     const oldest = hits[0]!;
-    buckets.set(bucket, hits);
+    buckets.set(bucket, { hits, limit });
     return {
       allowed: false,
       retryAfter: Math.max(1, Math.ceil((oldest + windowMs - now) / 1000)),
@@ -149,8 +165,8 @@ export function consume(
   }
 
   hits.push(now);
-  buckets.set(bucket, hits);
-  enforceCeiling();
+  buckets.set(bucket, { hits, limit });
+  enforceCeiling(now);
   return { allowed: true, retryAfter: 0 };
 }
 
@@ -211,9 +227,30 @@ export function rateLimit(options: RateLimitOptions): MiddlewareHandler {
   };
 }
 
-/** Login throttle keyed on the account, capping a distributed attack on one user. */
+/**
+ * Number of slots the login-throttle key space is folded into. A power of two,
+ * comfortably below MAX_BUCKETS so this namespace can never drive eviction.
+ */
+export const LOGIN_EMAIL_SLOTS = 4096;
+
+/**
+ * Login throttle key, capping a distributed attack on one account.
+ *
+ * The email is hashed into a fixed number of slots rather than used directly.
+ * The address is client-supplied, so using it verbatim would hand an attacker
+ * unbounded control over the key space — the root cause of eviction pressure.
+ * Folding it bounds that namespace by construction.
+ *
+ * Collisions mean two accounts occasionally share a throttle. That grants an
+ * attacker nothing new: they can already throttle any account by attempting it
+ * directly, and the outcome is a temporary lockout, never extra attempts.
+ */
 export function loginEmailKey(email: unknown): string {
-  return typeof email === "string" ? email.trim().toLowerCase() : "unknown";
+  const normalised =
+    typeof email === "string" ? email.trim().toLowerCase() : "unknown";
+  const digest = createHash("sha256").update(normalised).digest();
+  const slot = digest.readUInt16BE(0) % LOGIN_EMAIL_SLOTS;
+  return `s${slot}`;
 }
 
 

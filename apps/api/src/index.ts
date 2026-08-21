@@ -35,6 +35,16 @@ import {
   requireAuth,
   requireRole,
 } from "./auth.js";
+import {
+  LOGIN_EMAIL_MAX,
+  LOGIN_MAX,
+  LOGIN_WINDOW_MS,
+  WRITE_MAX,
+  WRITE_WINDOW_MS,
+  consume,
+  loginEmailKey,
+  rateLimit,
+} from "./rate-limit.js";
 
 const app = new Hono<{ Variables: AuthVariables }>();
 
@@ -153,35 +163,54 @@ app.get("/v1/search", (c) => {
   });
 });
 
-app.post("/v1/auth/login", async (c) => {
-  const body = await c.req.json<{ email: string; password: string }>();
-  if (!body?.email || !body?.password) {
-    return c.json({ error: "email and password required" }, 400);
-  }
-  const user = await authenticate(body.email, body.password);
-  if (!user) return c.json({ error: "Invalid credentials" }, 401);
-  const { password: _, ...safe } = user;
-  return c.json({ user: safe, token: issueToken(user) });
-});
+app.post(
+  "/v1/auth/login",
+  rateLimit({ id: "login-ip", limit: LOGIN_MAX, windowMs: LOGIN_WINDOW_MS }),
+  async (c) => {
+      const body = await c.req.json<{ email: string; password: string }>();
+      if (!body?.email || !body?.password) {
+        return c.json({ error: "email and password required" }, 400);
+      }
 
-app.get("/v1/me", requireAuth, (c) => c.json({ user: c.get("user") }));
+      // Second throttle keyed on the account, so rotating source addresses does
+      // not give an attacker unlimited attempts against one user. Applied after
+      // parsing rather than as middleware so the body is read exactly once.
+      const perEmail = consume(
+        `login-email:${loginEmailKey(body.email)}`,
+        LOGIN_EMAIL_MAX,
+        LOGIN_WINDOW_MS,
+      );
+      if (!perEmail.allowed) {
+        c.header("Retry-After", String(perEmail.retryAfter));
+        return c.json({ error: "Too many requests" }, 429);
+      }
 
-app.get("/v1/portal/listings", requireAuth, (c) => {
-  const user = c.get("user");
-  const store = getStore();
-  // Admins may list everything (optionally filtered); everyone else is
-  // restricted to their own listings regardless of what they ask for.
-  const businesses =
-    user.role === "admin"
-      ? filterByOwner(store.businesses, c.req.query("ownerId"))
-      : store.businesses.filter((b) => b.ownerUserId === user.id);
-  return c.json({
-    businesses: businesses.map((b) => ({
-      business: b,
-      context: resolveBusinessContext(b.id),
-    })),
-  });
-});
+      const user = await authenticate(body.email, body.password);
+      if (!user) return c.json({ error: "Invalid credentials" }, 401);
+      const { password: _, ...safe } = user;
+      return c.json({ user: safe, token: issueToken(user) });
+    },
+  );
+
+  app.get("/v1/me", requireAuth, (c) => c.json({ user: c.get("user") }));
+
+  app.get("/v1/portal/listings", requireAuth, (c) => {
+    const user = c.get("user");
+    const store = getStore();
+    // Admins may list everything (optionally filtered); everyone else is
+    // restricted to their own listings regardless of what they ask for.
+    const businesses =
+      user.role === "admin"
+        ? filterByOwner(store.businesses, c.req.query("ownerId"))
+        : store.businesses.filter((b) => b.ownerUserId === user.id);
+    return c.json({
+      businesses: businesses.map((b) => ({
+        business: b,
+        context: resolveBusinessContext(b.id),
+      })),
+    });
+  },
+);
 
 app.post(
   "/v1/portal/listings",
@@ -242,7 +271,11 @@ app.patch("/v1/portal/listings/:id", requireAuth, async (c) => {
   return c.json({ business: updated });
 });
 
-app.post("/v1/claims", requireAuth, async (c) => {
+app.post(
+  "/v1/claims",
+  rateLimit({ id: "claims", limit: WRITE_MAX, windowMs: WRITE_WINDOW_MS }),
+  requireAuth,
+  async (c) => {
   const user = c.get("user");
   const body = await c.req.json<{ businessId: string; note?: string }>();
   if (!getBusinessById(body.businessId)) {
@@ -278,55 +311,63 @@ app.post("/v1/claims/:id/decide", requireRole("admin"), async (c) => {
   return c.json({ claim });
 });
 
-app.post("/v1/businesses/:id/reviews", async (c) => {
-  const body = await c.req.json<{
-    authorName: string;
-    authorEmail?: string;
-    service: number;
-    value: number;
-    location: number;
-    cleanliness: number;
-    comment: string;
-  }>();
-  const review = addReview({ ...body, businessId: c.req.param("id") });
-  return c.json({ review }, 201);
-});
+app.post(
+  "/v1/businesses/:id/reviews",
+  rateLimit({ id: "reviews", limit: WRITE_MAX, windowMs: WRITE_WINDOW_MS }),
+  async (c) => {
+    const body = await c.req.json<{
+      authorName: string;
+      authorEmail?: string;
+      service: number;
+      value: number;
+      location: number;
+      cleanliness: number;
+      comment: string;
+    }>();
+    const review = addReview({ ...body, businessId: c.req.param("id") });
+    return c.json({ review }, 201);
+  },
+);
 
-app.post("/v1/businesses/:id/bookings", async (c) => {
-  const business = getBusinessById(c.req.param("id"));
-  if (!business) return c.json({ error: "Not found" }, 404);
-  if (business.bookingMode === "none") {
-    return c.json({ error: "Booking not enabled" }, 400);
-  }
-  const body = await c.req.json<{
-    customerName: string;
-    customerEmail: string;
-    customerPhone?: string;
-    startDate: string;
-    endDate?: string;
-    timeSlot?: string;
-    guests?: number;
-    tickets?: number;
-    notes?: string;
-    totalAmount?: number;
-  }>();
-  const booking = addBooking({
-    businessId: business.id,
-    mode: business.bookingMode,
-    customerName: body.customerName,
-    customerEmail: body.customerEmail,
-    customerPhone: body.customerPhone,
-    startDate: body.startDate,
-    endDate: body.endDate,
-    timeSlot: body.timeSlot,
-    guests: body.guests,
-    tickets: body.tickets,
-    notes: body.notes,
-    totalAmount: body.totalAmount ?? 0,
-    currency: "IDR",
-  });
-  return c.json({ booking }, 201);
-});
+app.post(
+  "/v1/businesses/:id/bookings",
+  rateLimit({ id: "bookings", limit: WRITE_MAX, windowMs: WRITE_WINDOW_MS }),
+  async (c) => {
+    const business = getBusinessById(c.req.param("id"));
+    if (!business) return c.json({ error: "Not found" }, 404);
+    if (business.bookingMode === "none") {
+      return c.json({ error: "Booking not enabled" }, 400);
+    }
+    const body = await c.req.json<{
+      customerName: string;
+      customerEmail: string;
+      customerPhone?: string;
+      startDate: string;
+      endDate?: string;
+      timeSlot?: string;
+      guests?: number;
+      tickets?: number;
+      notes?: string;
+      totalAmount?: number;
+    }>();
+    const booking = addBooking({
+      businessId: business.id,
+      mode: business.bookingMode,
+      customerName: body.customerName,
+      customerEmail: body.customerEmail,
+      customerPhone: body.customerPhone,
+      startDate: body.startDate,
+      endDate: body.endDate,
+      timeSlot: body.timeSlot,
+      guests: body.guests,
+      tickets: body.tickets,
+      notes: body.notes,
+      totalAmount: body.totalAmount ?? 0,
+      currency: "IDR",
+    });
+    return c.json({ booking }, 201);
+  },
+);
 
 app.get("/v1/bookings", requireAuth, (c) => {
   const user = c.get("user");

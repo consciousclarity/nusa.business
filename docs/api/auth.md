@@ -99,8 +99,62 @@ a wrong password take comparable time.
 The demo credentials in `seed-data.ts` remain readable on purpose — they are
 fixtures, and they are hashed as soon as they reach the store.
 
+## Rate limiting
+
+`apps/api/src/rate-limit.ts` — an in-memory sliding window, no dependency.
+
+| Route | Limit | Keyed on |
+|---|---|---|
+| `POST /v1/auth/login` | 10 / 15 min | client address |
+| `POST /v1/auth/login` | 5 / 15 min | normalised email |
+| `POST /v1/businesses/:id/reviews` | 20 / hour | client address |
+| `POST /v1/businesses/:id/bookings` | 20 / hour | client address |
+| `POST /v1/claims` | 20 / hour | client address |
+
+Exceeding a limit returns `429` with a `Retry-After` header in seconds. The two
+login limits are deliberate: the per-address one stops a single attacker, and
+the per-email one caps a *distributed* attack on one account — which matters
+here because the demo passwords are published in this repo and
+`admin@nusa.business` can approve claims.
+
+### Identifying the caller
+
+The API listens on loopback behind the host Caddy, so the socket peer is always
+`127.0.0.1`. Caddy **appends** to `X-Forwarded-For`, and a client can send that
+header itself — so the **leftmost entry is attacker-controlled and must never
+be used as a key**. `resolveClientIp()` reads, in order:
+
+1. `CF-Connecting-IP` — set for Cloudflare-proxied hosts (apex, `www`, island
+   hubs). Nested place hosts are grey-clouded and have no such header.
+2. The **rightmost** `X-Forwarded-For` entry — the one our own Caddy appended.
+3. `"unknown"`.
+
+### Never rate limited
+
+- **`GET /v1/tls-check`** — Caddy's `on_demand_tls` ask endpoint. A 429 here
+  stops certificate issuance, so nested hosts fail the TLS handshake. That is an
+  outage, not a slow-down.
+- **`GET /health`** — the `deploy-vps.sh` gate polls it up to 30 times in 60
+  seconds.
+
+Limits are applied per route, never globally, so nothing else is caught by
+accident.
+
+### Tuning and limitations
+
+Override via `.env`: `NUSA_RATELIMIT_LOGIN_MAX`, `NUSA_RATELIMIT_LOGIN_WINDOW_MS`,
+`NUSA_RATELIMIT_LOGIN_EMAIL_MAX`, `NUSA_RATELIMIT_WRITE_MAX`,
+`NUSA_RATELIMIT_WRITE_WINDOW_MS`. `NUSA_RATELIMIT_DISABLED=1` turns it off for
+local development.
+
+**State is per-process and resets on restart.** That is correct for the single
+`api` service in `docker/compose.prod.yml`, and wrong the moment there is a
+second replica — two containers would each allow the full quota. The successors,
+in order of effort: a Cloudflare rate-limiting rule at the edge (the free tier
+covers one login rule, and it also protects against traffic that never reaches
+the origin), or a shared Redis counter.
+
 ## Still to do before public launch
 
-- **Rate limiting** on `/v1/auth/login` and the public review/booking routes.
 - Consider HTTP-only cookies scoped to `.nusa.business` for SSO across
   subdomains, instead of `localStorage`.

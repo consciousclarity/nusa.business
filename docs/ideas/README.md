@@ -28,6 +28,7 @@ You do not need to remember to file things. When you brainstorm with Cursor (“
 
 | Idea | Status | Updated |
 |---|---|---|
+| [Fast text directory + vendor–visitor contact](./2026-09-07-fast-text-and-contact.md) | `exploring` | 2026-09-07 |
 | [Prevent platform fraud](./2026-09-07-prevent-platform-fraud.md) | `seed` | 2026-09-07 |
 
 ## Naming

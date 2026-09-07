@@ -2,6 +2,8 @@
 
 Solo-founder scratchpad for product and platform brainstorms. Chat is ephemeral; **this folder is the durable memory**.
 
+You work across **Cursor, Claude Code, and ChatGPT** — they do not share chat history. Anything worth keeping must be filed here (and merged to `main`) so every tool sees the same notes.
+
 You do not need to remember to file things. When you brainstorm with Cursor (“how do we prevent fraud?”, “should packages be…?”), the agent should write or update a note here and refresh this index.
 
 ## How it works

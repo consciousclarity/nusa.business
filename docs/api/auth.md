@@ -96,8 +96,9 @@ Two things keep an existing store from sitting at rest in plaintext:
 A login for an unknown email still performs one hash, so a missing account and
 a wrong password take comparable time.
 
-The demo credentials in `seed-data.ts` remain readable on purpose — they are
-fixtures, and they are hashed as soon as they reach the store.
+The demo credentials in `seed-data.ts` remain readable on purpose for **local**
+fixtures, and they are hashed as soon as they reach the store. Production does
+not auto-create them — see [demo-bootstrap.md](../ops/demo-bootstrap.md).
 
 ## Rate limiting
 

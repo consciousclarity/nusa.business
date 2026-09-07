@@ -15,7 +15,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | Multi-criteria reviews | done | service/value/location/cleanliness on listing + API |
 | Owner dashboard | done | Portal listings CRUD |
 | Opening hours / gallery / FAQ fields | partial | Hours seeded; gallery/FAQ schema present |
-| Booking: service / rental / event | done | Listing `bookingMode` + public form + `/v1/.../bookings` |
+| Booking: service / rental / event | done | Listing `bookingMode` + public form + `/v1/.../bookings` (request-only / pending; not verified inventory or price) |
 | Paid packages | planned | Model later; launch is free like bali.business |
 | Private messages | planned | Phase 6 |
 | Bookmarks | planned | Phase 6 |

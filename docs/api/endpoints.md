@@ -19,7 +19,7 @@
 |---|---|---|
 | GET | `/v1/portal/listings?ownerId=` | Inventory |
 | POST | `/v1/portal/listings` | Create |
-| PATCH | `/v1/portal/listings/:id` | Update |
+| PATCH | `/v1/portal/listings/:id` | Update (allowlisted fields only) |
 
 ## Claims & reviews
 
@@ -28,16 +28,17 @@
 | POST | `/v1/claims` | `{ businessId, claimantUserId, note? }` |
 | GET | `/v1/claims` | List |
 | POST | `/v1/claims/:id/decide` | `{ status: approved\|rejected }` |
-| POST | `/v1/businesses/:id/reviews` | Multi-criteria review |
+| POST | `/v1/businesses/:id/reviews` | Multi-criteria review (runtime-validated) |
 
 ## Bookings
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/v1/businesses/:id/bookings` | Requires `bookingMode != none` |
+| POST | `/v1/businesses/:id/bookings` | Pending request only; `bookingMode != none`; optional `Idempotency-Key` |
 | GET | `/v1/bookings?businessId=` | Inbox |
 
 Booking body supports `startDate`, `endDate`, `timeSlot`, `guests`, `tickets` depending on mode.
+Client `totalAmount` is ignored — not a priced inventory hold.
 
 ## Field ops
 

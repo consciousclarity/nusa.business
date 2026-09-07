@@ -48,6 +48,11 @@ import {
   rateLimit,
   resolveClientIp,
 } from "./rate-limit.js";
+import {
+  parseBookingBody,
+  parseListingPatchBody,
+  parseReviewBody,
+} from "./validate.js";
 
 const app = new Hono<{ Variables: AuthVariables }>();
 
@@ -55,6 +60,18 @@ const app = new Hono<{ Variables: AuthVariables }>();
 function tooManyRequests(c: Context, retryAfter: number) {
   c.header("Retry-After", String(retryAfter));
   return c.json({ error: "Too many requests" }, 429);
+}
+
+/** In-process booking idempotency (single API process; resets on restart). */
+const bookingIdempotency = new Map<string, { bookingId: string; body: unknown }>();
+const BOOKING_IDEMPOTENCY_MAX = 5_000;
+
+function rememberBookingIdempotency(key: string, bookingId: string, body: unknown) {
+  if (bookingIdempotency.size >= BOOKING_IDEMPOTENCY_MAX) {
+    const first = bookingIdempotency.keys().next().value;
+    if (first) bookingIdempotency.delete(first);
+  }
+  bookingIdempotency.set(key, { bookingId, body });
 }
 
 app.use(
@@ -268,13 +285,24 @@ app.patch("/v1/portal/listings/:id", requireAuth, async (c) => {
   if (!ownsOrAdmin(c.get("user"), existing.ownerUserId)) {
     return c.json({ error: "Forbidden" }, 403);
   }
-  const body = await c.req.json<Partial<typeof existing>>();
+  let raw: unknown;
+  try {
+    raw = await c.req.json();
+  } catch {
+    return c.json({ error: "Malformed JSON" }, 400);
+  }
+  const parsed = parseListingPatchBody(raw);
+  if (!parsed.ok) return c.json({ error: parsed.error }, 400);
   const updated = upsertBusiness({
     ...existing,
-    ...body,
+    ...parsed.value,
     // Identity and ownership are not client-editable.
     id: existing.id,
     ownerUserId: existing.ownerUserId,
+    registeredByAgentId: existing.registeredByAgentId,
+    vendorId: existing.vendorId,
+    placeId: existing.placeId,
+    createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),
   });
   return c.json({ business: updated });
@@ -335,19 +363,19 @@ app.post(
     const business = getBusinessById(c.req.param("id"));
     if (!business) return c.json({ error: "Not found" }, 404);
 
+    let raw: unknown;
+    try {
+      raw = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    const parsed = parseReviewBody(raw);
+    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+
     const limited = consumeWrite("reviews", resolveClientIp(c), business.id);
     if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
 
-    const body = await c.req.json<{
-      authorName: string;
-      authorEmail?: string;
-      service: number;
-      value: number;
-      location: number;
-      cleanliness: number;
-      comment: string;
-    }>();
-    const review = addReview({ ...body, businessId: business.id });
+    const review = addReview({ ...parsed.value, businessId: business.id });
     return c.json({ review }, 201);
   },
 );
@@ -365,36 +393,56 @@ app.post(
       return c.json({ error: "Booking not enabled" }, 400);
     }
 
+    let raw: unknown;
+    try {
+      raw = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    const parsed = parseBookingBody(raw);
+    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+
+    const idemKey = (c.req.header("idempotency-key") || "").trim().slice(0, 128);
+    if (idemKey) {
+      const prior = bookingIdempotency.get(`${business.id}:${idemKey}`);
+      if (prior) {
+        const existing = listBookings(business.id).find((b) => b.id === prior.bookingId);
+        if (existing) {
+          return c.json({ booking: existing, idempotentReplay: true }, 200);
+        }
+      }
+    }
+
     const limited = consumeWrite("bookings", resolveClientIp(c), business.id);
     if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
-    const body = await c.req.json<{
-      customerName: string;
-      customerEmail: string;
-      customerPhone?: string;
-      startDate: string;
-      endDate?: string;
-      timeSlot?: string;
-      guests?: number;
-      tickets?: number;
-      notes?: string;
-      totalAmount?: number;
-    }>();
+
     const booking = addBooking({
       businessId: business.id,
       mode: business.bookingMode,
-      customerName: body.customerName,
-      customerEmail: body.customerEmail,
-      customerPhone: body.customerPhone,
-      startDate: body.startDate,
-      endDate: body.endDate,
-      timeSlot: body.timeSlot,
-      guests: body.guests,
-      tickets: body.tickets,
-      notes: body.notes,
-      totalAmount: body.totalAmount ?? 0,
+      customerName: parsed.value.customerName,
+      customerEmail: parsed.value.customerEmail,
+      customerPhone: parsed.value.customerPhone,
+      startDate: parsed.value.startDate,
+      endDate: parsed.value.endDate,
+      timeSlot: parsed.value.timeSlot,
+      guests: parsed.value.guests,
+      tickets: parsed.value.tickets,
+      notes: parsed.value.notes,
+      // Request-only launch: ignore client amounts; not a verified price.
+      totalAmount: 0,
       currency: "IDR",
     });
-    return c.json({ booking }, 201);
+    if (idemKey) {
+      rememberBookingIdempotency(`${business.id}:${idemKey}`, booking.id, parsed.value);
+    }
+    return c.json(
+      {
+        booking,
+        notice:
+          "Request recorded as pending. This is not a confirmed reservation or price quote.",
+      },
+      201,
+    );
   },
 );
 

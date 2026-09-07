@@ -4,36 +4,115 @@ import { fileURLToPath } from "node:url";
 import { canonicalizeIslandSlug } from "@nusa/shared";
 import { migrateStore } from "./migrations.js";
 import { hashPassword, isHashed, verifyPassword } from "./password.js";
-import { createSeed } from "./seed-data.js";
+import { createReferenceStore, createSeed } from "./seed-data.js";
 import type {
   Booking,
   Business,
   Claim,
   DataStore,
   Review,
+  User,
   VendorStore,
 } from "./types.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
-const dataDir = process.env.NUSA_DATA_DIR || join(root, ".data");
-const storePath = join(dataDir, "store.json");
+
+/** Re-read on every call so tests can isolate via `NUSA_DATA_DIR`. */
+function dataDir(): string {
+  return process.env.NUSA_DATA_DIR || join(root, ".data");
+}
+
+function storePath(): string {
+  return join(dataDir(), "store.json");
+}
+
+function isProductionRuntime(): boolean {
+  return process.env.NODE_ENV === "production";
+}
+
+/**
+ * Demo catalog (sample businesses + well-known passwords) is opt-in outside
+ * local development. Production never creates it unless an operator sets
+ * `NUSA_ALLOW_DEMO_SEED=1` (discouraged — prefer reference + bootstrap admin).
+ */
+export function allowDemoSeed(): boolean {
+  const flag = process.env.NUSA_ALLOW_DEMO_SEED;
+  if (flag === "1" || flag === "true") return true;
+  if (flag === "0" || flag === "false") return false;
+  return !isProductionRuntime();
+}
+
+function bootstrapAdminFromEnv(): User | undefined {
+  const email = (process.env.NUSA_BOOTSTRAP_ADMIN_EMAIL || "").trim().toLowerCase();
+  const password = process.env.NUSA_BOOTSTRAP_ADMIN_PASSWORD || "";
+  const name = (process.env.NUSA_BOOTSTRAP_ADMIN_NAME || "Nusa Admin").trim();
+  if (!email && !password) return undefined;
+  if (!email || !password) {
+    throw new Error(
+      "Bootstrap admin requires both NUSA_BOOTSTRAP_ADMIN_EMAIL and NUSA_BOOTSTRAP_ADMIN_PASSWORD",
+    );
+  }
+  if (password.length < 16) {
+    throw new Error(
+      "NUSA_BOOTSTRAP_ADMIN_PASSWORD must be at least 16 characters",
+    );
+  }
+  if (!email.includes("@")) {
+    throw new Error("NUSA_BOOTSTRAP_ADMIN_EMAIL must be a valid email");
+  }
+  return {
+    id: `usr-bootstrap-${crypto.randomUUID().slice(0, 8)}`,
+    email,
+    name: name || "Nusa Admin",
+    role: "admin",
+    // Hashed immediately by hashStoredPasswords() on API startup / seed.
+    password,
+  };
+}
 
 function ensureStore(): DataStore {
-  if (!existsSync(storePath)) {
-    mkdirSync(dataDir, { recursive: true });
+  const path = storePath();
+  if (existsSync(path)) {
+    return JSON.parse(readFileSync(path, "utf8")) as DataStore;
+  }
+
+  mkdirSync(dataDir(), { recursive: true });
+
+  if (allowDemoSeed()) {
     const seed = createSeed();
-    writeFileSync(storePath, JSON.stringify(seed, null, 2));
+    writeFileSync(path, JSON.stringify(seed, null, 2));
     return seed;
   }
-  return JSON.parse(readFileSync(storePath, "utf8")) as DataStore;
+
+  // Production / locked environments: geography only, optional bootstrap admin.
+  const store = createReferenceStore();
+  const admin = bootstrapAdminFromEnv();
+  if (admin) {
+    store.users.push(admin);
+  } else if (isProductionRuntime()) {
+    throw new Error(
+      "No data store found. In production, set NUSA_BOOTSTRAP_ADMIN_EMAIL and " +
+        "NUSA_BOOTSTRAP_ADMIN_PASSWORD (≥16 chars) to create a geography-only " +
+        "store with one admin, or restore a backup into NUSA_DATA_DIR. " +
+        "Demo seeding is disabled unless NUSA_ALLOW_DEMO_SEED=1.",
+    );
+  }
+
+  writeFileSync(path, JSON.stringify(store, null, 2));
+  return store;
 }
 
 function save(store: DataStore) {
-  mkdirSync(dataDir, { recursive: true });
-  writeFileSync(storePath, JSON.stringify(store, null, 2));
+  mkdirSync(dataDir(), { recursive: true });
+  writeFileSync(storePath(), JSON.stringify(store, null, 2));
 }
 
 export function resetSeed(): DataStore {
+  if (isProductionRuntime() && !allowDemoSeed()) {
+    throw new Error(
+      "Refusing to reset demo seed while NODE_ENV=production without NUSA_ALLOW_DEMO_SEED=1",
+    );
+  }
   const seed = createSeed();
   save(seed);
   return seed;
@@ -299,4 +378,8 @@ export function resolveBusinessContext(businessId: string) {
 }
 
 export * from "./types.js";
-export { createSeed } from "./seed-data.js";
+export {
+  createSeed,
+  createReferenceStore,
+  DEMO_ACCOUNT_EMAILS,
+} from "./seed-data.js";

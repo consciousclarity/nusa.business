@@ -135,6 +135,20 @@ Nusa uses `4101` (api), `4103` (portal), `4321` (web).
 | `NUSA_AUTH_SECRET` | **yes in production** | ≥16 chars; signs bearer tokens. API refuses to start without it when `NODE_ENV=production` |
 | `NUSA_TOKEN_TTL` | no | Token lifetime in seconds, default 604800 |
 | `NUSA_DATA_DIR` | no | Container sets `/data`, backed by the `api_data` volume |
+| `NUSA_SSR_API_URL` | **yes for web (prod)** | Server-side Astro fetches only. Compose sets `http://api:8787`. Never embed this in client JS. |
+| `PUBLIC_BROWSER_API_URL` | **yes for web (prod)** | Public HTTPS origin for review/booking `fetch()` in the browser (default `https://api.nusa.business`). Build arg + runtime env. |
+| `VITE_API_URL` | **yes for portal (prod)** | Portal SPA API origin; must be public HTTPS (default `https://api.nusa.business`). Validated at image build. |
+| `PUBLIC_API_URL` | no | Legacy local/dev fallback when the split vars above are unset. Do **not** point it at Compose DNS in production. |
+
+### SSR vs browser API origins
+
+Compose service hostnames (`api`, `http://api:8787`) are reachable only on the
+Docker network. The web container uses `NUSA_SSR_API_URL` for server-rendered
+pages, while listing review/booking scripts and the portal use
+`PUBLIC_BROWSER_API_URL` / `VITE_API_URL` — public HTTPS via host Caddy /
+Cloudflare. `@nusa/shared` rejects internal/local browser origins when
+`NODE_ENV=production` so a misconfigured build fails clearly instead of
+shipping mixed-content or unreachable URLs.
 
 Rotating `NUSA_AUTH_SECRET` invalidates every issued token, forcing all portal
 users to log in again.

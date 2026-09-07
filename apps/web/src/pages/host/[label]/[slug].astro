@@ -1,6 +1,6 @@
 ---
 import Base from "../../../layouts/Base.astro";
-import { api, API } from "../../../lib/api";
+import { api, browserApiOrigin } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
 
 const label = Astro.params.label!;
@@ -239,7 +239,7 @@ const stamp =
   </div>
 </Base>
 
-<script define:vars={{ apiBase: API, businessId: data.business.id }}>
+<script define:vars={{ apiBase: browserApiOrigin(), businessId: data.business.id }}>
   const reviewForm = document.getElementById("review-form");
   reviewForm?.addEventListener("submit", async (e) => {
     e.preventDefault();

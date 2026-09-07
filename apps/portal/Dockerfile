@@ -7,8 +7,11 @@ RUN npm install --ignore-scripts --workspace=@nusa/shared --workspace=@nusa/port
 COPY packages/shared ./packages/shared
 COPY apps/portal ./apps/portal
 COPY tsconfig.base.json ./
-ENV VITE_API_URL=https://api.nusa.business
-RUN npm run build -w @nusa/shared && npm run build -w @nusa/portal
+ARG VITE_API_URL=https://api.nusa.business
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build -w @nusa/shared \
+  && node --input-type=module -e "import { assertBrowserSafeApiOrigin } from './packages/shared/dist/index.js'; assertBrowserSafeApiOrigin(process.env.VITE_API_URL,{production:true,label:'VITE_API_URL'}); console.log('portal VITE_API_URL ok:', process.env.VITE_API_URL);" \
+  && npm run build -w @nusa/portal
 
 FROM caddy:2-alpine
 COPY --from=build /app/apps/portal/dist /usr/share/caddy

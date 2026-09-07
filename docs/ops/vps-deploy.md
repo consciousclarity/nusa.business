@@ -149,6 +149,8 @@ pages, while listing review/booking scripts and the portal use
 Cloudflare. `@nusa/shared` rejects internal/local browser origins when
 `NODE_ENV=production` so a misconfigured build fails clearly instead of
 shipping mixed-content or unreachable URLs.
+| `NUSA_ALLOW_DEMO_SEED` | no | Default off in production. Never enable on the public VPS |
+| `NUSA_BOOTSTRAP_ADMIN_EMAIL` / `NUSA_BOOTSTRAP_ADMIN_PASSWORD` | first empty volume | Creates geography-only store + one admin; see [demo-bootstrap.md](./demo-bootstrap.md) |
 
 Rotating `NUSA_AUTH_SECRET` invalidates every issued token, forcing all portal
 users to log in again.

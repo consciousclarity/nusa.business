@@ -115,15 +115,29 @@ review scores, index numbering.
 
 ## Layout
 
-- Single column, `width: min(78ch, calc(100% - 2.5rem))`, `margin-inline: auto`.
+- Single column, `width: var(--page-measure)` where
+  `--page-measure: min(78ch, calc(100% - 2 * --page-gutter - safe-area insets))`
+  and `--page-gutter: clamp(0.85rem, 3.5vw, 1.25rem)`. `margin-inline: auto`.
 - Left-aligned throughout. Nothing is centred.
 - Space siblings with flex/grid `gap`, not per-element margins.
 - **Hairline rules instead of cards.** No `border-radius`, no `box-shadow`, no
   gradient, anywhere. Remove the two radial gradients currently on `body`.
 - Wide content (tables) sits in its own `overflow-x: auto` container. The page
-  body never scrolls sideways.
+  body never scrolls sideways (`overflow-x: clip` on `body`).
 - Information-dense. This is an index, not a landing page — closer spacing than
   a marketing site, but never cramped.
+
+### Narrow viewports (`max-width: 40rem`)
+
+Indonesia is mobile-heavy. Below ~640px:
+
+- Masthead stacks (brand, then nav); still left-aligned.
+- Resolver / record `dl` go single-column (label above value).
+- Index list drops to two columns; metadata (`.rhs`) wraps under the name.
+- Index rows use `display: contents` so the description aligns to the name
+  column without fake left padding.
+- Primary actions stretch full width; controls get a ~44px min height.
+- Form controls use `font-size: 1rem` so iOS does not zoom on focus.
 
 ## Components
 

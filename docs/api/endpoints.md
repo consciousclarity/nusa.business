@@ -7,7 +7,7 @@
 | GET | `/v1/islands` | All islands |
 | GET | `/v1/islands/:island` | Island + places + businesses |
 | GET | `/v1/islands/:island/places/:place` | Place hub payload |
-| GET | `/v1/islands/:island/places/:place/businesses/:slug` | Listing + reviews + vendor + bookings |
+| GET | `/v1/islands/:island/places/:place/businesses/:slug` | Public listing + scrubbed reviews + vendor (no bookings; drafts 404) |
 | GET | `/v1/places?island=` | Place list |
 | GET | `/v1/search?q=&island=&place=&category=` | Flat search |
 | GET | `/v1/meta/categories` | Category catalog |

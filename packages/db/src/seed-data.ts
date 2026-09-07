@@ -2,6 +2,32 @@ import type { DataStore } from "./types.js";
 
 const now = () => new Date().toISOString();
 
+/** Well-known local demo accounts — never auto-delete matching production users. */
+export const DEMO_ACCOUNT_EMAILS = [
+  "admin@nusa.business",
+  "agent@nusa.business",
+  "owner@example.com",
+] as const;
+
+/**
+ * Geography-only store for production / empty bootstrap.
+ * No demo users, businesses, reviews, bookings, or vendors.
+ */
+export function createReferenceStore(): DataStore {
+  const full = createSeed();
+  return {
+    islands: full.islands,
+    places: full.places,
+    businesses: [],
+    users: [],
+    claims: [],
+    reviews: [],
+    bookings: [],
+    vendors: [],
+  };
+}
+
+/** Full local/demo catalog (geography + sample listings + demo users). */
 export function createSeed(): DataStore {
   const t = now();
 

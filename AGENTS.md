@@ -39,10 +39,15 @@ Prototype product: [bali.business](https://bali.business) (WordPress). This repo
 | Portal UX | `apps/portal/src/pages/` |
 | Parity checklist | `docs/features-parity.md` |
 | Architecture decisions | `docs/architecture/` |
+| Brainstorm / idea capture | `docs/ideas/` |
+
+## Ideas inbox
+
+Cursor chat is **not** project memory. When brainstorming product or platform ideas (fraud, trust, monetization, future features, “what if…”), write or update a note under [`docs/ideas/`](docs/ideas/README.md) and refresh the index — do not leave conclusions only in chat. Use the `nusa-ideas` skill. Promote decided ideas to ADRs, roadmap / parity, or `docs/ops/security.md` as appropriate.
 
 ## Skills
 
-Project skills in [`.cursor/skills/`](.cursor/skills/) — use them for domain workflows (geo tenancy, field ops, capability map, release).
+Project skills in [`.cursor/skills/`](.cursor/skills/) — use them for domain workflows (geo tenancy, field ops, capability map, ideas inbox, release).
 
 ## Commands
 

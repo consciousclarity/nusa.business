@@ -8,6 +8,8 @@
 | `nusa-geo-tenancy` | Hosts, DNS, `/host` routes, place model |
 | `nusa-capability-map` | Feature parity work |
 | `nusa-field-ops` | Agent registration flows |
+| `nusa-ideas` | Capture brainstorms into `docs/ideas/` (chat is not memory) |
+
 
 Skills are project-scoped and travel with the repo.
 

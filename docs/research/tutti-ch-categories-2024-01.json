@@ -1,0 +1,464 @@
+[
+  {
+    "id": "antiquesArts",
+    "label": "Antiquitäten & Kunst"
+  },
+  {
+    "id": "babyChild",
+    "label": "Baby & Kind",
+    "children": [
+      {
+        "id": "babyCare",
+        "label": "Babypflege"
+      },
+      {
+        "id": "strollersSeats",
+        "label": "Kinderwagen & Sitze"
+      },
+      {
+        "id": "childrensRoom",
+        "label": "Kinderzimmer"
+      },
+      {
+        "id": "babyClothes",
+        "label": "Kleider & Schuhe"
+      }
+    ]
+  },
+  {
+    "id": "books",
+    "label": "Bücher",
+    "children": [
+      {
+        "id": "comics",
+        "label": "Comics"
+      },
+      {
+        "id": "novels",
+        "label": "Romane"
+      },
+      {
+        "id": "nonFictionBooks",
+        "label": "Sachbücher & Ratgeber"
+      },
+      {
+        "id": "otherBooks",
+        "label": "Sonstige Bücher"
+      }
+    ]
+  },
+  {
+    "id": "officeBusiness",
+    "label": "Büro & Gewerbe",
+    "children": [
+      {
+        "id": "officeMaterialFurniture",
+        "label": "Büromaterial & Büromöbel"
+      },
+      {
+        "id": "commercialInstallationsFurniture",
+        "label": "Geschäftseinrichtungen"
+      }
+    ]
+  },
+  {
+    "id": "computersAccessories",
+    "label": "Computer & Zubehör",
+    "children": [
+      {
+        "id": "computers",
+        "label": "Computer"
+      },
+      {
+        "id": "computerComponentsAccessories",
+        "label": "Komponenten & Zubehör"
+      },
+      {
+        "id": "software",
+        "label": "Software"
+      },
+      {
+        "id": "tablets",
+        "label": "Tablets"
+      }
+    ]
+  },
+  {
+    "id": "services",
+    "label": "Dienstleistungen",
+    "children": [
+      {
+        "id": "businessOfficeServices",
+        "label": "Büroservice"
+      },
+      {
+        "id": "cateringHospitalityServices",
+        "label": "Catering, Gastronomie & Partyplanung"
+      },
+      {
+        "id": "computerServices",
+        "label": "Computer & Handys"
+      },
+      {
+        "id": "electronicMechanicalServices",
+        "label": "Elektronik & Mechanik"
+      },
+      {
+        "id": "financeLegalServices",
+        "label": "Finanzen & Recht"
+      },
+      {
+        "id": "healthBeautyServices",
+        "label": "Gesundheit & Schönheit"
+      },
+      {
+        "id": "craftsServices",
+        "label": "Handwerk"
+      },
+      {
+        "id": "householdCleaningServices",
+        "label": "Haushalt & Reinigung"
+      },
+      {
+        "id": "coursesTuitionServices",
+        "label": "Kurse & Unterricht"
+      },
+      {
+        "id": "otherServices",
+        "label": "Sonstige Dienstleistungen"
+      },
+      {
+        "id": "petServices",
+        "label": "Tiere"
+      },
+      {
+        "id": "transportationMovingServices",
+        "label": "Umzug & Transport"
+      },
+      {
+        "id": "propertyMaintenanceServices",
+        "label": "Unterhalt & Sicherheit"
+      }
+    ]
+  },
+  {
+    "id": "vehicles",
+    "label": "Fahrzeuge",
+    "children": [
+      {
+        "id": "cars",
+        "label": "Autos"
+      },
+      {
+        "id": "carAccessories",
+        "label": "Autozubehör"
+      },
+      {
+        "id": "boats",
+        "label": "Boote & Zubehör"
+      },
+      {
+        "id": "motorcycleAccessories",
+        "label": "Motorradzubehör"
+      },
+      {
+        "id": "motorcycles",
+        "label": "Motorräder"
+      },
+      {
+        "id": "utilityVehicles",
+        "label": "Nutzfahrzeuge"
+      },
+      {
+        "id": "caravans",
+        "label": "Wohnmobile"
+      }
+    ]
+  },
+  {
+    "id": "films",
+    "label": "Filme"
+  },
+  {
+    "id": "photoVideo",
+    "label": "Foto & Video",
+    "children": [
+      {
+        "id": "photoCameras",
+        "label": "Fotokameras"
+      },
+      {
+        "id": "videoCameras",
+        "label": "Videokameras"
+      },
+      {
+        "id": "photoVideoAccessories",
+        "label": "Zubehör"
+      }
+    ]
+  },
+  {
+    "id": "gardenCraft",
+    "label": "Garten & Handwerk",
+    "children": [
+      {
+        "id": "buildingMaterials",
+        "label": "Baumaterial"
+      },
+      {
+        "id": "gardenOutfitting",
+        "label": "Gartenausstattung"
+      },
+      {
+        "id": "gardenEquipment",
+        "label": "Werkzeuge & Maschinen"
+      }
+    ]
+  },
+  {
+    "id": "household",
+    "label": "Haushalt",
+    "children": [
+      {
+        "id": "lighting",
+        "label": "Beleuchtung"
+      },
+      {
+        "id": "decorationAccessories",
+        "label": "Deko & Accessoires"
+      },
+      {
+        "id": "equipmentTools",
+        "label": "Geräte & Utensilien"
+      },
+      {
+        "id": "food",
+        "label": "Lebensmittel"
+      },
+      {
+        "id": "furniture",
+        "label": "Möbel"
+      }
+    ]
+  },
+  {
+    "id": "realEstate",
+    "label": "Immobilien"
+  },
+  {
+    "id": "clothesAccessories",
+    "label": "Kleidung & Accessoires",
+    "children": [
+      {
+        "id": "accessories",
+        "label": "Accessoires & Beauty"
+      },
+      {
+        "id": "womensClothes",
+        "label": "Kleidung für Damen"
+      },
+      {
+        "id": "mensClothes",
+        "label": "Kleidung für Herren"
+      },
+      {
+        "id": "womensShoes",
+        "label": "Schuhe für Damen"
+      },
+      {
+        "id": "mensShoes",
+        "label": "Schuhe für Herren"
+      },
+      {
+        "id": "bagsWallets",
+        "label": "Taschen & Portemonnaies"
+      },
+      {
+        "id": "watchesJewelry",
+        "label": "Uhren & Schmuck"
+      }
+    ]
+  },
+  {
+    "id": "music",
+    "label": "Musik",
+    "children": [
+      {
+        "id": "cds",
+        "label": "CD, Vinyl & Kassetten"
+      },
+      {
+        "id": "musicalInstruments",
+        "label": "Instrumente"
+      }
+    ]
+  },
+  {
+    "id": "collectibles",
+    "label": "Sammeln"
+  },
+  {
+    "id": "toysHandicrafts",
+    "label": "Spielzeuge & Basteln",
+    "children": [
+      {
+        "id": "handicrafts",
+        "label": "Basteln"
+      },
+      {
+        "id": "modeling",
+        "label": "Modellbau"
+      },
+      {
+        "id": "consolesGames",
+        "label": "Spielkonsolen & Games"
+      },
+      {
+        "id": "toys",
+        "label": "Spielzeuge"
+      }
+    ]
+  },
+  {
+    "id": "sportsOutdoors",
+    "label": "Sport & Outdoor",
+    "children": [
+      {
+        "id": "camping",
+        "label": "Camping"
+      },
+      {
+        "id": "fitness",
+        "label": "Fitness"
+      },
+      {
+        "id": "otherSports",
+        "label": "Sonstige Sportarten"
+      },
+      {
+        "id": "bicycles",
+        "label": "Velos"
+      },
+      {
+        "id": "winterSports",
+        "label": "Wintersport"
+      }
+    ]
+  },
+  {
+    "id": "jobs",
+    "label": "Stellenangebote",
+    "children": [
+      {
+        "id": "gastronomy",
+        "label": "Gastgewerbe"
+      },
+      {
+        "id": "healthcare",
+        "label": "Gesundheitswesen"
+      },
+      {
+        "id": "craftConstruction",
+        "label": "Handwerk & Bau"
+      },
+      {
+        "id": "childcareCleaning",
+        "label": "Kinderbetreuung & Reinigung"
+      },
+      {
+        "id": "otherJobs",
+        "label": "Sonstige Stellen"
+      }
+    ]
+  },
+  {
+    "id": "tvAudio",
+    "label": "TV & Audio",
+    "children": [
+      {
+        "id": "audioHifi",
+        "label": "Audio & Hi-Fi"
+      },
+      {
+        "id": "dvdPlayers",
+        "label": "DVD-Player"
+      },
+      {
+        "id": "tv",
+        "label": "Fernseher"
+      }
+    ]
+  },
+  {
+    "id": "phonesNavigation",
+    "label": "Telefon & Navigation",
+    "children": [
+      {
+        "id": "landlinePhones",
+        "label": "Festnetztelefone"
+      },
+      {
+        "id": "cellPhones",
+        "label": "Handys"
+      },
+      {
+        "id": "navigationSystems",
+        "label": "Navigationssysteme"
+      },
+      {
+        "id": "phoneNavigationAccessories",
+        "label": "Zubehör"
+      }
+    ]
+  },
+  {
+    "id": "ticketsVouchers",
+    "label": "Tickets & Gutscheine"
+  },
+  {
+    "id": "animals",
+    "label": "Tiere",
+    "children": [
+      {
+        "id": "fish",
+        "label": "Fische"
+      },
+      {
+        "id": "rabbitsRodents",
+        "label": "Hasen & Nagetiere"
+      },
+      {
+        "id": "dogs",
+        "label": "Hunde"
+      },
+      {
+        "id": "dogAccessories",
+        "label": "Hunde Zubehör"
+      },
+      {
+        "id": "cats",
+        "label": "Katzen"
+      },
+      {
+        "id": "horses",
+        "label": "Pferde"
+      },
+      {
+        "id": "reptiles",
+        "label": "Reptilien"
+      },
+      {
+        "id": "otherAnimals",
+        "label": "Sonstige Tiere"
+      },
+      {
+        "id": "birds",
+        "label": "Vögel"
+      }
+    ]
+  },
+  {
+    "id": "other",
+    "label": "Sonstiges"
+  }
+]

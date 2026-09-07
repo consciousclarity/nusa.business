@@ -23,6 +23,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Auth tokens | `tests/api.auth.test.mjs` | Pins the properties that replaced the forgeable `dev.${id}` scheme: tamper rejection, expiry, and that the old format no longer verifies. |
 | Password hashing | `tests/db.password.test.mjs` | Salting, verification, malformed-hash safety, and the legacy-plaintext path that lets an old store still authenticate. |
 | Production bootstrap | `tests/db.bootstrap.test.mjs` | Production missing store refuses demo seed; bootstrap admin creates geography-only store; existing stores are preserved. |
+| Public privacy | `tests/api.public-privacy.test.mjs` | Anonymous listing/search responses omit bookings, review emails, and ownership internals; drafts 404; owners cannot read each other's bookings. |
 
 ## Adding a test
 
@@ -40,9 +41,9 @@ does with `NUSA_AUTH_SECRET`), set them **before** a dynamic `await import(...)`
 
 ## Still to build
 
-1. **API integration** — Hono routes against a temp store via `NUSA_DATA_DIR`,
-   asserting the authorization matrix in [docs/api/auth.md](../api/auth.md)
-   rather than only the token primitives.
+1. **API authorization matrix (remaining)** — broaden beyond C01 privacy/booking
+   isolation to cover claims, listing PATCH, and forged tokens end-to-end
+   ([docs/api/auth.md](../api/auth.md)).
 2. **Smoke e2e** — Playwright over `/host/...` and the portal claim flow.
 3. **Repository helpers** — `packages/db` read/write paths, especially the
    whole-file rewrite, which is where concurrent writes will lose data.

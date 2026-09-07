@@ -15,6 +15,7 @@ Directory + claims + field agents + marketplace surfaces invite fake listings, s
 
 - Owner asked how to keep brainstorms durable; fraud prevention called out as an example topic that must live in the repo, not only in Cursor chat.
 - Existing MVP security caveats (plaintext demo passwords, predictable bearer tokens, no rate limits / audit log) are adjacent but not the full fraud story — see [ops/security.md](../ops/security.md).
+- Later same day: listing **verification badge** and completeness — see [listing verification](./2026-09-07-listing-verification.md); fake verified stamps are a fraud vector.
 
 ## Options (if any)
 

@@ -51,7 +51,7 @@ token is passed explicitly.
 | Route | Access |
 |---|---|
 | `GET /health`, `/v1/meta/*`, `/v1/host`, `/v1/tls-check` | public |
-| `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public |
+| `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public — listing payloads omit ownership internals; drafts excluded; listing detail never returns bookings |
 | `POST /v1/businesses/:id/reviews` | public — visitors review without an account |
 | `POST /v1/businesses/:id/bookings` | public — customers book without an account |
 | `GET /v1/me` | any authenticated user |

@@ -22,6 +22,8 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 - [Personas & journeys](./product/personas.md)
 - [Capability map](./features-parity.md)
 - [Roadmap](./product/roadmap.md)
+- [Ideas inbox](./ideas/README.md) — durable brainstorms (chat is not memory)
+
 
 ### Architecture
 

@@ -1,0 +1,112 @@
+Source: Wayback Machine snapshot `web/20240101000000` of https://www.tutti.ch/de
+Captured for research 2026-09-07. Live site was Cloudflare-blocked from the agent environment.
+Top-level categories: 23; total labels in tree: 107
+Note: taxonomy may have changed since Jan 2024; Immobilien appears as a leaf here (no children in this payload).
+
+Antiquitäten & Kunst
+Baby & Kind
+  Babypflege
+  Kinderwagen & Sitze
+  Kinderzimmer
+  Kleider & Schuhe
+Bücher
+  Comics
+  Romane
+  Sachbücher & Ratgeber
+  Sonstige Bücher
+Büro & Gewerbe
+  Büromaterial & Büromöbel
+  Geschäftseinrichtungen
+Computer & Zubehör
+  Computer
+  Komponenten & Zubehör
+  Software
+  Tablets
+Dienstleistungen
+  Büroservice
+  Catering, Gastronomie & Partyplanung
+  Computer & Handys
+  Elektronik & Mechanik
+  Finanzen & Recht
+  Gesundheit & Schönheit
+  Handwerk
+  Haushalt & Reinigung
+  Kurse & Unterricht
+  Sonstige Dienstleistungen
+  Tiere
+  Umzug & Transport
+  Unterhalt & Sicherheit
+Fahrzeuge
+  Autos
+  Autozubehör
+  Boote & Zubehör
+  Motorradzubehör
+  Motorräder
+  Nutzfahrzeuge
+  Wohnmobile
+Filme
+Foto & Video
+  Fotokameras
+  Videokameras
+  Zubehör
+Garten & Handwerk
+  Baumaterial
+  Gartenausstattung
+  Werkzeuge & Maschinen
+Haushalt
+  Beleuchtung
+  Deko & Accessoires
+  Geräte & Utensilien
+  Lebensmittel
+  Möbel
+Immobilien
+Kleidung & Accessoires
+  Accessoires & Beauty
+  Kleidung für Damen
+  Kleidung für Herren
+  Schuhe für Damen
+  Schuhe für Herren
+  Taschen & Portemonnaies
+  Uhren & Schmuck
+Musik
+  CD, Vinyl & Kassetten
+  Instrumente
+Sammeln
+Spielzeuge & Basteln
+  Basteln
+  Modellbau
+  Spielkonsolen & Games
+  Spielzeuge
+Sport & Outdoor
+  Camping
+  Fitness
+  Sonstige Sportarten
+  Velos
+  Wintersport
+Stellenangebote
+  Gastgewerbe
+  Gesundheitswesen
+  Handwerk & Bau
+  Kinderbetreuung & Reinigung
+  Sonstige Stellen
+TV & Audio
+  Audio & Hi-Fi
+  DVD-Player
+  Fernseher
+Telefon & Navigation
+  Festnetztelefone
+  Handys
+  Navigationssysteme
+  Zubehör
+Tickets & Gutscheine
+Tiere
+  Fische
+  Hasen & Nagetiere
+  Hunde
+  Hunde Zubehör
+  Katzen
+  Pferde
+  Reptilien
+  Sonstige Tiere
+  Vögel
+Sonstiges

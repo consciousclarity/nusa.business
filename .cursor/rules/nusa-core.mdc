@@ -10,6 +10,7 @@ alwaysApply: true
 - Prefer open-source dependencies (MIT/Apache/BSD/GPL). No third-party commercial theme code.
 - Launch economics: free listings, 0% commission unless an ADR changes it.
 - Update `docs/features-parity.md` when closing capability gaps.
+- Brainstorms belong in `docs/ideas/` (not only chat); use the `nusa-ideas` skill.
 - Dev tenants use `/host/...` paths. Do not create Astro routes under `_` folders.
 - Keep secrets out of git; use `.env.example` only.
 - Read `AGENTS.md` and relevant `.cursor/skills/*/SKILL.md` before large changes.

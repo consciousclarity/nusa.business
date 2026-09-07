@@ -135,6 +135,8 @@ Nusa uses `4101` (api), `4103` (portal), `4321` (web).
 | `NUSA_AUTH_SECRET` | **yes in production** | ≥16 chars; signs bearer tokens. API refuses to start without it when `NODE_ENV=production` |
 | `NUSA_TOKEN_TTL` | no | Token lifetime in seconds, default 604800 |
 | `NUSA_DATA_DIR` | no | Container sets `/data`, backed by the `api_data` volume |
+| `NUSA_ALLOW_DEMO_SEED` | no | Default off in production. Never enable on the public VPS |
+| `NUSA_BOOTSTRAP_ADMIN_EMAIL` / `NUSA_BOOTSTRAP_ADMIN_PASSWORD` | first empty volume | Creates geography-only store + one admin; see [demo-bootstrap.md](./demo-bootstrap.md) |
 
 Rotating `NUSA_AUTH_SECRET` invalidates every issued token, forcing all portal
 users to log in again.

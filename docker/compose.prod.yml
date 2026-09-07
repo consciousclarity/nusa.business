@@ -26,13 +26,17 @@ services:
     build:
       context: ..
       dockerfile: apps/web/Dockerfile
+      args:
+        PUBLIC_BROWSER_API_URL: ${PUBLIC_BROWSER_API_URL:-https://api.nusa.business}
+        PUBLIC_PORTAL_URL: ${PUBLIC_PORTAL_URL:-https://portal.nusa.business}
     restart: unless-stopped
     environment:
       HOST: "0.0.0.0"
       PORT: "4321"
-      # Baked at image build for Astro SSR; must be reachable inside compose.
-      PUBLIC_API_URL: "http://api:8787"
-      PUBLIC_PORTAL_URL: "https://portal.nusa.business"
+      # Server-only — never bake Compose DNS into client scripts.
+      NUSA_SSR_API_URL: "http://api:8787"
+      PUBLIC_BROWSER_API_URL: ${PUBLIC_BROWSER_API_URL:-https://api.nusa.business}
+      PUBLIC_PORTAL_URL: ${PUBLIC_PORTAL_URL:-https://portal.nusa.business}
     ports:
       - "127.0.0.1:4321:4321"
     depends_on:
@@ -42,6 +46,8 @@ services:
     build:
       context: ..
       dockerfile: apps/portal/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://api.nusa.business}
     restart: unless-stopped
     ports:
       - "127.0.0.1:4103:8080"

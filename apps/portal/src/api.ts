@@ -1,4 +1,13 @@
-const API = import.meta.env.VITE_API_URL || "http://localhost:8787";
+import {
+  resolveBrowserApiOrigin,
+} from "@nusa/shared";
+
+const production = import.meta.env.PROD === true;
+
+const API = resolveBrowserApiOrigin({
+  production,
+  VITE_API_URL: import.meta.env.VITE_API_URL,
+});
 
 export type User = {
   id: string;

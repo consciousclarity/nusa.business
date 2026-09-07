@@ -37,9 +37,12 @@ Two things specific to Codespaces:
   falls through to the nation page. That is expected — browse tenants with the
   `/host/{label}` paths below rather than subdomains, exactly as on localhost.
 - Known gap: the review / booking widget on a listing page is browser-side and
-  reads `PUBLIC_API_URL`, which points at localhost for server-side rendering.
-  That one widget will not reach the API from a browser tab on Codespaces.
-  Everything else — browsing, search, the whole portal — works.
+  reads `PUBLIC_BROWSER_API_URL` (falling back to legacy `PUBLIC_API_URL`),
+  which points at localhost in local/dev. That widget will not reach the API
+  from a browser tab on Codespaces. Everything else — browsing, search, the
+  whole portal — works. On Compose/prod, set `NUSA_SSR_API_URL` (internal) and
+  `PUBLIC_BROWSER_API_URL` / `VITE_API_URL` (public HTTPS) separately — see
+  [ops/vps-deploy.md](ops/vps-deploy.md).
 
 ## Checks
 

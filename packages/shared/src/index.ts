@@ -161,3 +161,12 @@ export const CATEGORIES = [
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
+
+export {
+  assertBrowserSafeApiOrigin,
+  assertSsrApiOrigin,
+  isInternalOrLocalHostname,
+  resolveBrowserApiOrigin,
+  resolveSsrApiOrigin,
+  stripTrailingSlash,
+} from "./api-origins.js";

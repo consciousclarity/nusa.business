@@ -22,6 +22,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Slugs | `tests/shared.host.test.mjs` | Slugs are URLs, and URLs are permanent once indexed. |
 | Auth tokens | `tests/api.auth.test.mjs` | Pins the properties that replaced the forgeable `dev.${id}` scheme: tamper rejection, expiry, and that the old format no longer verifies. |
 | Password hashing | `tests/db.password.test.mjs` | Salting, verification, malformed-hash safety, and the legacy-plaintext path that lets an old store still authenticate. |
+| API origins | `tests/shared.api-origins.test.mjs` | Browser origins must be public HTTPS in production; SSR may use Compose-internal URLs; `http://api:8787` is rejected for browsers. |
 | Production bootstrap | `tests/db.bootstrap.test.mjs` | Production missing store refuses demo seed; bootstrap admin creates geography-only store; existing stores are preserved. |
 | Public privacy | `tests/api.public-privacy.test.mjs` | Anonymous listing/search responses omit bookings, review emails, and ownership internals; drafts 404; owners cannot read each other's bookings. |
 

@@ -189,6 +189,19 @@ export {
 } from "./portal-return.js";
 
 export {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  escapeXml,
+  hostPath,
+  localBusinessJsonLd,
+  requestHost,
+  siteOrigin,
+  sitemapXml,
+  websiteJsonLd,
+  type JsonLd,
+} from "./seo.js";
+
+export {
   alternateLocale,
   detectLocale,
   withLocale,

@@ -32,6 +32,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | JSON durability | `tests/db.persist.test.mjs` | Atomic write + `.bak` rotation; recover truncated `store.json`; refuse silent re-seed when both files are corrupt. |
 | Public privacy | `tests/api.public-privacy.test.mjs` | Anonymous listing/search responses omit bookings, review emails, and ownership internals; drafts 404; owners cannot read each other's bookings. |
 | Public a11y chrome | `tests/web.a11y-chrome.test.mjs` | Skip link, crumb semantics, AA label colour, review fieldset, booking `aria-*` wiring. |
+| Public SEO helpers | `tests/web.seo.test.mjs` | Canonical origin, `/host` paths, LocalBusiness JSON-LD, sitemap XML escaping. |
 
 ## Adding a test
 

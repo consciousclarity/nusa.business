@@ -18,11 +18,44 @@ fails=0
 pass() { printf '  \033[32mok\033[0m   %s\n' "$1"; }
 fail() { printf '  \033[31mFAIL\033[0m %s\n' "$1"; fails=$((fails + 1)); }
 
-echo "== containers =="
+echo "== containers / supervisor =="
+pm2_seen=0
+compose_seen=0
+if command -v pm2 >/dev/null 2>&1; then
+  if pm2 jlist 2>/dev/null | grep -Eqi 'nusa|web|api|portal'; then
+    pass "pm2 present (inspect: pm2 ls)"
+    pm2_seen=1
+  fi
+fi
 if [ -f "$COMPOSE_FILE" ]; then
-  docker compose -f "$COMPOSE_FILE" ps 2>/dev/null || fail "docker compose ps"
+  if docker compose -f "$COMPOSE_FILE" ps 2>/dev/null | grep -Eqi 'Up|running'; then
+    pass "compose stack has running services ($COMPOSE_FILE)"
+    compose_seen=1
+  else
+    docker compose -f "$COMPOSE_FILE" ps 2>/dev/null || fail "docker compose ps"
+  fi
 else
-  fail "compose file not found at $COMPOSE_FILE"
+  if [ "$pm2_seen" -eq 1 ]; then
+    pass "compose file absent; PM2 runtime assumed"
+  else
+    fail "compose file not found at $COMPOSE_FILE"
+  fi
+fi
+if [ "$pm2_seen" -eq 1 ] && [ "$compose_seen" -eq 1 ]; then
+  fail "both PM2 and Compose look active — confirm intended runtime before deploy"
+elif [ "$pm2_seen" -eq 0 ] && [ "$compose_seen" -eq 0 ]; then
+  fail "neither PM2 nusa apps nor Compose services detected"
+fi
+
+if [ -d /opt/nusa.business/.git ]; then
+  echo
+  echo "== git (app tree) =="
+  sha=$(git -C /opt/nusa.business rev-parse HEAD 2>/dev/null || true)
+  if [ -n "$sha" ]; then
+    pass "HEAD $sha"
+  else
+    fail "could not read git HEAD under /opt/nusa.business"
+  fi
 fi
 
 echo

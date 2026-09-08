@@ -1,4 +1,10 @@
-# Hostinger VPS deploy — nusa.business → 62.72.7.218
+# Hostinger VPS deploy — nusa.business → [REDACTED]
+
+> **Runtime dual-track (C13):** Hermes (2026-09-07) saw **PM2** serving
+> api/web/portal under `/opt/nusa.business`, while this runbook describes
+> **Compose** on loopback. Before any deploy, confirm the live supervisor and
+> commit SHA — see [runtime-verification.md](./runtime-verification.md). Do not
+> deploy from Cursor without explicit authorization.
 
 ## Architecture
 

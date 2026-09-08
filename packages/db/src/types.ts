@@ -72,7 +72,35 @@ export type Claim = {
   businessId: string;
   claimantUserId: string;
   status: ClaimStatus;
+  /** Claimant evidence / note for operators — not shown publicly. */
   note?: string;
+  createdAt: string;
+  decidedByUserId?: string;
+  decidedAt?: string;
+  decisionReason?: string;
+};
+
+/** Admin-issued signup invite (launch path — no open self-registration). */
+export type Invite = {
+  id: string;
+  email: string;
+  role: UserRole;
+  tokenHash: string;
+  expiresAt: string;
+  usedAt?: string;
+  createdByUserId: string;
+  createdAt: string;
+  /** Optional listing to resume after register/login. */
+  businessId?: string;
+};
+
+/** Single-use password recovery token. */
+export type RecoveryToken = {
+  id: string;
+  userId: string;
+  tokenHash: string;
+  expiresAt: string;
+  usedAt?: string;
   createdAt: string;
 };
 
@@ -139,4 +167,6 @@ export type DataStore = {
   reviews: Review[];
   bookings: Booking[];
   vendors: VendorStore[];
+  invites: Invite[];
+  recoveryTokens: RecoveryToken[];
 };

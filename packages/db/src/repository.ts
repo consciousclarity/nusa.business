@@ -1,4 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonicalizeIslandSlug } from "@nusa/shared";
@@ -10,10 +11,13 @@ import type {
   Business,
   Claim,
   DataStore,
+  Invite,
+  RecoveryToken,
   Review,
   User,
   VendorStore,
 } from "./types.js";
+import type { UserRole } from "@nusa/shared";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -250,8 +254,28 @@ export function listClaims() {
   return getStore().claims;
 }
 
-export function addClaim(claim: Omit<Claim, "id" | "createdAt" | "status"> & { status?: Claim["status"] }): Claim {
+export class ClaimConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ClaimConflictError";
+  }
+}
+
+export function addClaim(
+  claim: Omit<Claim, "id" | "createdAt" | "status"> & { status?: Claim["status"] },
+): Claim {
   const store = getStore();
+  const pendingSame = store.claims.find(
+    (c) =>
+      c.businessId === claim.businessId &&
+      c.claimantUserId === claim.claimantUserId &&
+      c.status === "pending",
+  );
+  if (pendingSame) {
+    throw new ClaimConflictError(
+      "You already have a pending claim for this listing",
+    );
+  }
   const row: Claim = {
     ...claim,
     status: claim.status ?? "pending",
@@ -263,21 +287,80 @@ export function addClaim(claim: Omit<Claim, "id" | "createdAt" | "status"> & { s
   return row;
 }
 
-export function updateClaim(id: string, status: Claim["status"]): Claim | undefined {
+export type ClaimDecisionInput = {
+  status: "approved" | "rejected";
+  actorUserId: string;
+  reason?: string;
+};
+
+export type ClaimDecisionResult =
+  | { ok: true; claim: Claim }
+  | { ok: false; error: string; code: "not_found" | "not_pending" | "invalid" };
+
+/**
+ * Admin claim decision with audit fields. Approving transfers ownership and
+ * rejects other pending claims on the same listing so ownership is not raced.
+ */
+export function decideClaim(
+  id: string,
+  input: ClaimDecisionInput,
+): ClaimDecisionResult {
+  if (input.status !== "approved" && input.status !== "rejected") {
+    return { ok: false, error: "status must be approved or rejected", code: "invalid" };
+  }
   const store = getStore();
   const claim = store.claims.find((c) => c.id === id);
-  if (!claim) return undefined;
-  claim.status = status;
-  if (status === "approved") {
+  if (!claim) return { ok: false, error: "Not found", code: "not_found" };
+  if (claim.status !== "pending") {
+    return {
+      ok: false,
+      error: "Claim is already decided",
+      code: "not_pending",
+    };
+  }
+
+  const now = new Date().toISOString();
+  claim.status = input.status;
+  claim.decidedByUserId = input.actorUserId;
+  claim.decidedAt = now;
+  if (input.reason?.trim()) claim.decisionReason = input.reason.trim().slice(0, 2000);
+
+  if (input.status === "approved") {
     const biz = store.businesses.find((b) => b.id === claim.businessId);
     if (biz) {
       biz.status = "claimed";
       biz.ownerUserId = claim.claimantUserId;
-      biz.updatedAt = new Date().toISOString();
+      biz.updatedAt = now;
+    }
+    for (const other of store.claims) {
+      if (
+        other.id !== claim.id &&
+        other.businessId === claim.businessId &&
+        other.status === "pending"
+      ) {
+        other.status = "rejected";
+        other.decidedByUserId = input.actorUserId;
+        other.decidedAt = now;
+        other.decisionReason =
+          other.decisionReason ||
+          "Superseded when another claim on this listing was approved";
+      }
     }
   }
+
   save(store);
-  return claim;
+  return { ok: true, claim };
+}
+
+/** @deprecated Prefer decideClaim — kept for any transitional callers. */
+export function updateClaim(id: string, status: Claim["status"]): Claim | undefined {
+  if (status !== "approved" && status !== "rejected") return undefined;
+  const result = decideClaim(id, {
+    status,
+    actorUserId: "usr-legacy",
+    reason: "legacy updateClaim",
+  });
+  return result.ok ? result.claim : undefined;
 }
 
 export function listBookings(businessId?: string) {
@@ -379,6 +462,11 @@ export function getUser(id: string) {
   return getStore().users.find((u) => u.id === id);
 }
 
+export function getUserByEmail(email: string) {
+  const normalized = email.trim().toLowerCase();
+  return getStore().users.find((u) => u.email.toLowerCase() === normalized);
+}
+
 export function resolveBusinessContext(businessId: string) {
   const store = getStore();
   const business = store.businesses.find((b) => b.id === businessId);
@@ -388,6 +476,127 @@ export function resolveBusinessContext(businessId: string) {
   const island = store.islands.find((i) => i.id === place.islandId);
   if (!island) return null;
   return { business, place, island };
+}
+
+function hashOpaqueToken(raw: string): string {
+  return createHash("sha256").update(raw).digest("hex");
+}
+
+export function createInvite(input: {
+  email: string;
+  role: UserRole;
+  createdByUserId: string;
+  businessId?: string;
+  ttlHours?: number;
+}): { invite: Invite; rawToken: string } {
+  const store = getStore();
+  const email = input.email.trim().toLowerCase();
+  const rawToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+  const ttlMs = (input.ttlHours ?? 72) * 60 * 60 * 1000;
+  const invite: Invite = {
+    id: `inv-${crypto.randomUUID().slice(0, 8)}`,
+    email,
+    role: input.role,
+    tokenHash: hashOpaqueToken(rawToken),
+    expiresAt: new Date(Date.now() + ttlMs).toISOString(),
+    createdByUserId: input.createdByUserId,
+    createdAt: new Date().toISOString(),
+    businessId: input.businessId,
+  };
+  store.invites.push(invite);
+  save(store);
+  return { invite, rawToken };
+}
+
+export function findValidInvite(rawToken: string): Invite | undefined {
+  const hash = hashOpaqueToken(rawToken);
+  const now = Date.now();
+  return getStore().invites.find(
+    (i) =>
+      i.tokenHash === hash &&
+      !i.usedAt &&
+      Date.parse(i.expiresAt) > now,
+  );
+}
+
+export async function redeemInvite(input: {
+  rawToken: string;
+  name: string;
+  password: string;
+}): Promise<
+  | { ok: true; user: User; invite: Invite }
+  | { ok: false; error: string }
+> {
+  const store = getStore();
+  const hash = hashOpaqueToken(input.rawToken);
+  const invite = store.invites.find((i) => i.tokenHash === hash);
+  if (!invite) return { ok: false, error: "Invalid invitation" };
+  if (invite.usedAt) return { ok: false, error: "Invitation already used" };
+  if (Date.parse(invite.expiresAt) <= Date.now()) {
+    return { ok: false, error: "Invitation expired" };
+  }
+  if (getUserByEmail(invite.email)) {
+    return { ok: false, error: "An account with this email already exists" };
+  }
+  if (input.password.length < 12) {
+    return { ok: false, error: "Password must be at least 12 characters" };
+  }
+  const name = input.name.trim();
+  if (name.length < 1 || name.length > 120) {
+    return { ok: false, error: "Name is required" };
+  }
+  const user: User = {
+    id: `usr-${crypto.randomUUID().slice(0, 8)}`,
+    email: invite.email,
+    name,
+    role: invite.role,
+    password: await hashPassword(input.password),
+  };
+  store.users.push(user);
+  invite.usedAt = new Date().toISOString();
+  save(store);
+  return { ok: true, user, invite };
+}
+
+export function createRecoveryToken(userId: string, ttlHours = 2): {
+  token: RecoveryToken;
+  rawToken: string;
+} {
+  const store = getStore();
+  const rawToken = crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "");
+  const token: RecoveryToken = {
+    id: `rcv-${crypto.randomUUID().slice(0, 8)}`,
+    userId,
+    tokenHash: hashOpaqueToken(rawToken),
+    expiresAt: new Date(Date.now() + ttlHours * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date().toISOString(),
+  };
+  store.recoveryTokens.push(token);
+  save(store);
+  return { token, rawToken };
+}
+
+export async function consumeRecoveryToken(input: {
+  rawToken: string;
+  newPassword: string;
+}): Promise<{ ok: true; user: User } | { ok: false; error: string }> {
+  if (input.newPassword.length < 12) {
+    return { ok: false, error: "Password must be at least 12 characters" };
+  }
+  const store = getStore();
+  const hash = hashOpaqueToken(input.rawToken);
+  const token = store.recoveryTokens.find((t) => t.tokenHash === hash);
+  if (!token) return { ok: false, error: "Invalid recovery link" };
+  if (token.usedAt) return { ok: false, error: "Recovery link already used" };
+  if (Date.parse(token.expiresAt) <= Date.now()) {
+    return { ok: false, error: "Recovery link expired" };
+  }
+  const user = store.users.find((u) => u.id === token.userId);
+  if (!user) return { ok: false, error: "Invalid recovery link" };
+  user.password = await hashPassword(input.newPassword);
+  token.usedAt = new Date().toISOString();
+  save(store);
+  return { ok: true, user };
 }
 
 export * from "./types.js";

@@ -3,16 +3,23 @@ import type { Context } from "hono";
 import { cors } from "hono/cors";
 import {
   BusinessSlugConflictError,
+  ClaimConflictError,
   addBooking,
   addClaim,
   addReview,
   authenticate,
+  consumeRecoveryToken,
   createBusiness,
+  createInvite,
+  createRecoveryToken,
+  decideClaim,
+  findValidInvite,
   getBusiness,
   getBusinessById,
   getIslandBySlug,
   getPlace,
   getStore,
+  getUserByEmail,
   getVendorByBusinessId,
   getVendorById,
   listBookings,
@@ -21,12 +28,17 @@ import {
   listIslands,
   listPlaces,
   listReviews,
+  redeemInvite,
   resolveBusinessContext,
-  updateClaim,
   upsertBusiness,
   upsertVendor,
 } from "@nusa/db";
-import { CATEGORIES, parseHost, toSlug } from "@nusa/shared";
+import {
+  CATEGORIES,
+  parseHost,
+  safePortalReturnTo,
+  toSlug,
+} from "@nusa/shared";
 import {
   type AuthVariables,
   issueToken,
@@ -244,7 +256,227 @@ app.post(
   },
 );
 
+/** Invitation-based registration — launch path (no open self-signup). */
+app.post(
+  "/v1/auth/register",
+  rateLimit({ id: "register-ip", limit: LOGIN_MAX, windowMs: LOGIN_WINDOW_MS }),
+  async (c) => {
+    let body: { token?: string; name?: string; password?: string };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    if (!body.token || !body.name || !body.password) {
+      return c.json({ error: "token, name, and password are required" }, 400);
+    }
+    const result = await redeemInvite({
+      rawToken: body.token,
+      name: body.name,
+      password: body.password,
+    });
+    if (!result.ok) return c.json({ error: result.error }, 400);
+    const { password: _, ...safe } = result.user;
+    const returnTo = result.invite.businessId
+      ? `/claim?businessId=${encodeURIComponent(result.invite.businessId)}`
+      : "/";
+    return c.json(
+      {
+        user: safe,
+        token: issueToken(result.user),
+        returnTo: safePortalReturnTo(returnTo),
+      },
+      201,
+    );
+  },
+);
+
+app.get("/v1/auth/invite/:token", async (c) => {
+  const invite = findValidInvite(c.req.param("token"));
+  if (!invite) return c.json({ error: "Invalid or expired invitation" }, 404);
+  let listing: { id: string; name: string; place?: string; island?: string } | undefined;
+  if (invite.businessId) {
+    const ctx = resolveBusinessContext(invite.businessId);
+    if (ctx) {
+      listing = {
+        id: ctx.business.id,
+        name: ctx.business.name,
+        place: ctx.place.name,
+        island: ctx.island.name,
+      };
+    }
+  }
+  return c.json({
+    email: invite.email,
+    role: invite.role,
+    expiresAt: invite.expiresAt,
+    listing,
+  });
+});
+
+/**
+ * Password recovery request. Always returns 200 for valid-shaped emails so
+ * callers cannot probe account existence. Delivery is operator-mediated at
+ * launch (token returned only when NUSA_EXPOSE_RECOVERY_TOKENS=1).
+ */
+app.post(
+  "/v1/auth/recovery/request",
+  rateLimit({ id: "recovery-ip", limit: LOGIN_MAX, windowMs: LOGIN_WINDOW_MS }),
+  async (c) => {
+    let body: { email?: string };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    const email = (body.email || "").trim().toLowerCase();
+    if (!email.includes("@")) {
+      return c.json({ error: "email required" }, 400);
+    }
+    const perEmail = consume(
+      `recovery-email:${loginEmailKey(email)}`,
+      LOGIN_EMAIL_MAX,
+      LOGIN_WINDOW_MS,
+    );
+    if (!perEmail.allowed) {
+      c.header("Retry-After", String(perEmail.retryAfter));
+      return c.json({ error: "Too many requests" }, 429);
+    }
+
+    const user = getUserByEmail(email);
+    const expose =
+      process.env.NUSA_EXPOSE_RECOVERY_TOKENS === "1" ||
+      process.env.NODE_ENV !== "production";
+    let recoveryToken: string | undefined;
+    if (user) {
+      const issued = createRecoveryToken(user.id);
+      recoveryToken = issued.rawToken;
+      console.log(
+        `[recovery] token issued for user ${user.id} (email redacted); expose=${expose}`,
+      );
+    }
+    return c.json({
+      ok: true,
+      delivery: expose ? "response" : "operator",
+      message:
+        "If an account exists for that email, a recovery link was issued for an operator to deliver.",
+      ...(expose && recoveryToken
+        ? {
+            recoveryToken,
+            recoveryPath: `/recovery/confirm?token=${encodeURIComponent(recoveryToken)}`,
+          }
+        : {}),
+    });
+  },
+);
+
+app.post(
+  "/v1/auth/recovery/confirm",
+  rateLimit({ id: "recovery-confirm-ip", limit: LOGIN_MAX, windowMs: LOGIN_WINDOW_MS }),
+  async (c) => {
+    let body: { token?: string; password?: string };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    if (!body.token || !body.password) {
+      return c.json({ error: "token and password are required" }, 400);
+    }
+    const result = await consumeRecoveryToken({
+      rawToken: body.token,
+      newPassword: body.password,
+    });
+    if (!result.ok) return c.json({ error: result.error }, 400);
+    const { password: _, ...safe } = result.user;
+    return c.json({ user: safe, token: issueToken(result.user) });
+  },
+);
+
+app.post("/v1/invites", requireRole("admin"), async (c) => {
+  let body: {
+    email?: string;
+    role?: "owner" | "vendor" | "field_agent" | "admin";
+    businessId?: string;
+    ttlHours?: number;
+  };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Malformed JSON" }, 400);
+  }
+  const email = (body.email || "").trim().toLowerCase();
+  if (!email.includes("@")) return c.json({ error: "email required" }, 400);
+  if (body.businessId && !getBusinessById(body.businessId)) {
+    return c.json({ error: "Business not found" }, 404);
+  }
+  const role = body.role ?? "owner";
+  const { invite, rawToken } = createInvite({
+    email,
+    role,
+    createdByUserId: c.get("user").id,
+    businessId: body.businessId,
+    ttlHours: body.ttlHours,
+  });
+  return c.json(
+    {
+      invite: {
+        id: invite.id,
+        email: invite.email,
+        role: invite.role,
+        expiresAt: invite.expiresAt,
+        businessId: invite.businessId,
+      },
+      // Operator delivers this out-of-band (email/WhatsApp). Not a public secret
+      // channel — treat like a password reset link.
+      token: rawToken,
+      registerPath: `/register?token=${encodeURIComponent(rawToken)}`,
+    },
+    201,
+  );
+});
+
+/** Operator-mediated recovery when production does not expose tokens publicly. */
+app.post("/v1/admin/recovery-tokens", requireRole("admin"), async (c) => {
+  let body: { email?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Malformed JSON" }, 400);
+  }
+  const user = getUserByEmail(body.email || "");
+  if (!user) return c.json({ error: "User not found" }, 404);
+  const { rawToken } = createRecoveryToken(user.id);
+  return c.json({
+    userId: user.id,
+    email: user.email,
+    recoveryToken: rawToken,
+    recoveryPath: `/recovery/confirm?token=${encodeURIComponent(rawToken)}`,
+  });
+});
+
 app.get("/v1/me", requireAuth, (c) => c.json({ user: c.get("user") }));
+
+/** Claim UI helper: show listing name/place without requiring a raw ID only. */
+app.get("/v1/claim-context/:businessId", requireAuth, (c) => {
+  const ctx = resolveBusinessContext(c.req.param("businessId"));
+  if (!ctx || !isPubliclyListed(ctx.business)) {
+    return c.json({ error: "Business not found" }, 404);
+  }
+  return c.json({
+    business: {
+      id: ctx.business.id,
+      name: ctx.business.name,
+      slug: ctx.business.slug,
+      status: ctx.business.status,
+    },
+    place: { name: ctx.place.name, slug: ctx.place.slug },
+    island: { name: ctx.island.name, slug: ctx.island.slug },
+    returnTo: safePortalReturnTo(
+      `/claim?businessId=${encodeURIComponent(ctx.business.id)}`,
+    ),
+  });
+});
 
 app.get("/v1/portal/listings", requireAuth, (c) => {
   const user = c.get("user");
@@ -349,17 +581,36 @@ app.post(
   }),
   async (c) => {
     const user = c.get("user");
-    const body = await c.req.json<{ businessId: string; note?: string }>();
-    if (!getBusinessById(body.businessId)) {
+    let body: { businessId?: string; note?: string };
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    if (!body.businessId || typeof body.businessId !== "string") {
+      return c.json({ error: "businessId required" }, 400);
+    }
+    const business = getBusinessById(body.businessId);
+    if (!business || !isPubliclyListed(business)) {
       return c.json({ error: "Business not found" }, 404);
     }
-    // The claimant is always the caller — never taken from the request body.
-    const claim = addClaim({
-      businessId: body.businessId,
-      claimantUserId: user.id,
-      note: body.note,
-    });
-    return c.json({ claim }, 201);
+    if (body.note && body.note.length > 4000) {
+      return c.json({ error: "note is too long (max 4000)" }, 400);
+    }
+    try {
+      // The claimant is always the caller — never taken from the request body.
+      const claim = addClaim({
+        businessId: business.id,
+        claimantUserId: user.id,
+        note: body.note?.trim() || undefined,
+      });
+      return c.json({ claim }, 201);
+    } catch (err) {
+      if (err instanceof ClaimConflictError) {
+        return c.json({ error: err.message }, 409);
+      }
+      throw err;
+    }
   },
 );
 
@@ -375,13 +626,28 @@ app.get("/v1/claims", requireAuth, (c) => {
 });
 
 app.post("/v1/claims/:id/decide", requireRole("admin"), async (c) => {
-  const body = await c.req.json<{ status: "approved" | "rejected" }>();
+  let body: { status?: "approved" | "rejected"; reason?: string };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Malformed JSON" }, 400);
+  }
   if (body.status !== "approved" && body.status !== "rejected") {
     return c.json({ error: "status must be approved or rejected" }, 400);
   }
-  const claim = updateClaim(c.req.param("id"), body.status);
-  if (!claim) return c.json({ error: "Not found" }, 404);
-  return c.json({ claim });
+  if (body.reason && body.reason.length > 2000) {
+    return c.json({ error: "reason is too long (max 2000)" }, 400);
+  }
+  const result = decideClaim(c.req.param("id"), {
+    status: body.status,
+    actorUserId: c.get("user").id,
+    reason: body.reason,
+  });
+  if (!result.ok) {
+    const status = result.code === "not_found" ? 404 : 409;
+    return c.json({ error: result.error }, status);
+  }
+  return c.json({ claim: result.claim });
 });
 
 app.post(

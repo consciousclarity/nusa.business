@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { api, type User } from "../api";
+import { safePortalReturnTo } from "@nusa/shared";
 
 type DemoLogin = {
   email: string;
@@ -8,10 +9,6 @@ type DemoLogin = {
   hint: string;
 };
 
-/**
- * Keep demo strings inside a DEV-only branch so production Vite builds can
- * eliminate them. Staging may opt in with VITE_NUSA_DEMO_LOGIN=true.
- */
 function demoLoginConfig(): DemoLogin | null {
   if (
     import.meta.env.DEV ||
@@ -29,14 +26,33 @@ function demoLoginConfig(): DemoLogin | null {
 const demoLogin = demoLoginConfig();
 
 export function LoginPage({
+  user,
   onLogin,
 }: {
+  user: User | null;
   onLogin: (s: { user: User; token: string }) => void;
 }) {
   const nav = useNavigate();
+  const [params] = useSearchParams();
+  const returnTo = safePortalReturnTo(params.get("returnTo"));
+  const businessId = (() => {
+    try {
+      const u = new URL(returnTo, "http://portal.local");
+      return u.pathname === "/claim"
+        ? u.searchParams.get("businessId") || ""
+        : "";
+    } catch {
+      return "";
+    }
+  })();
+
   const [email, setEmail] = useState(demoLogin?.email ?? "");
   const [password, setPassword] = useState(demoLogin?.password ?? "");
   const [error, setError] = useState("");
+
+  if (user) {
+    return <Navigate to={returnTo} replace />;
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,7 +63,7 @@ export function LoginPage({
         body: JSON.stringify({ email, password }),
       });
       onLogin(data);
-      nav("/");
+      nav(returnTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     }
@@ -56,6 +72,11 @@ export function LoginPage({
   return (
     <div className="card" style={{ maxWidth: 420 }}>
       <h1>Sign in</h1>
+      {businessId && (
+        <p className="muted">
+          After sign-in you will return to claim the selected listing.
+        </p>
+      )}
       {demoLogin && <p className="muted">{demoLogin.hint}</p>}
       <form className="stack" onSubmit={submit}>
         <label>
@@ -79,6 +100,13 @@ export function LoginPage({
         {error && <p className="error">{error}</p>}
         <button type="submit">Login</button>
       </form>
+      <p className="muted" style={{ marginTop: "1rem" }}>
+        <Link to={`/register${params.get("returnTo") ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`}>
+          Have an invite?
+        </Link>
+        {" · "}
+        <Link to="/recovery">Forgot password?</Link>
+      </p>
     </div>
   );
 }

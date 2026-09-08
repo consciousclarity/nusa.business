@@ -24,6 +24,8 @@ export function createReferenceStore(): DataStore {
     reviews: [],
     bookings: [],
     vendors: [],
+    invites: [],
+    recoveryTokens: [],
   };
 }
 
@@ -619,5 +621,7 @@ export function createSeed(): DataStore {
     reviews,
     bookings: [],
     vendors,
+    invites: [],
+    recoveryTokens: [],
   };
 }

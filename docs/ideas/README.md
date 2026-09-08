@@ -30,6 +30,7 @@ You do not need to remember to file things. When you brainstorm with Cursor (“
 
 | Idea | Status | Updated |
 |---|---|---|
+| [Going deeper than place.island hosts](./2026-09-08-geo-deeper-than-host.md) | `exploring` | 2026-09-08 |
 | [Monetization & advertising (Nusa-adapted)](./2026-09-07-monetization-passive-income.md) | `exploring` | 2026-09-07 |
 | [Shared brainstorm memory (multi-tool)](./2026-09-07-shared-brainstorm-memory.md) | `decided` | 2026-09-07 |
 | [Complete listing profile](./2026-09-07-complete-listing-profile.md) | `exploring` | 2026-09-07 |

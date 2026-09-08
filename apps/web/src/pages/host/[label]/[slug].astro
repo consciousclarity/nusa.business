@@ -3,6 +3,7 @@ import Base from "../../../layouts/Base.astro";
 import { api, browserApiOrigin } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
 import { t, type Locale } from "../../../i18n/ui";
+import { telHref, whatsappHref } from "@nusa/shared";
 
 const label = Astro.params.label!;
 const slug = Astro.params.slug!;
@@ -57,6 +58,9 @@ const stamp =
     : data.business.status === "published"
       ? null
       : null;
+
+const wa = whatsappHref(data.business.whatsapp);
+const phoneLink = telHref(data.business.phone);
 ---
 <Base
   title={`${data.business.name} — ${placeMeta.place.name}`}
@@ -90,13 +94,27 @@ const stamp =
       {data.business.phone && (
         <>
           <dt>Phone</dt>
-          <dd>{data.business.phone}</dd>
+          <dd>
+            {phoneLink ? (
+              <a href={phoneLink}>{data.business.phone}</a>
+            ) : (
+              data.business.phone
+            )}
+          </dd>
         </>
       )}
       {data.business.whatsapp && (
         <>
           <dt>WhatsApp</dt>
-          <dd>{data.business.whatsapp}</dd>
+          <dd>
+            {wa ? (
+              <a href={wa} rel="noopener noreferrer">
+                {data.business.whatsapp}
+              </a>
+            ) : (
+              data.business.whatsapp
+            )}
+          </dd>
         </>
       )}
       <dt>Booking</dt>
@@ -106,7 +124,20 @@ const stamp =
     </dl>
 
     <p class="actions">
-      <a class="cta" href={`${portal}/claim?businessId=${data.business.id}`}>
+      {wa && (
+        <a class="cta" href={wa} rel="noopener noreferrer">
+          {t(locale, "chatWhatsApp")}
+        </a>
+      )}
+      {phoneLink && (
+        <a class={`cta${wa ? " secondary" : ""}`} href={phoneLink}>
+          {t(locale, "call")}
+        </a>
+      )}
+      <a
+        class={`cta${wa || phoneLink ? " secondary" : ""}`}
+        href={`${portal}/claim?businessId=${data.business.id}`}
+      >
         {t(locale, "claimThis")}
       </a>
       {data.business.bookingMode !== "none" && (

@@ -75,7 +75,7 @@ EOF
 
 If a match is confirmed **demo** (weak/known password, no real ownership):
 
-1. Take a backup of `store.json`.
+1. Take a backup of `store.json` (and `store.json.bak` if present).
 2. Disable or remove that user only after confirming no legitimate ownership.
 3. Rotate `NUSA_AUTH_SECRET` to invalidate sessions.
 4. Re-check bookings/claims tied to that `user.id`.
@@ -84,5 +84,7 @@ Password hashing does **not** make published demo passwords safe.
 
 ## Rollback
 
-Restore the previous `store.json` from backup and restart the API container.
-Unset any unintended `NUSA_ALLOW_DEMO_SEED`.
+Restore the previous `store.json` (or `store.json.bak`) from backup and restart
+the API container. Unset any unintended `NUSA_ALLOW_DEMO_SEED`.
+
+Writes use temp-file + `fsync` + `rename`; see [data-model.md](../architecture/data-model.md).

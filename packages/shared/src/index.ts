@@ -172,6 +172,12 @@ export {
 } from "./api-origins.js";
 
 export {
+  parseCorsOriginAllowlist,
+  resolveCorsAllowOrigin,
+  type CorsOriginOptions,
+} from "./cors-origins.js";
+
+export {
   businessIdFromReturnTo,
   safePortalReturnTo,
 } from "./portal-return.js";

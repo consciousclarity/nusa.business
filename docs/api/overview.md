@@ -8,7 +8,8 @@ All product routes are under `/v1`. Health: `GET /health`.
 
 - JSON request/response  
 - Errors: `{ "error": "message" }` with 4xx/5xx  
-- CORS enabled for local web/portal origins  
+- CORS enabled for local web/portal origins and `https://*.nusa.business`
+  (optional `NUSA_CORS_ORIGINS`); foreign Origins are not reflected  
 
 ## Resource groups
 

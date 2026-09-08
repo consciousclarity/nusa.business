@@ -44,6 +44,7 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 - [Monorepo layout](./engineering/monorepo.md)
 - [Local development](./getting-started.md)
 - [Testing](./engineering/testing.md)
+- [Public performance](./engineering/performance.md)
 - [Coding standards](./engineering/standards.md)
 
 ### API

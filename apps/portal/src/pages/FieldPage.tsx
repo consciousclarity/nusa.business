@@ -74,8 +74,8 @@ export function FieldPage({ user }: { user: User }) {
       <h1>Field ops registration</h1>
       {!allowed && (
         <p className="error">
-          Sign in as field agent (agent@nusa.business / agent123) to register
-          businesses on the ground.
+          Sign in with a field agent or admin account to register businesses on
+          the ground.
         </p>
       )}
       <div className="card">

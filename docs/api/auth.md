@@ -51,7 +51,7 @@ token is passed explicitly.
 | Route | Access |
 |---|---|
 | `GET /health`, `/v1/meta/*`, `/v1/host`, `/v1/tls-check` | public |
-| `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public |
+| `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public — listing payloads omit ownership internals; drafts excluded; listing detail never returns bookings |
 | `POST /v1/businesses/:id/reviews` | public — visitors review without an account |
 | `POST /v1/businesses/:id/bookings` | public — customers book without an account |
 | `GET /v1/me` | any authenticated user |
@@ -96,8 +96,9 @@ Two things keep an existing store from sitting at rest in plaintext:
 A login for an unknown email still performs one hash, so a missing account and
 a wrong password take comparable time.
 
-The demo credentials in `seed-data.ts` remain readable on purpose — they are
-fixtures, and they are hashed as soon as they reach the store.
+The demo credentials in `seed-data.ts` remain readable on purpose for **local**
+fixtures, and they are hashed as soon as they reach the store. Production does
+not auto-create them — see [demo-bootstrap.md](../ops/demo-bootstrap.md).
 
 ## Rate limiting
 

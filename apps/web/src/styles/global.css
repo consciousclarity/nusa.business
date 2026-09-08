@@ -21,6 +21,13 @@
   --step-1: 1rem;
   --step-2: 1.25rem;
   --step-3: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
+
+  /* Fluid side gutter: tighter on phones, ~1.25rem on wide viewports */
+  --page-gutter: clamp(0.85rem, 3.5vw, 1.25rem);
+  --page-measure: min(
+    78ch,
+    calc(100% - (2 * var(--page-gutter)) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))
+  );
 }
 
 @media (prefers-color-scheme: dark) {
@@ -68,13 +75,17 @@ body {
   font-size: var(--step-0);
   line-height: 1.55;
   font-variant-numeric: tabular-nums;
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  overflow-x: clip;
 }
 
 body > header,
 body > .crumbs,
 body > main,
 body > footer {
-  width: min(78ch, calc(100% - 2.5rem));
+  width: var(--page-measure);
   margin-inline: auto;
 }
 
@@ -318,6 +329,11 @@ ol {
 }
 
 .index-list > li {
+  display: grid;
+  grid-template-columns: 2.5ch minmax(0, 1fr) auto;
+  column-gap: 0.65rem;
+  row-gap: 0.25rem;
+  align-items: baseline;
   margin: 0;
   padding: 0.55rem 0;
   border-bottom: 1px dotted var(--rule);
@@ -327,11 +343,9 @@ ol {
   border-top: 1px dotted var(--rule);
 }
 
+/* Children participate in the li grid so desc aligns to the name column */
 .index-row {
-  display: grid;
-  grid-template-columns: 2.5ch 1fr auto;
-  gap: 0.65rem;
-  align-items: baseline;
+  display: contents;
 }
 
 .index-row .n {
@@ -342,6 +356,7 @@ ol {
 .index-row .name {
   color: var(--ink);
   text-decoration: none;
+  overflow-wrap: anywhere;
 }
 
 .index-row a.name:visited {
@@ -357,6 +372,7 @@ ol {
   color: var(--ink-faint);
   font-size: var(--step--1);
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .index-desc {
@@ -364,10 +380,9 @@ ol {
   font-size: 0.95rem;
   line-height: 1.55;
   color: var(--ink-soft);
-  margin: 0.25rem 0 0;
+  margin: 0;
   max-width: 66ch;
   grid-column: 2 / -1;
-  padding-left: calc(2.5ch + 0.65rem);
 }
 
 /* —— Status stamp —— */
@@ -572,13 +587,27 @@ table.data caption {
 
 .site-footer a {
   color: var(--ink-soft);
+  overflow-wrap: anywhere;
 }
 
 .site-footer a:hover {
   color: var(--link);
 }
 
+/* Narrow / phone — Indonesia mobile-first browsing */
 @media (max-width: 40rem) {
+  .site-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.65rem;
+  }
+
+  .site-header nav {
+    width: 100%;
+    justify-content: flex-start;
+    row-gap: 0.5rem;
+  }
+
   .resolver dl,
   .kv {
     grid-template-columns: 1fr;
@@ -595,8 +624,8 @@ table.data caption {
     margin-top: 0;
   }
 
-  .index-row {
-    grid-template-columns: 2.5ch 1fr;
+  .index-list > li {
+    grid-template-columns: 2.5ch minmax(0, 1fr);
   }
 
   .index-row .rhs {
@@ -605,7 +634,32 @@ table.data caption {
   }
 
   .index-desc {
-    padding-left: calc(2.5ch + 0.65rem);
+    grid-column: 2 / -1;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .actions .cta,
+  .actions button {
+    width: 100%;
+    text-align: center;
+  }
+
+  .cta,
+  button {
+    min-height: 2.75rem;
+    padding-inline: 1rem;
+  }
+
+  /* ≥16px prevents iOS focus-zoom on form fields */
+  input,
+  select,
+  textarea {
+    max-width: none;
+    font-size: 1rem;
   }
 }
 

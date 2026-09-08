@@ -39,6 +39,9 @@ See [migration-bali.md](./migration-bali.md).
 
 ## Demo accounts
 
+Local/dev only — see [ops/demo-bootstrap.md](./ops/demo-bootstrap.md). Production
+builds do not embed these, and production storage does not auto-create them.
+
 | Email | Password | Role |
 |---|---|---|
 | admin@nusa.business | admin123 | admin |

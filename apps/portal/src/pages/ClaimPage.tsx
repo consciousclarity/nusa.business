@@ -14,6 +14,15 @@ type Claim = {
   claimantUserId: string;
   status: string;
   note?: string;
+  decidedByUserId?: string;
+  decidedAt?: string;
+  decisionReason?: string;
+};
+
+type ClaimContext = {
+  business: { id: string; name: string; status: string };
+  place: { name: string };
+  island: { name: string };
 };
 
 export function ClaimPage({ user }: { user: User }) {
@@ -22,14 +31,29 @@ export function ClaimPage({ user }: { user: User }) {
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [businessId, setBusinessId] = useState(preset);
+  const [context, setContext] = useState<ClaimContext | null>(null);
   const [note, setNote] = useState("");
+  const [reason, setReason] = useState("");
   const [claims, setClaims] = useState<Claim[]>([]);
   const [msg, setMsg] = useState("");
+  const [error, setError] = useState("");
 
   const selected = useMemo(
     () => hits.find((h) => h.business.id === businessId),
     [hits, businessId],
   );
+
+  const displayName =
+    context?.business.name ||
+    selected?.business.name ||
+    (businessId ? `Listing ${businessId}` : "");
+
+  const displayWhere =
+    context
+      ? `${context.place.name}, ${context.island.name}`
+      : selected?.place && selected?.island
+        ? `${selected.place.name}, ${selected.island.name}`
+        : "";
 
   async function refreshClaims() {
     const data = await api<{ claims: Claim[] }>("/v1/claims");
@@ -38,8 +62,21 @@ export function ClaimPage({ user }: { user: User }) {
 
   useEffect(() => {
     refreshClaims().catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
     if (preset) setBusinessId(preset);
   }, [preset]);
+
+  useEffect(() => {
+    if (!businessId) {
+      setContext(null);
+      return;
+    }
+    api<ClaimContext>(`/v1/claim-context/${encodeURIComponent(businessId)}`)
+      .then(setContext)
+      .catch(() => setContext(null));
+  }, [businessId]);
 
   async function search(e: React.FormEvent) {
     e.preventDefault();
@@ -52,29 +89,43 @@ export function ClaimPage({ user }: { user: User }) {
   async function submitClaim(e: React.FormEvent) {
     e.preventDefault();
     setMsg("");
-    await api("/v1/claims", {
-      method: "POST",
-      body: JSON.stringify({
-        businessId,
-        claimantUserId: user.id,
-        note,
-      }),
-    });
-    setMsg("Claim submitted — free, pending admin approval.");
-    await refreshClaims();
+    setError("");
+    try {
+      await api("/v1/claims", {
+        method: "POST",
+        body: JSON.stringify({
+          businessId,
+          note,
+        }),
+      });
+      setMsg("Claim submitted — free, pending admin approval. You cannot edit the listing until approved.");
+      await refreshClaims();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Claim failed");
+    }
   }
 
   async function decide(id: string, status: "approved" | "rejected") {
-    await api(`/v1/claims/${id}/decide`, {
-      method: "POST",
-      body: JSON.stringify({ status }),
-    });
-    await refreshClaims();
+    setError("");
+    try {
+      await api(`/v1/claims/${id}/decide`, {
+        method: "POST",
+        body: JSON.stringify({ status, reason: reason || undefined }),
+      });
+      setReason("");
+      await refreshClaims();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Decision failed");
+    }
   }
 
   return (
     <div>
       <h1>Claim listing</h1>
+      <p className="muted">
+        Claims stay pending until an admin approves. Approval is required before
+        you can edit the listing. Rejected claims can be resubmitted with new evidence.
+      </p>
       <div className="card">
         <form className="stack" onSubmit={search}>
           <label>
@@ -106,31 +157,45 @@ export function ClaimPage({ user }: { user: User }) {
 
       <div className="card">
         <form className="stack" onSubmit={submitClaim}>
-          <label>
-            Business ID
-            <input
-              required
-              value={businessId}
-              onChange={(e) => setBusinessId(e.target.value)}
-            />
-          </label>
-          {selected && (
-            <p className="muted">Selected: {selected.business.name}</p>
+          {displayName ? (
+            <p>
+              Claiming <strong>{displayName}</strong>
+              {displayWhere ? ` — ${displayWhere}` : ""}
+            </p>
+          ) : (
+            <p className="muted">Search and select a listing to claim.</p>
           )}
+          <input type="hidden" value={businessId} readOnly />
           <label>
-            Note
+            Evidence for operators (kept private)
             <textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="I am the owner / manager…"
+              placeholder="I am the owner / manager… include WhatsApp or docs reference"
+              required
             />
           </label>
-          <button type="submit">Submit free claim</button>
+          <button type="submit" disabled={!businessId}>
+            Submit free claim
+          </button>
           {msg && <p className="success">{msg}</p>}
+          {error && <p className="error">{error}</p>}
         </form>
       </div>
 
       <h2>Claims</h2>
+      {user.role === "admin" && (
+        <div className="card">
+          <label>
+            Decision reason (optional, recorded on approve/reject)
+            <input
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Verified WhatsApp match / insufficient evidence"
+            />
+          </label>
+        </div>
+      )}
       {claims.map((c) => (
         <div className="card" key={c.id}>
           <div className="row">
@@ -141,6 +206,13 @@ export function ClaimPage({ user }: { user: User }) {
             Business {c.businessId} · claimant {c.claimantUserId}
           </p>
           {c.note && <p>{c.note}</p>}
+          {c.decidedAt && (
+            <p className="muted">
+              Decided {c.decidedAt}
+              {c.decidedByUserId ? ` by ${c.decidedByUserId}` : ""}
+              {c.decisionReason ? ` — ${c.decisionReason}` : ""}
+            </p>
+          )}
           {user.role === "admin" && c.status === "pending" && (
             <div className="row">
               <button type="button" onClick={() => decide(c.id, "approved")}>

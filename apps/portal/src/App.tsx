@@ -1,13 +1,37 @@
-import { Link, Navigate, Route, Routes } from "react-router";
+import { Link, Navigate, Route, Routes, useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import { loadSession, saveSession, type User } from "./api";
 import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+import {
+  RecoveryConfirmPage,
+  RecoveryRequestPage,
+} from "./pages/RecoveryPages";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ListingsPage } from "./pages/ListingsPage";
 import { ClaimPage } from "./pages/ClaimPage";
 import { FieldPage } from "./pages/FieldPage";
 import { BookingsPage } from "./pages/BookingsPage";
 import { VendorPage } from "./pages/VendorPage";
+import { InvitesPage } from "./pages/InvitesPage";
+
+function RequireAuth({
+  user,
+  children,
+}: {
+  user: User | null;
+  children: React.ReactNode;
+}) {
+  const location = useLocation();
+  if (user) return children;
+  const returnTo = `${location.pathname}${location.search}`;
+  return (
+    <Navigate
+      to={`/login?returnTo=${encodeURIComponent(returnTo)}`}
+      replace
+    />
+  );
+}
 
 export function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -39,6 +63,7 @@ export function App() {
           <Link to="/field">Field ops</Link>
           <Link to="/bookings">Bookings</Link>
           <Link to="/vendor">Vendor shop</Link>
+          {user?.role === "admin" && <Link to="/invites">Invites</Link>}
           {user ? (
             <button type="button" onClick={onLogout}>
               Log out ({user.role})
@@ -51,29 +76,67 @@ export function App() {
 
       <Routes>
         <Route path="/login" element={<LoginPage onLogin={onLogin} />} />
+        <Route path="/register" element={<RegisterPage onLogin={onLogin} />} />
+        <Route path="/recovery" element={<RecoveryRequestPage />} />
+        <Route
+          path="/recovery/confirm"
+          element={<RecoveryConfirmPage onLogin={onLogin} />}
+        />
         <Route
           path="/"
-          element={user ? <DashboardPage user={user} /> : <Navigate to="/login" replace />}
+          element={
+            <RequireAuth user={user}>
+              <DashboardPage user={user!} />
+            </RequireAuth>
+          }
         />
         <Route
           path="/listings"
-          element={user ? <ListingsPage user={user} /> : <Navigate to="/login" replace />}
+          element={
+            <RequireAuth user={user}>
+              <ListingsPage user={user!} />
+            </RequireAuth>
+          }
         />
         <Route
           path="/claim"
-          element={user ? <ClaimPage user={user} /> : <Navigate to="/login" replace />}
+          element={
+            <RequireAuth user={user}>
+              <ClaimPage user={user!} />
+            </RequireAuth>
+          }
         />
         <Route
           path="/field"
-          element={user ? <FieldPage user={user} /> : <Navigate to="/login" replace />}
+          element={
+            <RequireAuth user={user}>
+              <FieldPage user={user!} />
+            </RequireAuth>
+          }
         />
         <Route
           path="/bookings"
-          element={user ? <BookingsPage /> : <Navigate to="/login" replace />}
+          element={
+            <RequireAuth user={user}>
+              <BookingsPage />
+            </RequireAuth>
+          }
         />
         <Route
           path="/vendor"
-          element={user ? <VendorPage user={user} /> : <Navigate to="/login" replace />}
+          element={
+            <RequireAuth user={user}>
+              <VendorPage user={user!} />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/invites"
+          element={
+            <RequireAuth user={user}>
+              <InvitesPage user={user!} />
+            </RequireAuth>
+          }
         />
       </Routes>
     </div>

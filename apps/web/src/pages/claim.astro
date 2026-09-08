@@ -24,6 +24,7 @@ const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 
   <p class="actions">
     <a class="cta" href={`${portal}/claim`}>Open claim portal</a>
-    <a class="cta secondary" href={`${portal}/login`}>Owner login</a>
+    <a class="cta secondary" href={`${portal}/login?returnTo=${encodeURIComponent("/claim")}`}>Owner login</a>
+    <a class="cta secondary" href={`${portal}/register`}>Have an invite?</a>
   </p>
 </Base>

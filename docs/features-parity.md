@@ -11,7 +11,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | Nested hosts `place.island.nusa.business` | done | `@nusa/shared` `parseHost` + `/host/` dev routes |
 | Search / filters | partial | API `/v1/search` (Meilisearch wired in Docker, not yet indexed) |
 | Map search | planned | MapLibre + PostGIS (schema outlined) |
-| Claim listing | done | Portal `/claim` + API `/v1/claims` |
+| Claim listing | done | Portal `/claim` + API `/v1/claims` (invite onboarding, returnTo, decision audit) |
 | Multi-criteria reviews | done | service/value/location/cleanliness on listing + API |
 | Owner dashboard | done | Portal listings CRUD |
 | Opening hours / gallery / FAQ fields | partial | Hours seeded; gallery/FAQ schema present |

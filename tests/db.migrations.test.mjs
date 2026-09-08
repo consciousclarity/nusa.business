@@ -46,7 +46,10 @@ describe("store migrations", () => {
     assert.deepEqual(applied, [
       "2026-08-rename-jawa-to-java",
       "2026-08-rename-sumatera-to-sumatra",
+      "2026-09-onboarding-collections",
     ]);
+    assert.deepEqual(store.invites, []);
+    assert.deepEqual(store.recoveryTokens, []);
     const island = store.islands.find((i) => i.slug === "java");
     assert.ok(island, "expected an island with slug java");
     assert.equal(island.id, "isl-java");
@@ -127,6 +130,8 @@ describe("store migrations", () => {
       if (p.islandId === "isl-jawa") p.islandId = "isl-java";
       if (p.islandId === "isl-sumatera") p.islandId = "isl-sumatra";
     }
+    store.invites = [];
+    store.recoveryTokens = [];
     assert.deepEqual(migrateStore(store), []);
   });
 });

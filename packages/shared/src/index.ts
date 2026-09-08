@@ -170,3 +170,8 @@ export {
   resolveSsrApiOrigin,
   stripTrailingSlash,
 } from "./api-origins.js";
+
+export {
+  businessIdFromReturnTo,
+  safePortalReturnTo,
+} from "./portal-return.js";

@@ -69,6 +69,25 @@ const MIGRATIONS: Migration[] = [
         { id: "isl-sumatra", slug: "sumatra", name: "Sumatra" },
       ),
   },
+  {
+    id: "2026-09-onboarding-collections",
+    apply: (store) => {
+      let changed = false;
+      const s = store as DataStore & {
+        invites?: DataStore["invites"];
+        recoveryTokens?: DataStore["recoveryTokens"];
+      };
+      if (!Array.isArray(s.invites)) {
+        s.invites = [];
+        changed = true;
+      }
+      if (!Array.isArray(s.recoveryTokens)) {
+        s.recoveryTokens = [];
+        changed = true;
+      }
+      return changed;
+    },
+  },
 ];
 
 /**

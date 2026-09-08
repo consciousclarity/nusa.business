@@ -12,6 +12,7 @@
 - [Docker Compose](./docker.md)  
 - [Environments](./environments.md)  
 - [Security](./security.md)  
+- [Release decision (C14)](./release-decision.md)  
 - [Code review & approval policy](./code-review.md)  
 
 ## Cloudflare

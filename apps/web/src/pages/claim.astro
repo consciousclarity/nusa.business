@@ -1,8 +1,17 @@
 ---
 import Base from "../layouts/Base.astro";
+import { absoluteUrl } from "../lib/seo";
+
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
+const claimUrl = absoluteUrl(Astro.request, "/claim");
+const claimDescription =
+  "Field teams register businesses for free. Owners claim listings at no cost — customize details, reply to reviews, and optionally open a vendor shop.";
 ---
-<Base title="Claim a listing — nusa.business">
+<Base
+  title="Claim a listing — nusa.business"
+  description={claimDescription}
+  canonical={claimUrl}
+>
   <section class="lede">
     <h1>Claim a listing</h1>
     <p class="prose">

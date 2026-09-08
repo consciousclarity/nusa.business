@@ -1,25 +1,56 @@
 ---
 import "../styles/global.css";
 import { nationHref } from "../lib/links";
+import {
+  absoluteUrl,
+  type JsonLd,
+} from "../lib/seo";
 
 interface Props {
   title: string;
   description?: string;
   crumb?: { label: string; href?: string }[];
+  /** Absolute canonical URL; defaults to the current request URL. */
+  canonical?: string;
+  ogType?: string;
+  jsonLd?: JsonLd;
 }
 
-const { title, description, crumb = [] } = Astro.props;
+const { title, description, crumb = [], ogType = "website", jsonLd } =
+  Astro.props;
 const portalUrl = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 const homeHref = nationHref(Astro.request);
+const metaDescription =
+  description || "Local businesses across Indonesia";
+const canonical =
+  Astro.props.canonical ||
+  absoluteUrl(Astro.request, Astro.url.pathname + Astro.url.search);
+const jsonLdBlocks = jsonLd
+  ? Array.isArray(jsonLd)
+    ? jsonLd
+    : [jsonLd]
+  : [];
 ---
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description || "Local businesses across Indonesia"} />
+    <meta name="description" content={metaDescription} />
     <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:site_name" content="nusa.business" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={metaDescription} />
     <title>{title}</title>
+    {jsonLdBlocks.map((block) => (
+      <script type="application/ld+json" set:html={JSON.stringify(block)} />
+    ))}
   </head>
   <body>
     <header class="site-header">

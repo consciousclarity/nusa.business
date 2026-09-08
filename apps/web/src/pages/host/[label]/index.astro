@@ -2,6 +2,12 @@
 import Base from "../../../layouts/Base.astro";
 import { api } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  hostPath,
+  websiteJsonLd,
+} from "../../../lib/seo";
 
 const label = Astro.params.label!;
 const parts = label.split(".");
@@ -62,6 +68,19 @@ const queryHost =
     : mode === "place" && placeData
       ? `${placeData.place.slug}.${placeData.island.slug}.nusa.business`
       : label;
+
+const islandCanonical =
+  islandData &&
+  absoluteUrl(req, hostPath({ island: islandData.island.slug }));
+const placeCanonical =
+  placeData &&
+  absoluteUrl(
+    req,
+    hostPath({
+      island: placeData.island.slug,
+      place: placeData.place.slug,
+    }),
+  );
 ---
 
 {mode === "island" && islandData && (
@@ -69,6 +88,18 @@ const queryHost =
     title={`${islandData.island.name} — nusa.business`}
     description={islandData.island.tagline}
     crumb={[{ label: islandData.island.slug }]}
+    canonical={islandCanonical!}
+    jsonLd={[
+      websiteJsonLd({
+        url: islandCanonical!,
+        name: `${islandData.island.name} — nusa.business`,
+        description: islandData.island.tagline,
+      }),
+      breadcrumbJsonLd([
+        { name: "nusa.business", url: absoluteUrl(req, "/") },
+        { name: islandData.island.name, url: islandCanonical! },
+      ]),
+    ]}
   >
     <section class="lede">
       <h1>{islandData.island.name}</h1>
@@ -156,6 +187,22 @@ const queryHost =
         href: tenantHref(req, { island: placeData.island.slug }),
       },
       { label: placeData.place.slug },
+    ]}
+    canonical={placeCanonical!}
+    jsonLd={[
+      websiteJsonLd({
+        url: placeCanonical!,
+        name: `${placeData.place.name}, ${placeData.island.name}`,
+        description: placeData.place.summary,
+      }),
+      breadcrumbJsonLd([
+        { name: "nusa.business", url: absoluteUrl(req, "/") },
+        {
+          name: placeData.island.name,
+          url: absoluteUrl(req, hostPath({ island: placeData.island.slug })),
+        },
+        { name: placeData.place.name, url: placeCanonical! },
+      ]),
     ]}
   >
     <section class="lede">

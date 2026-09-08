@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import { api } from "../lib/api";
 import { publicUrl } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
+import { absoluteUrl, websiteJsonLd } from "../lib/seo";
 
 const { context } = resolveRequestContext(Astro.request, Astro.url);
 
@@ -30,8 +31,17 @@ const pending = data.islands.length - active;
 function islandHref(slug: string) {
   return useRealHosts ? publicUrl({ island: slug }) : `/host/${slug}`;
 }
+
+const nationUrl = absoluteUrl(Astro.request, "/");
+const nationDescription =
+  "Local business directory indexed by nested geography — nation, island, place, record. Free listings. No commission at launch.";
 ---
-<Base title="nusa.business — Local businesses across Indonesia">
+<Base
+  title="nusa.business — Local businesses across Indonesia"
+  description={nationDescription}
+  canonical={nationUrl}
+  jsonLd={websiteJsonLd({ url: nationUrl, description: nationDescription })}
+>
   <section class="lede">
     <h1>Indonesia</h1>
     <p class="prose">

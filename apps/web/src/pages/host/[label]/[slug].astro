@@ -2,6 +2,12 @@
 import Base from "../../../layouts/Base.astro";
 import { api, browserApiOrigin } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  hostPath as seoHostPath,
+  localBusinessJsonLd,
+} from "../../../lib/seo";
 
 const label = Astro.params.label!;
 const slug = Astro.params.slug!;
@@ -49,6 +55,12 @@ const placeMeta = await api<{
 
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 const hostPath = `${placeSlug}.${islandSlug}.nusa.business/${slug}`;
+const listingPath = seoHostPath({
+  island: islandSlug!,
+  place: placeSlug!,
+  slug,
+});
+const listingUrl = absoluteUrl(req, listingPath);
 const stamp =
   data.business.status === "draft"
     ? "Unclaimed"
@@ -66,6 +78,33 @@ const stamp =
       href: tenantHref(req, { island: islandSlug!, place: placeSlug! }),
     },
     { label: data.business.slug },
+  ]}
+  canonical={listingUrl}
+  ogType="article"
+  jsonLd={[
+    localBusinessJsonLd({
+      name: data.business.name,
+      description: data.business.summary,
+      url: listingUrl,
+      address: data.business.address,
+      telephone: data.business.phone,
+      categories: data.business.categories,
+    }),
+    breadcrumbJsonLd([
+      { name: "nusa.business", url: absoluteUrl(req, "/") },
+      {
+        name: placeMeta.island.name,
+        url: absoluteUrl(req, seoHostPath({ island: islandSlug! })),
+      },
+      {
+        name: placeMeta.place.name,
+        url: absoluteUrl(
+          req,
+          seoHostPath({ island: islandSlug!, place: placeSlug! }),
+        ),
+      },
+      { name: data.business.name, url: listingUrl },
+    ]),
   ]}
 >
   <article class="record">

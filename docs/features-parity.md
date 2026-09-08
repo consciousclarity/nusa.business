@@ -20,6 +20,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | Private messages | planned | Phase 6 |
 | Bookmarks | planned | Phase 6 |
 | i18n en/id | partial | English UI; id routes next |
+| Public SEO chrome | partial | Canonical + OG + JSON-LD + `/robots.txt` + `/sitemap.xml` |
 | AI local guide | planned | Optional |
 
 ## Marketplace capabilities

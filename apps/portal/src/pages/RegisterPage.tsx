@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
-import { api, type User } from "../api";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
+import { api, loadSession, type User } from "../api";
 import { safePortalReturnTo } from "@nusa/shared";
 
 export function RegisterPage({
@@ -12,6 +12,8 @@ export function RegisterPage({
   const [params] = useSearchParams();
   const tokenFromQuery = params.get("token") || "";
   const returnToHint = safePortalReturnTo(params.get("returnTo"));
+  /** Already signed-in visitors should not re-register; do not gate on post-submit session. */
+  const [alreadyAuthed] = useState(() => Boolean(loadSession()?.user));
 
   const [token, setToken] = useState(tokenFromQuery);
   const [name, setName] = useState("");
@@ -20,6 +22,7 @@ export function RegisterPage({
   const [listing, setListing] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+  const [dest, setDest] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -59,11 +62,20 @@ export function RegisterPage({
         method: "POST",
         body: JSON.stringify({ token, name, password }),
       });
+      const next = safePortalReturnTo(data.returnTo || returnToHint);
+      setDest(next);
       onLogin(data);
-      nav(safePortalReturnTo(data.returnTo || returnToHint));
+      nav(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     }
+  }
+
+  if (alreadyAuthed) {
+    return <Navigate to={returnToHint} replace />;
+  }
+  if (dest) {
+    return <Navigate to={dest} replace />;
   }
 
   return (

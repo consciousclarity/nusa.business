@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { api, type User } from "../api";
 import { safePortalReturnTo } from "@nusa/shared";
 
@@ -26,8 +26,10 @@ function demoLoginConfig(): DemoLogin | null {
 const demoLogin = demoLoginConfig();
 
 export function LoginPage({
+  user,
   onLogin,
 }: {
+  user: User | null;
   onLogin: (s: { user: User; token: string }) => void;
 }) {
   const nav = useNavigate();
@@ -47,6 +49,10 @@ export function LoginPage({
   const [email, setEmail] = useState(demoLogin?.email ?? "");
   const [password, setPassword] = useState(demoLogin?.password ?? "");
   const [error, setError] = useState("");
+
+  if (user) {
+    return <Navigate to={returnTo} replace />;
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();

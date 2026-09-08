@@ -35,7 +35,9 @@ import {
 } from "@nusa/db";
 import {
   CATEGORIES,
+  parseCorsOriginAllowlist,
   parseHost,
+  resolveCorsAllowOrigin,
   safePortalReturnTo,
   toSlug,
 } from "@nusa/shared";
@@ -73,6 +75,10 @@ import {
 
 const app = new Hono<{ Variables: AuthVariables }>();
 
+const CORS_EXTRA = parseCorsOriginAllowlist(process.env.NUSA_CORS_ORIGINS);
+const CORS_APEX = (process.env.NUSA_CORS_APEX || "nusa.business").trim();
+const CORS_PRODUCTION = process.env.NODE_ENV === "production";
+
 app.onError((error, c) => {
   if (error instanceof BusinessSlugConflictError) {
     return c.json({ error: error.message }, 409);
@@ -102,7 +108,12 @@ function rememberBookingIdempotency(key: string, bookingId: string, body: unknow
 app.use(
   "*",
   cors({
-    origin: (origin) => origin || "*",
+    origin: (origin) =>
+      resolveCorsAllowOrigin(origin, {
+        production: CORS_PRODUCTION,
+        extraOrigins: CORS_EXTRA,
+        apexHostname: CORS_APEX,
+      }) ?? undefined,
     credentials: true,
   }),
 );

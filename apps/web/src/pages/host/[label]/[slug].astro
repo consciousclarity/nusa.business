@@ -2,6 +2,8 @@
 import Base from "../../../layouts/Base.astro";
 import { api, browserApiOrigin } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
+import { t, type Locale } from "../../../i18n/ui";
+import { telHref, whatsappHref } from "@nusa/shared";
 
 const label = Astro.params.label!;
 const slug = Astro.params.slug!;
@@ -10,6 +12,7 @@ if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
 
 const [placeSlug, islandSlug] = parts;
 const req = Astro.request;
+const locale: Locale = Astro.locals.locale ?? "en";
 const data = await api<{
   business: {
     id: string;
@@ -55,18 +58,22 @@ const stamp =
     : data.business.status === "published"
       ? null
       : null;
+
+const wa = whatsappHref(data.business.whatsapp);
+const phoneLink = telHref(data.business.phone);
 ---
 <Base
   title={`${data.business.name} — ${placeMeta.place.name}`}
   description={data.business.summary}
   crumb={[
-    { label: islandSlug!, href: tenantHref(req, { island: islandSlug! }) },
+    { label: islandSlug!, href: tenantHref(req, { island: islandSlug!, locale }) },
     {
       label: placeSlug!,
-      href: tenantHref(req, { island: islandSlug!, place: placeSlug! }),
+      href: tenantHref(req, { island: islandSlug!, place: placeSlug!, locale }),
     },
     { label: data.business.slug },
   ]}
+  locale={locale}
 >
   <article class="record">
     <h1>{data.business.name}</h1>
@@ -76,7 +83,7 @@ const stamp =
     <dl class="kv">
       <dt>Host</dt>
       <dd>{hostPath}</dd>
-      <dt>Category</dt>
+      <dt>{t(locale, "category")}</dt>
       <dd>{data.business.categories.join(" · ") || "—"}</dd>
       {data.business.address && (
         <>
@@ -87,13 +94,27 @@ const stamp =
       {data.business.phone && (
         <>
           <dt>Phone</dt>
-          <dd>{data.business.phone}</dd>
+          <dd>
+            {phoneLink ? (
+              <a href={phoneLink}>{data.business.phone}</a>
+            ) : (
+              data.business.phone
+            )}
+          </dd>
         </>
       )}
       {data.business.whatsapp && (
         <>
           <dt>WhatsApp</dt>
-          <dd>{data.business.whatsapp}</dd>
+          <dd>
+            {wa ? (
+              <a href={wa} rel="noopener noreferrer">
+                {data.business.whatsapp}
+              </a>
+            ) : (
+              data.business.whatsapp
+            )}
+          </dd>
         </>
       )}
       <dt>Booking</dt>
@@ -103,18 +124,31 @@ const stamp =
     </dl>
 
     <p class="actions">
-      <a class="cta" href={`${portal}/claim?businessId=${data.business.id}`}>
-        Claim this listing
+      {wa && (
+        <a class="cta" href={wa} rel="noopener noreferrer">
+          {t(locale, "chatWhatsApp")}
+        </a>
+      )}
+      {phoneLink && (
+        <a class={`cta${wa ? " secondary" : ""}`} href={phoneLink}>
+          {t(locale, "call")}
+        </a>
+      )}
+      <a
+        class={`cta${wa || phoneLink ? " secondary" : ""}`}
+        href={`${portal}/claim?businessId=${data.business.id}`}
+      >
+        {t(locale, "claimThis")}
       </a>
       {data.business.bookingMode !== "none" && (
-        <a class="cta secondary" href="#book">Book ({data.business.bookingMode})</a>
+        <a class="cta secondary" href="#book">{t(locale, "book")} ({data.business.bookingMode})</a>
       )}
     </p>
   </article>
 
   <div class="stack">
     <section class="section">
-      <h2>Overview</h2>
+      <h2>{t(locale, "overview")}</h2>
       <p class="prose">{data.business.description}</p>
     </section>
 
@@ -122,18 +156,18 @@ const stamp =
       <section class="section" aria-labelledby="hours-caption">
         <div class="table-wrap">
           <table class="data">
-            <caption id="hours-caption">Opening hours</caption>
+            <caption id="hours-caption">{t(locale, "openingHours")}</caption>
             <thead>
               <tr>
-                <th scope="col">Day</th>
-                <th scope="col">Hours</th>
+                <th scope="col">{t(locale, "day")}</th>
+                <th scope="col">{t(locale, "hours")}</th>
               </tr>
             </thead>
             <tbody>
               {data.business.openingHours.map((h) => (
                 <tr>
                   <th scope="row">{h.day}</th>
-                  <td>{h.closed ? "Closed" : `${h.open} – ${h.close}`}</td>
+                  <td>{h.closed ? t(locale, "closed") : `${h.open} – ${h.close}`}</td>
                 </tr>
               ))}
             </tbody>
@@ -165,7 +199,7 @@ const stamp =
     )}
 
     <section class="section" id="reviews">
-      <h2>Reviews</h2>
+      <h2>{t(locale, "reviews")}</h2>
       {data.reviews.length === 0 && <p class="meta">No reviews yet.</p>}
       {data.reviews.length > 0 && (
         <div class="table-wrap">

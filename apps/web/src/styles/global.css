@@ -322,6 +322,49 @@ ol {
   color: var(--ink-soft);
 }
 
+.banner a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.banner a:hover {
+  color: var(--link);
+}
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  padding-block: 0.75rem;
+  margin: 0 0 1.25rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.filter-bar label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-family: var(--mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.filter-bar select {
+  min-width: min(100%, 16rem);
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 0;
+  padding: 0.55rem 0.65rem;
+  min-height: 2.75rem;
+}
+
 /* —— Resolver —— */
 .resolver {
   background: var(--paper-2);

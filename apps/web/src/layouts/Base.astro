@@ -1,36 +1,65 @@
 ---
 import "../styles/global.css";
 import { nationHref } from "../lib/links";
+import {
+  alternateLocale,
+  detectLocale,
+  t,
+  withLocale,
+  type Locale,
+} from "../i18n/ui";
 
 interface Props {
   title: string;
   description?: string;
   crumb?: { label: string; href?: string }[];
+  locale?: Locale;
 }
 
+const locale: Locale =
+  Astro.props.locale ?? Astro.locals.locale ?? "en";
 const { title, description, crumb = [] } = Astro.props;
 const portalUrl = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
-const homeHref = nationHref(Astro.request);
+const homeHref = nationHref(Astro.request, locale);
+const { pathWithoutLocale } = detectLocale(Astro.url.pathname);
+const other = alternateLocale(locale);
+const switchHref = withLocale(pathWithoutLocale + Astro.url.search, other);
 ---
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description || "Local businesses across Indonesia"} />
+    <meta
+      name="description"
+      content={description || t(locale, "metaDescription")}
+    />
     <meta name="color-scheme" content="light dark" />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href={new URL(withLocale(pathWithoutLocale, "en"), Astro.url).pathname}
+    />
+    <link
+      rel="alternate"
+      hreflang="id"
+      href={new URL(withLocale(pathWithoutLocale, "id"), Astro.url).pathname}
+    />
     <title>{title}</title>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
       <a class="brand" href={homeHref}>nusa<span class="tld">.business</span></a>
-      <nav aria-label="Primary">
-        <a href="/claim">Claim</a>
-        <a href={portalUrl}>Portal</a>
+      <nav aria-label={t(locale, "navPrimary")}>
+        <a href={withLocale("/claim", locale)}>{t(locale, "navClaim")}</a>
+        <a href={portalUrl}>{t(locale, "navPortal")}</a>
+        <a href={switchHref} lang={other} hreflang={other}>
+          {t(locale, "langSwitchShort")}
+        </a>
       </nav>
     </header>
-    <nav class="crumbs" aria-label="Path">
+    <nav class="crumbs" aria-label={t(locale, "navPath")}>
       <a href={homeHref}>nusa.business</a>
       {crumb.map((c) => (
         <>
@@ -48,13 +77,13 @@ const homeHref = nationHref(Astro.request);
       <slot />
     </main>
     <footer class="site-footer">
-      <p>Free local listings across the archipelago. No registration fees. No commission at launch.</p>
+      <p>{t(locale, "footer")}</p>
       <p>
-        <a href="/host/bali">/host/bali</a>
+        <a href={withLocale("/host/bali", locale)}>/host/bali</a>
         <span aria-hidden="true"> · </span>
-        <a href="/host/gianyar.bali">/host/gianyar.bali</a>
+        <a href={withLocale("/host/gianyar.bali", locale)}>/host/gianyar.bali</a>
         <span aria-hidden="true"> · </span>
-        <a href="/host/uluwatu.bali">/host/uluwatu.bali</a>
+        <a href={withLocale("/host/uluwatu.bali", locale)}>/host/uluwatu.bali</a>
       </p>
     </footer>
   </body>

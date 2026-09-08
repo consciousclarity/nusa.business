@@ -6,7 +6,7 @@ import {
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { canonicalizeIslandSlug } from "@nusa/shared";
+import { canonicalizeIslandSlug, haversineKm, normalizeAddress } from "@nusa/shared";
 import { migrateStore } from "./migrations.js";
 import { hashPassword, isHashed, verifyPassword } from "./password.js";
 import { atomicWriteFile, backupPathFor } from "./persist.js";
@@ -509,6 +509,130 @@ export function resolveBusinessContext(businessId: string) {
   const island = store.islands.find((i) => i.id === place.islandId);
   if (!island) return null;
   return { business, place, island };
+}
+
+export type DiscoveryNeighbor = {
+  business: Business;
+  place: { id: string; slug: string; name: string };
+  island: { id: string; slug: string; name: string };
+  distanceKm: number;
+};
+
+export type BusinessDiscovery = {
+  origin: { lat: number; lng: number; address?: string } | null;
+  radiusKm: number;
+  sameAddress: DiscoveryNeighbor[];
+  similar: DiscoveryNeighbor[];
+  nearbyCategories: string[];
+  nearby: DiscoveryNeighbor[];
+  activeCategory: string | null;
+};
+
+/**
+ * Same-address peers, similar businesses within radius, and category-filtered
+ * nearby set for the listing discovery panels.
+ */
+export function getBusinessDiscovery(
+  businessId: string,
+  opts: { radiusKm?: number; category?: string; similarLimit?: number } = {},
+): BusinessDiscovery | null {
+  const ctx = resolveBusinessContext(businessId);
+  if (!ctx) return null;
+  const { business: self } = ctx;
+  const radiusKm = opts.radiusKm ?? 2;
+  const similarLimit = opts.similarLimit ?? 10;
+  const store = getStore();
+
+  const selfAddr = normalizeAddress(self.address);
+  const sameAddress: DiscoveryNeighbor[] = [];
+  const withDistance: DiscoveryNeighbor[] = [];
+
+  for (const b of store.businesses) {
+    if (b.id === self.id || b.status === "draft") continue;
+    const peerCtx = resolveBusinessContext(b.id);
+    if (!peerCtx) continue;
+    const row = {
+      business: b,
+      place: {
+        id: peerCtx.place.id,
+        slug: peerCtx.place.slug,
+        name: peerCtx.place.name,
+      },
+      island: {
+        id: peerCtx.island.id,
+        slug: peerCtx.island.slug,
+        name: peerCtx.island.name,
+      },
+      distanceKm: 0,
+    };
+
+    if (selfAddr && normalizeAddress(b.address) === selfAddr) {
+      sameAddress.push(row);
+    }
+
+    if (
+      typeof self.lat === "number" &&
+      typeof self.lng === "number" &&
+      typeof b.lat === "number" &&
+      typeof b.lng === "number"
+    ) {
+      const distanceKm = haversineKm(self.lat, self.lng, b.lat, b.lng);
+      if (distanceKm <= radiusKm) {
+        withDistance.push({ ...row, distanceKm });
+      }
+    }
+  }
+
+  sameAddress.sort((a, b) => a.business.name.localeCompare(b.business.name));
+  withDistance.sort((a, b) => a.distanceKm - b.distanceKm);
+
+  const sameIds = new Set(sameAddress.map((n) => n.business.id));
+  const similar = withDistance
+    .filter(
+      (n) =>
+        !sameIds.has(n.business.id) &&
+        n.business.categories.some((c) => self.categories.includes(c)),
+    )
+    .slice(0, similarLimit);
+
+  const categoryCounts = new Map<string, number>();
+  for (const n of withDistance) {
+    for (const c of n.business.categories) {
+      categoryCounts.set(c, (categoryCounts.get(c) ?? 0) + 1);
+    }
+  }
+  const nearbyCategories = [...categoryCounts.keys()].sort((a, b) =>
+    a.localeCompare(b),
+  );
+
+  let activeCategory: string | null = null;
+  if (opts.category && nearbyCategories.includes(opts.category)) {
+    activeCategory = opts.category;
+  } else {
+    activeCategory =
+      self.categories.find((c) => nearbyCategories.includes(c)) ??
+      nearbyCategories[0] ??
+      null;
+  }
+
+  const nearby = activeCategory
+    ? withDistance.filter((n) => n.business.categories.includes(activeCategory!))
+    : [];
+
+  const origin =
+    typeof self.lat === "number" && typeof self.lng === "number"
+      ? { lat: self.lat, lng: self.lng, address: self.address }
+      : null;
+
+  return {
+    origin,
+    radiusKm,
+    sameAddress,
+    similar,
+    nearbyCategories,
+    nearby,
+    activeCategory,
+  };
 }
 
 function hashOpaqueToken(raw: string): string {

@@ -61,6 +61,50 @@ const stamp =
 
 const wa = whatsappHref(data.business.whatsapp);
 const phoneLink = telHref(data.business.phone);
+
+type DiscoveryNeighbor = {
+  business: {
+    id: string;
+    name: string;
+    slug: string;
+    summary: string;
+    categories: string[];
+    lat?: number;
+    lng?: number;
+  };
+  place: { slug: string; name: string };
+  island: { slug: string };
+  distanceKm: number;
+};
+
+type DiscoveryPayload = {
+  origin: { lat: number; lng: number; address?: string } | null;
+  sameAddress: DiscoveryNeighbor[];
+  similar: DiscoveryNeighbor[];
+  nearbyCategories: string[];
+  nearby: DiscoveryNeighbor[];
+  activeCategory: string | null;
+  radiusKm: number;
+};
+
+const discovery = await api<DiscoveryPayload>(
+  `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`,
+);
+
+function neighborHref(n: DiscoveryNeighbor) {
+  return tenantHref(req, {
+    island: n.island.slug,
+    place: n.place.slug,
+    slug: n.business.slug,
+    locale,
+  });
+}
+
+const discoveryApi = `${browserApiOrigin()}/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`;
+const nearbyWithHref = discovery.nearby.map((n) => ({
+  ...n,
+  href: neighborHref(n),
+}));
 ---
 <Base
   title={`${data.business.name} — ${placeMeta.place.name}`}
@@ -151,6 +195,100 @@ const phoneLink = telHref(data.business.phone);
       <h2>{t(locale, "overview")}</h2>
       <p class="prose">{data.business.description}</p>
     </section>
+
+    {discovery.sameAddress.length > 0 && (
+      <section class="section" aria-labelledby="same-address-heading">
+        <h2 id="same-address-heading">{t(locale, "otherAtAddress")}</h2>
+        <p class="meta">{data.business.address}</p>
+        <ol class="index-list">
+          {discovery.sameAddress.map((n, i) => (
+            <li>
+              <div class="index-row">
+                <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                <a class="name" href={neighborHref(n)}>{n.business.name}</a>
+                <span class="rhs">{n.business.categories[0] ?? n.place.name}</span>
+              </div>
+              <p class="index-desc">{n.business.summary}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {discovery.similar.length > 0 && (
+      <section class="section" aria-labelledby="similar-heading">
+        <h2 id="similar-heading">{t(locale, "similarNearby")}</h2>
+        <ol class="index-list">
+          {discovery.similar.map((n, i) => (
+            <li>
+              <div class="index-row">
+                <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                <a class="name" href={neighborHref(n)}>{n.business.name}</a>
+                <span class="rhs">
+                  {n.distanceKm.toFixed(2)} {t(locale, "kmAway")} · {n.place.name}
+                </span>
+              </div>
+              <p class="index-desc">{n.business.summary}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {discovery.origin && discovery.nearbyCategories.length > 0 && (
+      <section
+        class="section nearby-discovery"
+        aria-labelledby="nearby-cat-heading"
+        data-nearby-root
+        data-endpoint={discoveryApi}
+        data-active-category={discovery.activeCategory ? encodeURIComponent(discovery.activeCategory) : ""}
+        data-empty-label={t(locale, "noNearbyInCategory")}
+      >
+        <h2 id="nearby-cat-heading">{t(locale, "nearbyByCategory")}</h2>
+        <div class="nearby-layout">
+          <div class="nearby-controls">
+            <div class="category-chips" role="group" aria-label={t(locale, "category")}>
+              {discovery.nearbyCategories.map((cat) => (
+                <button
+                  type="button"
+                  class:list={["chip", { "is-active": cat === discovery.activeCategory }]}
+                  data-category={encodeURIComponent(cat)}
+                  aria-pressed={cat === discovery.activeCategory ? "true" : "false"}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+            <div
+              class="nearby-map"
+              data-nearby-map
+              role="img"
+              aria-label={t(locale, "nearbyMap")}
+            ></div>
+          </div>
+          <div data-nearby-list>
+            {nearbyWithHref.length === 0 ? (
+              <p class="meta">{t(locale, "noNearbyInCategory")}</p>
+            ) : (
+              <ol class="index-list">
+                {nearbyWithHref.map((n, i) => (
+                  <li>
+                    <div class="index-row">
+                      <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                      <a class="name" href={n.href}>{n.business.name}</a>
+                      <span class="rhs">
+                        {n.distanceKm.toFixed(2)} {t(locale, "kmAway")}
+                      </span>
+                    </div>
+                    <p class="index-desc">{n.business.summary}</p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
 
     {data.business.openingHours?.length > 0 && (
       <section class="section" aria-labelledby="hours-caption">
@@ -418,4 +556,10 @@ const phoneLink = telHref(data.business.phone);
       lockForm(bookingForm, false);
     }
   });
+</script>
+
+<script>
+  import { mountNearbyDiscovery } from "../../../scripts/nearby-discovery";
+  const root = document.querySelector("[data-nearby-root]");
+  if (root instanceof HTMLElement) mountNearbyDiscovery(root);
 </script>

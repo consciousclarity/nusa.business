@@ -16,6 +16,7 @@ import {
   findValidInvite,
   getBusiness,
   getBusinessById,
+  getBusinessDiscovery,
   getIslandBySlug,
   getPlace,
   getStore,
@@ -212,6 +213,42 @@ app.get("/v1/islands/:island/places/:place/businesses/:slug", (c) => {
     business: toPublicBusiness(business),
     reviews,
     vendor,
+  });
+});
+
+app.get("/v1/islands/:island/places/:place/businesses/:slug/discovery", (c) => {
+  const business = getBusiness(
+    c.req.param("island"),
+    c.req.param("place"),
+    c.req.param("slug"),
+  );
+  if (!business || !isPubliclyListed(business)) {
+    return c.json({ error: "Business not found" }, 404);
+  }
+  const radiusRaw = c.req.query("radiusKm");
+  const radiusKm = radiusRaw ? Number(radiusRaw) : 2;
+  if (!Number.isFinite(radiusKm) || radiusKm <= 0 || radiusKm > 50) {
+    return c.json({ error: "radiusKm must be between 0 and 50" }, 400);
+  }
+  const category = c.req.query("category") || undefined;
+  const discovery = getBusinessDiscovery(business.id, { radiusKm, category });
+  if (!discovery) return c.json({ error: "Business not found" }, 404);
+
+  const mapNeighbor = (n: (typeof discovery.nearby)[number]) => ({
+    business: toPublicBusiness(n.business),
+    place: n.place,
+    island: n.island,
+    distanceKm: Math.round(n.distanceKm * 100) / 100,
+  });
+
+  return c.json({
+    origin: discovery.origin,
+    radiusKm: discovery.radiusKm,
+    sameAddress: discovery.sameAddress.map(mapNeighbor),
+    similar: discovery.similar.map(mapNeighbor),
+    nearbyCategories: discovery.nearbyCategories,
+    nearby: discovery.nearby.map(mapNeighbor),
+    activeCategory: discovery.activeCategory,
   });
 });
 

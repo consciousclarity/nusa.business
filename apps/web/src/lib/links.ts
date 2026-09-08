@@ -1,4 +1,4 @@
-import { nationHomeHref, publicUrl } from "@nusa/shared";
+import { nationHomeHref, publicUrl, type Locale, withLocale } from "@nusa/shared";
 
 function requestHost(request: Request): string {
   return (
@@ -9,15 +9,21 @@ function requestHost(request: Request): string {
 }
 
 /** Brand / breadcrumb "nusa.business" → always the nation apex in production. */
-export function nationHref(request: Request): string {
-  return nationHomeHref(requestHost(request));
+export function nationHref(request: Request, locale: Locale = "en"): string {
+  const home = nationHomeHref(requestHost(request));
+  if (home === "/") return withLocale("/", locale);
+  if (locale === "en") return home;
+  const u = new URL(home);
+  u.pathname = withLocale(u.pathname || "/", "id");
+  return u.toString();
 }
 
 /** Prefer real nested hosts on nusa.business; keep /host paths for local/dev. */
 export function tenantHref(
   request: Request,
-  opts: { island: string; place?: string; slug?: string },
+  opts: { island: string; place?: string; slug?: string; locale?: Locale },
 ): string {
+  const locale = opts.locale ?? "en";
   const host = requestHost(request).split(":")[0]?.toLowerCase() ?? "";
   const useReal =
     host === "nusa.business" ||
@@ -25,13 +31,18 @@ export function tenantHref(
 
   if (!useReal) {
     const label = opts.place ? `${opts.place}.${opts.island}` : opts.island;
-    return opts.slug ? `/host/${label}/${opts.slug}` : `/host/${label}`;
+    const path = opts.slug ? `/host/${label}/${opts.slug}` : `/host/${label}`;
+    return withLocale(path, locale);
   }
 
-  return publicUrl({
+  const absolute = publicUrl({
     island: opts.island,
     place: opts.place,
     slug: opts.slug,
     root: "https://nusa.business",
   });
+  if (locale === "en") return absolute;
+  const u = new URL(absolute);
+  u.pathname = withLocale(u.pathname || "/", "id");
+  return u.toString();
 }

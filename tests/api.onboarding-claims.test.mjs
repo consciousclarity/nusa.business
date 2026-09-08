@@ -99,6 +99,7 @@ describe("safePortalReturnTo", () => {
       safePortalReturnTo("/claim?businessId=biz-a"),
       "/claim?businessId=biz-a",
     );
+    assert.equal(safePortalReturnTo("/invites"), "/invites");
     assert.equal(safePortalReturnTo("https://evil.test"), "/");
     assert.equal(safePortalReturnTo("//evil.test"), "/");
     assert.equal(safePortalReturnTo("/unknown"), "/");

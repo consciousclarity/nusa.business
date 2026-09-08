@@ -9,6 +9,7 @@ import {
   siteOrigin,
   sitemapXml,
   websiteJsonLd,
+  withLocale,
 } from "@nusa/shared";
 
 function req(host, proto) {
@@ -32,6 +33,10 @@ describe("public SEO helpers (C11)", () => {
     assert.equal(
       hostPath({ island: "bali", place: "gianyar", slug: "babi-guling" }),
       "/host/gianyar.bali/babi-guling",
+    );
+    assert.equal(
+      absoluteUrl(r, withLocale(hostPath({ island: "bali" }), "id")),
+      "http://localhost:4321/id/host/bali",
     );
   });
 

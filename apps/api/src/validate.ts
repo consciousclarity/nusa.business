@@ -6,7 +6,6 @@ export type ValidationResult<T> = ValidationOk<T> | ValidationErr;
 
 const CATEGORY_SET = new Set<string>(CATEGORIES);
 const BOOKING_MODES = new Set(["none", "service", "rental", "event"]);
-const BUSINESS_STATUSES = new Set(["draft", "published", "claimed"]);
 
 const SAFE_URL = /^(https?:)\/\//i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -133,7 +132,9 @@ function requireIsoDate(
     return fail(`${key} must be an ISO date (YYYY-MM-DD)`);
   }
   const t = Date.parse(`${s.value}T00:00:00.000Z`);
-  if (!Number.isFinite(t)) return fail(`${key} must be a valid date`);
+  if (!Number.isFinite(t) || new Date(t).toISOString().slice(0, 10) !== s.value) {
+    return fail(`${key} must be a valid date`);
+  }
   return s;
 }
 
@@ -272,7 +273,6 @@ const LISTING_PATCH_ALLOW = new Set([
   "openingHours",
   "faq",
   "bookingMode",
-  "status",
   "slug",
 ]);
 
@@ -293,7 +293,6 @@ export type ListingPatchInput = {
   openingHours?: { day: string; open: string; close: string; closed?: boolean }[];
   faq?: { q: string; a: string }[];
   bookingMode?: "none" | "service" | "rental" | "event";
-  status?: "draft" | "published" | "claimed";
   slug?: string;
 };
 
@@ -374,13 +373,6 @@ export function parseListingPatchBody(
       return fail("bookingMode must be none|service|rental|event");
     }
     out.bookingMode = raw as ListingPatchInput["bookingMode"];
-  }
-  if ("status" in row) {
-    const raw = row.status;
-    if (typeof raw !== "string" || !BUSINESS_STATUSES.has(raw)) {
-      return fail("status must be draft|published|claimed");
-    }
-    out.status = raw as ListingPatchInput["status"];
   }
   if ("categories" in row) {
     const raw = row.categories;

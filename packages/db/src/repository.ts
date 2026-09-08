@@ -116,8 +116,21 @@ export function getBusinessById(id: string) {
   return getStore().businesses.find((b) => b.id === id);
 }
 
+export class BusinessSlugConflictError extends Error {
+  constructor() {
+    super("A business with this slug already exists in this place");
+    this.name = "BusinessSlugConflictError";
+  }
+}
+
 export function upsertBusiness(input: Business): Business {
   const store = getStore();
+  // Synchronous check and save form one critical section in the single API process.
+  if (store.businesses.some((b) =>
+    b.id !== input.id && b.placeId === input.placeId && b.slug === input.slug
+  )) {
+    throw new BusinessSlugConflictError();
+  }
   const idx = store.businesses.findIndex((b) => b.id === input.id);
   if (idx >= 0) store.businesses[idx] = input;
   else store.businesses.push(input);

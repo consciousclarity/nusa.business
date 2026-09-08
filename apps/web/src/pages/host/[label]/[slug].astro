@@ -262,10 +262,10 @@ const stamp =
   reviewForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (reviewForm.dataset.busy === "1") return;
+    const fd = new FormData(reviewForm);
     reviewForm.dataset.busy = "1";
     lockForm(reviewForm, true);
     setStatus(reviewMsg, "Submitting review…", false);
-    const fd = new FormData(reviewForm);
     try {
       const res = await fetch(`${apiBase}/v1/businesses/${businessId}/reviews`, {
         method: "POST",
@@ -304,13 +304,15 @@ const stamp =
   const bookingForm = document.getElementById("booking-form");
   const bookingMsg = document.getElementById("booking-msg");
   let bookingIdempotencyKey = crypto.randomUUID();
+  let lastBookingPayload;
   bookingForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     if (bookingForm.dataset.busy === "1") return;
+    // Disabled controls are omitted by FormData, so capture values before locking.
+    const fd = new FormData(bookingForm);
     bookingForm.dataset.busy = "1";
     lockForm(bookingForm, true);
     setStatus(bookingMsg, "Sending request…", false);
-    const fd = new FormData(bookingForm);
     const payload = {
       customerName: fd.get("customerName"),
       customerEmail: fd.get("customerEmail"),
@@ -319,6 +321,11 @@ const stamp =
       timeSlot: fd.get("timeSlot") || undefined,
       tickets: fd.get("tickets") ? Number(fd.get("tickets")) : undefined,
     };
+    const serializedPayload = JSON.stringify(payload);
+    if (lastBookingPayload !== undefined && lastBookingPayload !== serializedPayload) {
+      bookingIdempotencyKey = crypto.randomUUID();
+    }
+    lastBookingPayload = serializedPayload;
     try {
       const res = await fetch(`${apiBase}/v1/businesses/${businessId}/bookings`, {
         method: "POST",

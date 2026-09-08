@@ -98,3 +98,28 @@ describe("parseListingPatchBody", () => {
     );
   });
 });
+
+describe("calendar dates", () => {
+  const good = { customerName: "Sam", customerEmail: "sam@example.test" };
+  for (const date of ["2026-02-29", "2026-02-30", "2026-04-31", "1900-02-29", "2100-02-29", "2026-00-01", "2026-13-01", "2026-01-00"]) {
+    it(`rejects ${date} as either booking date`, () => {
+      assert.equal(parseBookingBody({ ...good, startDate: date }).ok, false);
+      assert.equal(parseBookingBody({ ...good, startDate: "0001-01-01", endDate: date }).ok, false);
+    });
+  }
+  for (const date of ["2026-02-28", "2024-02-29", "2000-02-29", "2026-04-30", "2026-12-31", "0001-01-01"]) {
+    it(`preserves valid boundary ${date}`, () => {
+      const parsed = parseBookingBody({ ...good, startDate: date, endDate: date });
+      assert.equal(parsed.ok, true);
+      assert.equal(parsed.value.startDate, date);
+      assert.equal(parsed.value.endDate, date);
+    });
+  }
+});
+
+it("rejects owner status patches while allowing ordinary edits", () => {
+  for (const status of ["claimed", "draft", "published", null]) {
+    assert.equal(parseListingPatchBody({ name: "Allowed", status }).ok, false);
+  }
+  assert.equal(parseListingPatchBody({ name: "Allowed", slug: "new-slug" }).ok, true);
+});

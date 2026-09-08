@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { cors } from "hono/cors";
 import {
+  BusinessSlugConflictError,
   addBooking,
   addClaim,
   addReview,
@@ -55,6 +56,14 @@ import {
 } from "./validate.js";
 
 const app = new Hono<{ Variables: AuthVariables }>();
+
+app.onError((error, c) => {
+  if (error instanceof BusinessSlugConflictError) {
+    return c.json({ error: error.message }, 409);
+  }
+  console.error(error);
+  return c.json({ error: "Internal Server Error" }, 500);
+});
 
 /** Uniform 429 so callers cannot tell which limit they hit. */
 function tooManyRequests(c: Context, retryAfter: number) {
@@ -166,8 +175,7 @@ app.get("/v1/islands/:island/places/:place/businesses/:slug", (c) => {
   if (!business) return c.json({ error: "Business not found" }, 404);
   const reviews = listReviews(business.id);
   const vendor = getVendorByBusinessId(business.id);
-  const bookings = listBookings(business.id);
-  return c.json({ business, reviews, vendor, bookings });
+  return c.json({ business, reviews, vendor });
 });
 
 app.get("/v1/search", (c) => {
@@ -256,6 +264,9 @@ app.post(
       ownerUserId?: string;
       status?: "draft" | "published" | "claimed";
     }>();
+    if (body.status !== undefined && body.status !== "draft" && body.status !== "published") {
+      return c.json({ error: "status must be draft or published; claimed requires claim approval" }, 400);
+    }
     const business = createBusiness({
       placeId: body.placeId,
       slug: toSlug(body.name),
@@ -402,10 +413,17 @@ app.post(
     const parsed = parseBookingBody(raw);
     if (!parsed.ok) return c.json({ error: parsed.error }, 400);
 
-    const idemKey = (c.req.header("idempotency-key") || "").trim().slice(0, 128);
+    const idemKey = (c.req.header("idempotency-key") || "").trim();
+    if (idemKey.length > 128) {
+      return c.json({ error: "Idempotency key is too long (max 128)" }, 400);
+    }
     if (idemKey) {
       const prior = bookingIdempotency.get(`${business.id}:${idemKey}`);
       if (prior) {
+        // parseBookingBody emits fields in a fixed order and normalizes optional values.
+        if (JSON.stringify(prior.body) !== JSON.stringify(parsed.value)) {
+          return c.json({ error: "Idempotency key already used for a different request" }, 409);
+        }
         const existing = listBookings(business.id).find((b) => b.id === prior.bookingId);
         if (existing) {
           return c.json({ booking: existing, idempotentReplay: true }, 200);

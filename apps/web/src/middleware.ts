@@ -11,6 +11,27 @@ function isLocalHost(host: string): boolean {
   );
 }
 
+/** Public HTML can be short-cached; assets are hashed by the build. */
+function withPerfHeaders(response: Response): Response {
+  if (!(response.status >= 200 && response.status < 400)) return response;
+  const headers = new Headers(response.headers);
+  if (!headers.has("X-Content-Type-Options")) {
+    headers.set("X-Content-Type-Options", "nosniff");
+  }
+  const type = headers.get("content-type") || "";
+  if (type.includes("text/html") && !headers.has("Cache-Control")) {
+    headers.set(
+      "Cache-Control",
+      "public, max-age=60, stale-while-revalidate=600",
+    );
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 /**
  * Production tenancy:
  * - Real hosts (java.nusa.business, yogyakarta.java.nusa.business) rewrite
@@ -53,18 +74,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Already under /host — serve as-is (dev, or after failed canonicalize)
   if (pathname === "/host" || pathname.startsWith("/host/")) {
-    return next();
+    return withPerfHeaders(await next());
   }
 
   const tenant = parseHost(hostHeader);
   if (tenant.kind === "island") {
     const target = `/host/${tenant.island}${pathname === "/" ? "" : pathname}`;
-    return context.rewrite(target);
+    return withPerfHeaders(await context.rewrite(target));
   }
   if (tenant.kind === "place") {
     const target = `/host/${tenant.place}.${tenant.island}${pathname === "/" ? "" : pathname}`;
-    return context.rewrite(target);
+    return withPerfHeaders(await context.rewrite(target));
   }
 
-  return next();
+  return withPerfHeaders(await next());
 });

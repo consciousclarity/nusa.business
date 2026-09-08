@@ -206,8 +206,11 @@ Non-negotiable, and the reason for the aesthetic rather than a side effect:
 
   This matches `.cursor/rules/nusa-web-astro.mdc`: *"minimize client JS (islands
   only when needed)"* — minimise, not eliminate.
-- Total CSS under ~8 KB uncompressed. The current file is 136 lines; this should
-  land in the same order of magnitude.
+- **CSS budget (C12):** source `global.css` ≤ 14 KB; built hashed CSS ≤ 10 KB;
+  gzip of source ≤ 4 KB. Responsive media queries pushed past the original
+  ~8 KB aspirational line — gate with `tests/web.perf-budget.test.mjs`.
+- HTML responses send `Cache-Control: public, max-age=60, stale-while-revalidate=600`
+  (middleware). Edge gzip/brotli remains the reverse proxy’s job.
 
 On a 3G phone in Gianyar the page should load like a text file. For an
 SEO-first directory in a mobile-heavy market that is the competitive advantage,
@@ -257,11 +260,13 @@ authenticated tool with different needs. Align it in a later pass.
       render pulls only the document and its own stylesheet — no font, script or
       stylesheet from anywhere else. Same-origin listing photos below the fold
       are expected and do not count against this.
-- [ ] `npm run build` exits 0; `npm test` passes
+- [ ] `npm run build` exits 0; `npm test` passes (includes perf budget)
 - [ ] Light and dark both legible, including with an explicit `data-theme`
       override in either direction
 - [ ] No `border-radius`, `box-shadow` or `gradient` in `global.css`
+- [ ] Built CSS ≤ 10 KB; source ≤ 14 KB (see Performance budget)
 - [ ] `/host/gianyar.bali/babi-guling-pande-egi` shows opening hours as a real
       table with a caption
 - [ ] Keyboard tab through a page: every focused element visibly indicated
 - [ ] Page body does not scroll horizontally at 320px width
+- [ ] HTML responses include short `Cache-Control` (middleware)

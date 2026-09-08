@@ -702,6 +702,8 @@ table.data caption {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+  position: relative;
+  z-index: 2;
 }
 
 .chip {
@@ -715,6 +717,8 @@ table.data caption {
   padding: 0.45em 0.7em;
   cursor: pointer;
   min-height: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .chip.is-active,
@@ -729,11 +733,14 @@ table.data caption {
 }
 
 .nearby-map {
+  position: relative;
+  z-index: 0;
   width: 100%;
   height: min(22rem, 55vh);
   border: 1px solid var(--rule);
   background: var(--paper-2);
-  z-index: 0;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .nearby-map .leaflet-container {

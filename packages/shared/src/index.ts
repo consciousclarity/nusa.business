@@ -172,6 +172,12 @@ export {
 } from "./api-origins.js";
 
 export {
+  contactDigits,
+  telHref,
+  whatsappHref,
+} from "./contact-links.js";
+
+export {
   parseCorsOriginAllowlist,
   resolveCorsAllowOrigin,
   type CorsOriginOptions,

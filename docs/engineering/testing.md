@@ -26,6 +26,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Onboarding / claims | `tests/api.onboarding-claims.test.mjs` | Invite register, safe returnTo, duplicate pending claims, audited decisions, recovery tokens. |
 | Authz / CORS | `tests/api.authz-cors.test.mjs`, `tests/shared.cors-origins.test.mjs` | Origin allowlist (no reflect-any); role matrix for listings, bookings, invites, claim decide. |
 | API origins | `tests/shared.api-origins.test.mjs` | Browser origins must be public HTTPS in production; SSR may use Compose-internal URLs; `http://api:8787` is rejected for browsers. |
+| Contact links | `tests/shared.contact-links.test.mjs` | WhatsApp `wa.me` and `tel:` normalisation for Indonesian numbers. |
 | Production bootstrap | `tests/db.bootstrap.test.mjs` | Production missing store refuses demo seed; bootstrap admin creates geography-only store; existing stores are preserved. |
 | JSON durability | `tests/db.persist.test.mjs` | Atomic write + `.bak` rotation; recover truncated `store.json`; refuse silent re-seed when both files are corrupt. |
 | Public privacy | `tests/api.public-privacy.test.mjs` | Anonymous listing/search responses omit bookings, review emails, and ownership internals; drafts 404; owners cannot read each other's bookings. |

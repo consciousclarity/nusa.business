@@ -172,6 +172,39 @@ export {
 } from "./api-origins.js";
 
 export {
+  contactDigits,
+  telHref,
+  whatsappHref,
+} from "./contact-links.js";
+
+export {
+  parseCorsOriginAllowlist,
+  resolveCorsAllowOrigin,
+  type CorsOriginOptions,
+} from "./cors-origins.js";
+
+export {
   businessIdFromReturnTo,
   safePortalReturnTo,
 } from "./portal-return.js";
+
+export {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  escapeXml,
+  hostPath,
+  localBusinessJsonLd,
+  requestHost,
+  siteOrigin,
+  sitemapXml,
+  websiteJsonLd,
+  type JsonLd,
+} from "./seo.js";
+
+export {
+  alternateLocale,
+  detectLocale,
+  withLocale,
+  type Locale,
+  LOCALES,
+} from "./locale.js";

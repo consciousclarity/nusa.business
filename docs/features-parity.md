@@ -9,17 +9,19 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | Listings + categories | done | `packages/db`, API `/v1/...`, Astro pages |
 | Geo regions as first-class places | done | Island / Place model + host parser |
 | Nested hosts `place.island.nusa.business` | done | `@nusa/shared` `parseHost` + `/host/` dev routes |
-| Search / filters | partial | API `/v1/search` (Meilisearch wired in Docker, not yet indexed) |
+| Search / filters | partial | API `/v1/search`; place-hub category filter (`?category=`) |
 | Map search | planned | MapLibre + PostGIS (schema outlined) |
 | Claim listing | done | Portal `/claim` + API `/v1/claims` (invite onboarding, returnTo, decision audit) |
 | Multi-criteria reviews | done | service/value/location/cleanliness on listing + API |
 | Owner dashboard | done | Portal listings CRUD |
 | Opening hours / gallery / FAQ fields | partial | Hours seeded; gallery/FAQ schema present |
 | Booking: service / rental / event | done | Listing `bookingMode` + public form + `/v1/.../bookings` (request-only / pending; not verified inventory or price) |
+| WhatsApp / phone contact | done | Listing `wa.me` + `tel:` deep links (mobile-first) |
 | Paid packages | planned | Model later; launch is free like bali.business |
 | Private messages | planned | Phase 6 |
 | Bookmarks | planned | Phase 6 |
-| i18n en/id | partial | English UI; id routes next |
+| i18n en/id | partial | Public `/id` prefix + chrome copy; listing body stays author language |
+| Public SEO chrome | partial | Canonical + OG + JSON-LD + `/robots.txt` + `/sitemap.xml` |
 | AI local guide | planned | Optional |
 
 ## Marketplace capabilities

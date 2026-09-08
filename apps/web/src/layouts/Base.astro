@@ -1,53 +1,114 @@
 ---
 import "../styles/global.css";
 import { nationHref } from "../lib/links";
+import { absoluteUrl, type JsonLd } from "../lib/seo";
+import {
+  alternateLocale,
+  detectLocale,
+  t,
+  withLocale,
+  type Locale,
+} from "../i18n/ui";
 
 interface Props {
   title: string;
   description?: string;
   crumb?: { label: string; href?: string }[];
+  locale?: Locale;
+  /** Absolute canonical URL; defaults to the current request URL. */
+  canonical?: string;
+  ogType?: string;
+  jsonLd?: JsonLd;
 }
 
-const { title, description, crumb = [] } = Astro.props;
+const locale: Locale =
+  Astro.props.locale ?? Astro.locals.locale ?? "en";
+const { title, description, crumb = [], ogType = "website", jsonLd } =
+  Astro.props;
 const portalUrl = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
-const homeHref = nationHref(Astro.request);
+const homeHref = nationHref(Astro.request, locale);
+const { pathWithoutLocale } = detectLocale(Astro.url.pathname);
+const other = alternateLocale(locale);
+const switchHref = withLocale(pathWithoutLocale + Astro.url.search, other);
+const metaDescription =
+  description || t(locale, "metaDescription");
+const canonical =
+  Astro.props.canonical ||
+  absoluteUrl(Astro.request, Astro.url.pathname + Astro.url.search);
+const jsonLdBlocks = jsonLd
+  ? Array.isArray(jsonLd)
+    ? jsonLd
+    : [jsonLd]
+  : [];
 ---
 <!doctype html>
-<html lang="en">
+<html lang={locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description || "Local businesses across Indonesia"} />
+    <meta name="description" content={metaDescription} />
     <meta name="color-scheme" content="light dark" />
+    <link rel="canonical" href={canonical} />
+    <link
+      rel="alternate"
+      hreflang="en"
+      href={absoluteUrl(Astro.request, withLocale(pathWithoutLocale, "en"))}
+    />
+    <link
+      rel="alternate"
+      hreflang="id"
+      href={absoluteUrl(Astro.request, withLocale(pathWithoutLocale, "id"))}
+    />
+    <meta property="og:site_name" content="nusa.business" />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={metaDescription} />
     <title>{title}</title>
+    {jsonLdBlocks.map((block) => (
+      <script type="application/ld+json" set:html={JSON.stringify(block)} />
+    ))}
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
       <a class="brand" href={homeHref}>nusa<span class="tld">.business</span></a>
-      <nav aria-label="Primary">
-        <a href="/claim">Claim</a>
-        <a href={portalUrl}>Portal</a>
+      <nav aria-label={t(locale, "navPrimary")}>
+        <a href={withLocale("/claim", locale)}>{t(locale, "navClaim")}</a>
+        <a href={portalUrl}>{t(locale, "navPortal")}</a>
+        <a href={switchHref} lang={other} hreflang={other}>
+          {t(locale, "langSwitchShort")}
+        </a>
       </nav>
     </header>
-    <nav class="crumbs" aria-label="Path">
+    <nav class="crumbs" aria-label={t(locale, "navPath")}>
       <a href={homeHref}>nusa.business</a>
       {crumb.map((c) => (
         <>
-          <span class="sep">/</span>
-          {c.href ? <a href={c.href}>{c.label}</a> : <span class="here">{c.label}</span>}
+          <span class="sep" aria-hidden="true">/</span>
+          {c.href ? (
+            <a href={c.href}>{c.label}</a>
+          ) : (
+            <span class="here" aria-current="page">{c.label}</span>
+          )}
         </>
       ))}
-      {crumb.length > 0 && <span class="sep">/</span>}
+      {crumb.length > 0 && <span class="sep" aria-hidden="true">/</span>}
     </nav>
-    <main>
+    <main id="main-content" tabindex="-1">
       <slot />
     </main>
     <footer class="site-footer">
-      <p>Free local listings across the archipelago. No registration fees. No commission at launch.</p>
+      <p>{t(locale, "footer")}</p>
       <p>
-        <a href="/host/bali">/host/bali</a>
-        · <a href="/host/gianyar.bali">/host/gianyar.bali</a>
-        · <a href="/host/uluwatu.bali">/host/uluwatu.bali</a>
+        <a href={withLocale("/host/bali", locale)}>/host/bali</a>
+        <span aria-hidden="true"> · </span>
+        <a href={withLocale("/host/gianyar.bali", locale)}>/host/gianyar.bali</a>
+        <span aria-hidden="true"> · </span>
+        <a href={withLocale("/host/uluwatu.bali", locale)}>/host/uluwatu.bali</a>
       </p>
     </footer>
   </body>

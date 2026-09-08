@@ -206,9 +206,10 @@ Non-negotiable, and the reason for the aesthetic rather than a side effect:
 
   This matches `.cursor/rules/nusa-web-astro.mdc`: *"minimize client JS (islands
   only when needed)"* — minimise, not eliminate.
-- **CSS budget (C12):** source `global.css` ≤ 14 KB; built hashed CSS ≤ 10 KB;
-  gzip of source ≤ 4 KB. Responsive media queries pushed past the original
-  ~8 KB aspirational line — gate with `tests/web.perf-budget.test.mjs`.
+- **CSS budget (C12):** source `global.css` ≤ 14 KB; built hashed CSS ≤ 11 KB;
+  gzip of source ≤ 4 KB. Responsive media queries plus the C10/C11 chrome
+  pushed past the original ~8 KB aspirational line — gate with
+  `tests/web.perf-budget.test.mjs`.
 - HTML responses send `Cache-Control: public, max-age=60, stale-while-revalidate=600`
   (middleware). Edge gzip/brotli remains the reverse proxy’s job.
 
@@ -220,11 +221,15 @@ not the compromise.
 
 - Visible `:focus-visible` — `2px solid var(--link)`, `outline-offset: 2px`.
   Never remove outlines.
+- Skip link (`Skip to content` → `#main-content`) is the first focusable control.
 - Body text meets WCAG AA against `--paper` in both themes. `--ink-faint` is for
-  non-essential metadata only; never body copy.
+  non-essential metadata only; never body copy or form labels (labels/th use
+  `--ink-soft`).
 - Semantic elements: `<nav aria-label>`, `<table>` with `<caption>` and `<th>`,
-  one `<h1>` per page, headings in order.
-- Links are underlined. Colour is never the only signal.
+  one `<h1>` per page, headings in order. Path crumbs use `aria-current="page"`;
+  decorative `/` separators are `aria-hidden`.
+- Links are underlined. Colour is never the only signal (form errors also use
+  weight + stamp underline + left border).
 - Honour `prefers-reduced-motion`. There is almost no motion in this system by
   design.
 
@@ -264,9 +269,11 @@ authenticated tool with different needs. Align it in a later pass.
 - [ ] Light and dark both legible, including with an explicit `data-theme`
       override in either direction
 - [ ] No `border-radius`, `box-shadow` or `gradient` in `global.css`
-- [ ] Built CSS ≤ 10 KB; source ≤ 14 KB (see Performance budget)
+- [ ] Built CSS ≤ 11 KB; source ≤ 14 KB (see Performance budget)
 - [ ] `/host/gianyar.bali/babi-guling-pande-egi` shows opening hours as a real
       table with a caption
-- [ ] Keyboard tab through a page: every focused element visibly indicated
+- [ ] Keyboard tab through a page: every focused element visibly indicated;
+      first Tab reveals **Skip to content** and Enter jumps to `#main-content`
 - [ ] Page body does not scroll horizontally at 320px width
+- [ ] Form labels / table headers remain legible (not `--ink-faint`) in light and dark
 - [ ] HTML responses include short `Cache-Control` (middleware)

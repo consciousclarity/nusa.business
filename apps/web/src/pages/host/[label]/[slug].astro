@@ -2,6 +2,14 @@
 import Base from "../../../layouts/Base.astro";
 import { api, browserApiOrigin } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  hostPath as seoHostPath,
+  localBusinessJsonLd,
+} from "../../../lib/seo";
+import { t, withLocale, type Locale } from "../../../i18n/ui";
+import { telHref, whatsappHref } from "@nusa/shared";
 
 const label = Astro.params.label!;
 const slug = Astro.params.slug!;
@@ -10,6 +18,7 @@ if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
 
 const [placeSlug, islandSlug] = parts;
 const req = Astro.request;
+const locale: Locale = Astro.locals.locale ?? "en";
 const data = await api<{
   business: {
     id: string;
@@ -49,23 +58,69 @@ const placeMeta = await api<{
 
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 const hostPath = `${placeSlug}.${islandSlug}.nusa.business/${slug}`;
+const listingPath = withLocale(
+  seoHostPath({
+    island: islandSlug!,
+    place: placeSlug!,
+    slug,
+  }),
+  locale,
+);
+const listingUrl = absoluteUrl(req, listingPath);
 const stamp =
   data.business.status === "draft"
     ? "Unclaimed"
     : data.business.status === "published"
       ? null
       : null;
+
+const wa = whatsappHref(data.business.whatsapp);
+const phoneLink = telHref(data.business.phone);
 ---
 <Base
   title={`${data.business.name} — ${placeMeta.place.name}`}
   description={data.business.summary}
   crumb={[
-    { label: islandSlug!, href: tenantHref(req, { island: islandSlug! }) },
+    { label: islandSlug!, href: tenantHref(req, { island: islandSlug!, locale }) },
     {
       label: placeSlug!,
-      href: tenantHref(req, { island: islandSlug!, place: placeSlug! }),
+      href: tenantHref(req, { island: islandSlug!, place: placeSlug!, locale }),
     },
     { label: data.business.slug },
+  ]}
+  locale={locale}
+  canonical={listingUrl}
+  ogType="article"
+  jsonLd={[
+    localBusinessJsonLd({
+      name: data.business.name,
+      description: data.business.summary,
+      url: listingUrl,
+      address: data.business.address,
+      telephone: data.business.phone,
+      categories: data.business.categories,
+    }),
+    breadcrumbJsonLd([
+      { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+      {
+        name: placeMeta.island.name,
+        url: absoluteUrl(
+          req,
+          withLocale(seoHostPath({ island: islandSlug! }), locale),
+        ),
+      },
+      {
+        name: placeMeta.place.name,
+        url: absoluteUrl(
+          req,
+          withLocale(
+            seoHostPath({ island: islandSlug!, place: placeSlug! }),
+            locale,
+          ),
+        ),
+      },
+      { name: data.business.name, url: listingUrl },
+    ]),
   ]}
 >
   <article class="record">
@@ -76,7 +131,7 @@ const stamp =
     <dl class="kv">
       <dt>Host</dt>
       <dd>{hostPath}</dd>
-      <dt>Category</dt>
+      <dt>{t(locale, "category")}</dt>
       <dd>{data.business.categories.join(" · ") || "—"}</dd>
       {data.business.address && (
         <>
@@ -87,13 +142,27 @@ const stamp =
       {data.business.phone && (
         <>
           <dt>Phone</dt>
-          <dd>{data.business.phone}</dd>
+          <dd>
+            {phoneLink ? (
+              <a href={phoneLink}>{data.business.phone}</a>
+            ) : (
+              data.business.phone
+            )}
+          </dd>
         </>
       )}
       {data.business.whatsapp && (
         <>
           <dt>WhatsApp</dt>
-          <dd>{data.business.whatsapp}</dd>
+          <dd>
+            {wa ? (
+              <a href={wa} rel="noopener noreferrer">
+                {data.business.whatsapp}
+              </a>
+            ) : (
+              data.business.whatsapp
+            )}
+          </dd>
         </>
       )}
       <dt>Booking</dt>
@@ -103,37 +172,50 @@ const stamp =
     </dl>
 
     <p class="actions">
-      <a class="cta" href={`${portal}/claim?businessId=${data.business.id}`}>
-        Claim this listing
+      {wa && (
+        <a class="cta" href={wa} rel="noopener noreferrer">
+          {t(locale, "chatWhatsApp")}
+        </a>
+      )}
+      {phoneLink && (
+        <a class={`cta${wa ? " secondary" : ""}`} href={phoneLink}>
+          {t(locale, "call")}
+        </a>
+      )}
+      <a
+        class={`cta${wa || phoneLink ? " secondary" : ""}`}
+        href={`${portal}/claim?businessId=${data.business.id}`}
+      >
+        {t(locale, "claimThis")}
       </a>
       {data.business.bookingMode !== "none" && (
-        <a class="cta secondary" href="#book">Book ({data.business.bookingMode})</a>
+        <a class="cta secondary" href="#book">{t(locale, "book")} ({data.business.bookingMode})</a>
       )}
     </p>
   </article>
 
   <div class="stack">
     <section class="section">
-      <h2>Overview</h2>
+      <h2>{t(locale, "overview")}</h2>
       <p class="prose">{data.business.description}</p>
     </section>
 
     {data.business.openingHours?.length > 0 && (
-      <section class="section">
+      <section class="section" aria-labelledby="hours-caption">
         <div class="table-wrap">
           <table class="data">
-            <caption>Opening hours</caption>
+            <caption id="hours-caption">{t(locale, "openingHours")}</caption>
             <thead>
               <tr>
-                <th scope="col">Day</th>
-                <th scope="col">Hours</th>
+                <th scope="col">{t(locale, "day")}</th>
+                <th scope="col">{t(locale, "hours")}</th>
               </tr>
             </thead>
             <tbody>
               {data.business.openingHours.map((h) => (
                 <tr>
                   <th scope="row">{h.day}</th>
-                  <td>{h.closed ? "Closed" : `${h.open} – ${h.close}`}</td>
+                  <td>{h.closed ? t(locale, "closed") : `${h.open} – ${h.close}`}</td>
                 </tr>
               ))}
             </tbody>
@@ -165,7 +247,7 @@ const stamp =
     )}
 
     <section class="section" id="reviews">
-      <h2>Reviews</h2>
+      <h2>{t(locale, "reviews")}</h2>
       {data.reviews.length === 0 && <p class="meta">No reviews yet.</p>}
       {data.reviews.length > 0 && (
         <div class="table-wrap">
@@ -204,13 +286,16 @@ const stamp =
         <h3>Add review</h3>
         <label>Name <input name="authorName" required autocomplete="nickname" /></label>
         <label>Comment <textarea name="comment" required rows="3"></textarea></label>
-        <label>Service <input type="number" name="service" min="1" max="5" value="5" /></label>
-        <label>Value <input type="number" name="value" min="1" max="5" value="5" /></label>
-        <label>Location <input type="number" name="location" min="1" max="5" value="5" /></label>
-        <label>
-          Cleanliness
-          <input type="number" name="cleanliness" min="1" max="5" value="5" />
-        </label>
+        <fieldset class="scores">
+          <legend>Scores (1–5)</legend>
+          <label>Service <input type="number" name="service" min="1" max="5" value="5" required /></label>
+          <label>Value <input type="number" name="value" min="1" max="5" value="5" required /></label>
+          <label>Location <input type="number" name="location" min="1" max="5" value="5" required /></label>
+          <label>
+            Cleanliness
+            <input type="number" name="cleanliness" min="1" max="5" value="5" required />
+          </label>
+        </fieldset>
         <button type="submit">Submit review</button>
         <p class="meta" id="review-msg" role="status" aria-live="polite"></p>
       </form>
@@ -219,11 +304,15 @@ const stamp =
     {data.business.bookingMode !== "none" && (
       <section class="section" id="book">
         <h2>Request a booking · {data.business.bookingMode}</h2>
-        <p class="meta">
+        <p class="meta" id="booking-notice">
           Sends a pending request to the business. This is not a confirmed
           reservation and does not lock a price or inventory.
         </p>
-        <form class="stack" id="booking-form">
+        <form
+          class="stack"
+          id="booking-form"
+          aria-describedby="booking-notice"
+        >
           <label>Name <input name="customerName" required autocomplete="name" /></label>
           <label>Email <input type="email" name="customerEmail" required autocomplete="email" /></label>
           <label>Date <input type="date" name="startDate" required /></label>
@@ -249,6 +338,11 @@ const stamp =
     if (!el) return;
     el.textContent = text;
     el.classList.toggle("error", !!isError);
+    const form = el.closest("form");
+    if (form) {
+      if (isError) form.setAttribute("aria-invalid", "true");
+      else form.removeAttribute("aria-invalid");
+    }
   }
 
   function lockForm(form, locked) {

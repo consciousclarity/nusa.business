@@ -1,5 +1,11 @@
 import { defineMiddleware } from "astro:middleware";
-import { parseDevHostPath, parseHost, publicUrl } from "@nusa/shared";
+import {
+  detectLocale,
+  parseDevHostPath,
+  parseHost,
+  publicUrl,
+  withLocale,
+} from "@nusa/shared";
 
 function isLocalHost(host: string): boolean {
   const h = host.split(":")[0]?.toLowerCase() ?? "";
@@ -34,14 +40,17 @@ function withPerfHeaders(response: Response): Response {
 
 /**
  * Production tenancy:
- * - Real hosts (java.nusa.business, yogyakarta.java.nusa.business) rewrite
- *   invisibly to /host/{label}/… so the public URL stays on the subdomain.
- * - On the nation apex, /host/{label} 301s to the canonical nested host.
- * Localhost keeps /host/... paths as the primary surface.
+ * - Real hosts rewrite invisibly to /host/{label}/…
+ * - Nation apex /host/{label} 301s to the canonical nested host.
+ *
+ * Locale: optional `/id` prefix. Stripped with `next(path)` so middleware does
+ * **not** re-run (a `rewrite()` would re-detect locale as `en` on `/`).
  */
 export const onRequest = defineMiddleware(async (context, next) => {
   const url = context.url;
-  const pathname = url.pathname;
+  const { locale, pathWithoutLocale } = detectLocale(url.pathname);
+  context.locals.locale = locale;
+
   const hostHeader =
     context.request.headers.get("x-forwarded-host") ||
     context.request.headers.get("host") ||
@@ -49,42 +58,70 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const host = hostHeader.split(":")[0]?.toLowerCase() ?? "";
   const local = isLocalHost(host) || import.meta.env.DEV;
 
-  const hostPath = parseDevHostPath(pathname);
+  const hostPath = parseDevHostPath(pathWithoutLocale);
   if (hostPath && !local) {
     const apex = parseHost(hostHeader);
-    // Only canonicalize on the nation apex — island/place hosts rewrite
-    // into /host/... and must not 301 back out (redirect loop).
     if (
       apex.kind === "nation" &&
       (hostPath.context.kind === "island" || hostPath.context.kind === "place")
     ) {
       const ctx = hostPath.context;
+      const slugPath =
+        hostPath.pathname === "/"
+          ? undefined
+          : hostPath.pathname.replace(/^\//, "");
       const target = publicUrl({
         island: ctx.island,
         place: ctx.kind === "place" ? ctx.place : undefined,
-        slug:
-          hostPath.pathname === "/"
-            ? undefined
-            : hostPath.pathname.replace(/^\//, ""),
+        slug: slugPath,
         root: "https://nusa.business",
       });
+      if (locale === "id") {
+        const u = new URL(target);
+        u.pathname = withLocale(u.pathname, "id");
+        return context.redirect(u.toString(), 301);
+      }
       return context.redirect(target, 301);
     }
   }
 
+  // Strip /id without re-entering middleware (keeps locals.locale = id).
+  if (pathWithoutLocale !== url.pathname) {
+    const stripped = `${pathWithoutLocale}${url.search}`;
+
+    if (
+      pathWithoutLocale === "/host" ||
+      pathWithoutLocale.startsWith("/host/")
+    ) {
+      return withPerfHeaders(await next(stripped));
+    }
+
+    const tenant = parseHost(hostHeader);
+    if (tenant.kind === "island") {
+      const target = `/host/${tenant.island}${pathWithoutLocale === "/" ? "" : pathWithoutLocale}`;
+      return withPerfHeaders(await next(`${target}${url.search}`));
+    }
+    if (tenant.kind === "place") {
+      const target = `/host/${tenant.place}.${tenant.island}${pathWithoutLocale === "/" ? "" : pathWithoutLocale}`;
+      return withPerfHeaders(await next(`${target}${url.search}`));
+    }
+
+    return withPerfHeaders(await next(stripped));
+  }
+
   // Already under /host — serve as-is (dev, or after failed canonicalize)
-  if (pathname === "/host" || pathname.startsWith("/host/")) {
+  if (pathWithoutLocale === "/host" || pathWithoutLocale.startsWith("/host/")) {
     return withPerfHeaders(await next());
   }
 
   const tenant = parseHost(hostHeader);
   if (tenant.kind === "island") {
-    const target = `/host/${tenant.island}${pathname === "/" ? "" : pathname}`;
-    return withPerfHeaders(await context.rewrite(target));
+    const target = `/host/${tenant.island}${pathWithoutLocale === "/" ? "" : pathWithoutLocale}`;
+    return withPerfHeaders(await next(`${target}${url.search}`));
   }
   if (tenant.kind === "place") {
-    const target = `/host/${tenant.place}.${tenant.island}${pathname === "/" ? "" : pathname}`;
-    return withPerfHeaders(await context.rewrite(target));
+    const target = `/host/${tenant.place}.${tenant.island}${pathWithoutLocale === "/" ? "" : pathWithoutLocale}`;
+    return withPerfHeaders(await next(`${target}${url.search}`));
   }
 
   return withPerfHeaders(await next());

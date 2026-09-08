@@ -15,8 +15,8 @@ const middlewarePath = join(root, "apps/web/src/middleware.ts");
 
 /** Soft ceiling for source CSS after responsive media queries landed. */
 const SOURCE_CSS_MAX = 14_000;
-/** Built hashed CSS should stay near the teletype ~8–10 KB target. */
-const BUILT_CSS_MAX = 10_000;
+/** Built hashed CSS should stay near the teletype ~10 KB target. */
+const BUILT_CSS_MAX = 11_000;
 const GZIP_CSS_MAX = 4_000;
 
 function walkAstro(dir) {

@@ -23,6 +23,10 @@ export function RegisterPage({
 
   useEffect(() => {
     if (!token) return;
+    setError("");
+    setInfo("");
+    setEmail("");
+    setListing("");
     api<{
       email: string;
       listing?: { name: string; place?: string; island?: string };
@@ -75,15 +79,6 @@ export function RegisterPage({
         </p>
       )}
       <form className="stack" onSubmit={submit}>
-        <label>
-          Invite token
-          <input
-            required
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            autoComplete="off"
-          />
-        </label>
         {email && (
           <p className="muted">
             Account email: <strong>{email}</strong>
@@ -109,9 +104,21 @@ export function RegisterPage({
             autoComplete="new-password"
           />
         </label>
+        <label>
+          Invite token
+          <input
+            required
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            readOnly={Boolean(tokenFromQuery)}
+            autoComplete="off"
+          />
+        </label>
         {info && <p className="muted">{info}</p>}
         {error && <p className="error">{error}</p>}
-        <button type="submit">Create account</button>
+        <button type="submit" disabled={Boolean(error) && !email}>
+          Create account
+        </button>
       </form>
       <p className="muted" style={{ marginTop: "1rem" }}>
         <Link to="/login">Already have an account?</Link>

@@ -75,8 +75,26 @@ export function App() {
       </header>
 
       <Routes>
-        <Route path="/login" element={<LoginPage onLogin={onLogin} />} />
-        <Route path="/register" element={<RegisterPage onLogin={onLogin} />} />
+        <Route
+          path="/login"
+          element={
+            user ? (
+              <Navigate to="/" replace />
+            ) : (
+              <LoginPage onLogin={onLogin} />
+            )
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            user ? (
+              <Navigate to="/" replace />
+            ) : (
+              <RegisterPage onLogin={onLogin} />
+            )
+          }
+        />
         <Route path="/recovery" element={<RecoveryRequestPage />} />
         <Route
           path="/recovery/confirm"

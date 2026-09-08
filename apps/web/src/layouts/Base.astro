@@ -48,6 +48,7 @@ const switchHref = withLocale(pathWithoutLocale + Astro.url.search, other);
     <title>{title}</title>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <header class="site-header">
       <a class="brand" href={homeHref}>nusa<span class="tld">.business</span></a>
       <nav aria-label={t(locale, "navPrimary")}>
@@ -62,21 +63,27 @@ const switchHref = withLocale(pathWithoutLocale + Astro.url.search, other);
       <a href={homeHref}>nusa.business</a>
       {crumb.map((c) => (
         <>
-          <span class="sep">/</span>
-          {c.href ? <a href={c.href}>{c.label}</a> : <span class="here">{c.label}</span>}
+          <span class="sep" aria-hidden="true">/</span>
+          {c.href ? (
+            <a href={c.href}>{c.label}</a>
+          ) : (
+            <span class="here" aria-current="page">{c.label}</span>
+          )}
         </>
       ))}
-      {crumb.length > 0 && <span class="sep">/</span>}
+      {crumb.length > 0 && <span class="sep" aria-hidden="true">/</span>}
     </nav>
-    <main>
+    <main id="main-content" tabindex="-1">
       <slot />
     </main>
     <footer class="site-footer">
       <p>{t(locale, "footer")}</p>
       <p>
         <a href={withLocale("/host/bali", locale)}>/host/bali</a>
-        · <a href={withLocale("/host/gianyar.bali", locale)}>/host/gianyar.bali</a>
-        · <a href={withLocale("/host/uluwatu.bali", locale)}>/host/uluwatu.bali</a>
+        <span aria-hidden="true"> · </span>
+        <a href={withLocale("/host/gianyar.bali", locale)}>/host/gianyar.bali</a>
+        <span aria-hidden="true"> · </span>
+        <a href={withLocale("/host/uluwatu.bali", locale)}>/host/uluwatu.bali</a>
       </p>
     </footer>
   </body>

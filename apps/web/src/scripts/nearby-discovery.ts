@@ -106,7 +106,10 @@ export function mountNearbyDiscovery(root: HTMLElement) {
   const chips = root.querySelectorAll<HTMLButtonElement>("[data-category]");
   if (!endpoint || !listEl || !mapEl) return;
 
-  const map = L.map(mapEl, { scrollWheelZoom: false, attributionControl: true });
+  const map = L.map(mapEl, {
+    scrollWheelZoom: false,
+    attributionControl: true,
+  });
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -114,13 +117,23 @@ export function mountNearbyDiscovery(root: HTMLElement) {
   const layer = L.layerGroup().addTo(map);
   map.setView([-8.54, 115.32], 13);
 
+  // Leaflet measures the pane after layout; without this, the map layer can
+  // sit over the category chips and steal clicks.
+  requestAnimationFrame(() => {
+    map.invalidateSize();
+  });
+
+  let loadSeq = 0;
+
   async function load(category: string | null) {
+    const seq = ++loadSeq;
     const url = new URL(endpoint!);
     if (category) url.searchParams.set("category", category);
     else url.searchParams.delete("category");
     const res = await fetch(url.toString());
-    if (!res.ok) return;
+    if (!res.ok || seq !== loadSeq) return;
     const data = (await res.json()) as DiscoveryPayload;
+    if (seq !== loadSeq) return;
     const nearby = data.nearby.map(withHref);
     chips.forEach((btn) => {
       const cat = decodeURIComponent(btn.dataset.category || "");
@@ -130,6 +143,7 @@ export function mountNearbyDiscovery(root: HTMLElement) {
     });
     renderList(listEl!, nearby, emptyLabel);
     syncMap(map, layer, data.origin, nearby);
+    map.invalidateSize();
   }
 
   chips.forEach((btn) => {

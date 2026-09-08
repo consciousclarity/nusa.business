@@ -245,27 +245,29 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
         data-empty-label={t(locale, "noNearbyInCategory")}
       >
         <h2 id="nearby-cat-heading">{t(locale, "nearbyByCategory")}</h2>
+        <div
+          class="category-chips"
+          role="group"
+          aria-label={t(locale, "category")}
+        >
+          {discovery.nearbyCategories.map((cat) => (
+            <button
+              type="button"
+              class:list={["chip", { "is-active": cat === discovery.activeCategory }]}
+              data-category={encodeURIComponent(cat)}
+              aria-pressed={cat === discovery.activeCategory ? "true" : "false"}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
         <div class="nearby-layout">
-          <div class="nearby-controls">
-            <div class="category-chips" role="group" aria-label={t(locale, "category")}>
-              {discovery.nearbyCategories.map((cat) => (
-                <button
-                  type="button"
-                  class:list={["chip", { "is-active": cat === discovery.activeCategory }]}
-                  data-category={encodeURIComponent(cat)}
-                  aria-pressed={cat === discovery.activeCategory ? "true" : "false"}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-            <div
-              class="nearby-map"
-              data-nearby-map
-              role="img"
-              aria-label={t(locale, "nearbyMap")}
-            ></div>
-          </div>
+          <div
+            class="nearby-map"
+            data-nearby-map
+            role="img"
+            aria-label={t(locale, "nearbyMap")}
+          ></div>
           <div data-nearby-list>
             {nearbyWithHref.length === 0 ? (
               <p class="meta">{t(locale, "noNearbyInCategory")}</p>

@@ -691,6 +691,7 @@ table.data caption {
 .nearby-layout {
   display: grid;
   gap: 1.25rem;
+  margin-top: 0.85rem;
 }
 
 .nearby-controls {
@@ -704,6 +705,7 @@ table.data caption {
   gap: 0.45rem;
   position: relative;
   z-index: 2;
+  margin-top: 0.65rem;
 }
 
 .chip {

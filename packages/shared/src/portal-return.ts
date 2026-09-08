@@ -9,6 +9,7 @@ const ALLOWED_PREFIXES = [
   "/bookings",
   "/field",
   "/vendor",
+  "/invites",
   "/register",
   "/recovery",
 ];

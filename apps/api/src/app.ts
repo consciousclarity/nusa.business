@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { cors } from "hono/cors";
 import {
+  BusinessSlugConflictError,
   addBooking,
   addClaim,
   addReview,
@@ -52,12 +53,38 @@ import {
   resolveClientIp,
 } from "./rate-limit.js";
 
+import {
+  parseBookingBody,
+  parseListingPatchBody,
+  parseReviewBody,
+} from "./validate.js";
+
 const app = new Hono<{ Variables: AuthVariables }>();
+
+app.onError((error, c) => {
+  if (error instanceof BusinessSlugConflictError) {
+    return c.json({ error: error.message }, 409);
+  }
+  console.error(error);
+  return c.json({ error: "Internal Server Error" }, 500);
+});
 
 /** Uniform 429 so callers cannot tell which limit they hit. */
 function tooManyRequests(c: Context, retryAfter: number) {
   c.header("Retry-After", String(retryAfter));
   return c.json({ error: "Too many requests" }, 429);
+}
+
+/** In-process booking idempotency (single API process; resets on restart). */
+const bookingIdempotency = new Map<string, { bookingId: string; body: unknown }>();
+const BOOKING_IDEMPOTENCY_MAX = 5_000;
+
+function rememberBookingIdempotency(key: string, bookingId: string, body: unknown) {
+  if (bookingIdempotency.size >= BOOKING_IDEMPOTENCY_MAX) {
+    const first = bookingIdempotency.keys().next().value;
+    if (first) bookingIdempotency.delete(first);
+  }
+  bookingIdempotency.set(key, { bookingId, body });
 }
 
 app.use(
@@ -254,6 +281,9 @@ app.post(
       ownerUserId?: string;
       status?: "draft" | "published" | "claimed";
     }>();
+    if (body.status !== undefined && body.status !== "draft" && body.status !== "published") {
+      return c.json({ error: "status must be draft or published; claimed requires claim approval" }, 400);
+    }
     const business = createBusiness({
       placeId: body.placeId,
       slug: toSlug(body.name),
@@ -283,13 +313,24 @@ app.patch("/v1/portal/listings/:id", requireAuth, async (c) => {
   if (!ownsOrAdmin(c.get("user"), existing.ownerUserId)) {
     return c.json({ error: "Forbidden" }, 403);
   }
-  const body = await c.req.json<Partial<typeof existing>>();
+  let raw: unknown;
+  try {
+    raw = await c.req.json();
+  } catch {
+    return c.json({ error: "Malformed JSON" }, 400);
+  }
+  const parsed = parseListingPatchBody(raw);
+  if (!parsed.ok) return c.json({ error: parsed.error }, 400);
   const updated = upsertBusiness({
     ...existing,
-    ...body,
+    ...parsed.value,
     // Identity and ownership are not client-editable.
     id: existing.id,
     ownerUserId: existing.ownerUserId,
+    registeredByAgentId: existing.registeredByAgentId,
+    vendorId: existing.vendorId,
+    placeId: existing.placeId,
+    createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),
   });
   return c.json({ business: updated });
@@ -343,76 +384,107 @@ app.post("/v1/claims/:id/decide", requireRole("admin"), async (c) => {
   return c.json({ claim });
 });
 
-app.post("/v1/businesses/:id/reviews", async (c) => {
-  // Verified before limiting: an unchecked id would both create orphan
-  // reviews and let an attacker mint unlimited distinct rate-limit keys.
-  const business = getBusinessById(c.req.param("id"));
-  if (!business || !isPubliclyListed(business)) {
-    return c.json({ error: "Not found" }, 404);
-  }
+app.post(
+  "/v1/businesses/:id/reviews",
+  async (c) => {
+    // Verified before limiting: an unchecked id would both create orphan
+    // reviews and let an attacker mint unlimited distinct rate-limit keys.
+    const business = getBusinessById(c.req.param("id"));
+    if (!business || !isPubliclyListed(business)) {
+      return c.json({ error: "Not found" }, 404);
+    }
 
-  const limited = consumeWrite("reviews", resolveClientIp(c), business.id);
-  if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
+    let raw: unknown;
+    try {
+      raw = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    const parsed = parseReviewBody(raw);
+    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
 
-  const body = await c.req.json<{
-    authorName: string;
-    authorEmail?: string;
-    service: number;
-    value: number;
-    location: number;
-    cleanliness: number;
-    comment: string;
-  }>();
-  const review = addReview({ ...body, businessId: business.id });
-  return c.json({ review: toPublicReview(review) }, 201);
-});
+    const limited = consumeWrite("reviews", resolveClientIp(c), business.id);
+    if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
 
-app.post("/v1/businesses/:id/bookings", async (c) => {
-  const business = getBusinessById(c.req.param("id"));
-  if (!business || !isPubliclyListed(business)) {
-    return c.json({ error: "Not found" }, 404);
-  }
+    const review = addReview({ ...parsed.value, businessId: business.id });
+    return c.json({ review: toPublicReview(review) }, 201);
+  },
+);
 
-  // Booking-disabled is checked first: a request refused for that reason
-  // never touched the booking resource, and the owner can enable booking
-  // mid-window — charging it would leave real customers blocked afterwards.
-  if (business.bookingMode === "none") {
-    return c.json({ error: "Booking not enabled" }, 400);
-  }
+app.post(
+  "/v1/businesses/:id/bookings",
+  async (c) => {
+    const business = getBusinessById(c.req.param("id"));
+    if (!business || !isPubliclyListed(business)) {
+      return c.json({ error: "Not found" }, 404);
+    }
 
-  const limited = consumeWrite("bookings", resolveClientIp(c), business.id);
-  if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
-  const body = await c.req.json<{
-    customerName: string;
-    customerEmail: string;
-    customerPhone?: string;
-    startDate: string;
-    endDate?: string;
-    timeSlot?: string;
-    guests?: number;
-    tickets?: number;
-    notes?: string;
-    totalAmount?: number;
-  }>();
-  const booking = addBooking({
-    businessId: business.id,
-    mode: business.bookingMode,
-    customerName: body.customerName,
-    customerEmail: body.customerEmail,
-    customerPhone: body.customerPhone,
-    startDate: body.startDate,
-    endDate: body.endDate,
-    timeSlot: body.timeSlot,
-    guests: body.guests,
-    tickets: body.tickets,
-    notes: body.notes,
-    totalAmount: body.totalAmount ?? 0,
-    currency: "IDR",
-  });
-  // Echo the created request to the submitter only — never list bookings
-  // on public directory reads.
-  return c.json({ booking }, 201);
-});
+    // Booking-disabled is checked first: a request refused for that reason
+    // never touched the booking resource, and the owner can enable booking
+    // mid-window — charging it would leave real customers blocked afterwards.
+    if (business.bookingMode === "none") {
+      return c.json({ error: "Booking not enabled" }, 400);
+    }
+
+    let raw: unknown;
+    try {
+      raw = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    const parsed = parseBookingBody(raw);
+    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+
+    const idemKey = (c.req.header("idempotency-key") || "").trim();
+    if (idemKey.length > 128) {
+      return c.json({ error: "Idempotency key is too long (max 128)" }, 400);
+    }
+    if (idemKey) {
+      const prior = bookingIdempotency.get(`${business.id}:${idemKey}`);
+      if (prior) {
+        // parseBookingBody emits fields in a fixed order and normalizes optional values.
+        if (JSON.stringify(prior.body) !== JSON.stringify(parsed.value)) {
+          return c.json({ error: "Idempotency key already used for a different request" }, 409);
+        }
+        const existing = listBookings(business.id).find((b) => b.id === prior.bookingId);
+        if (existing) {
+          return c.json({ booking: existing, idempotentReplay: true }, 200);
+        }
+      }
+    }
+
+    const limited = consumeWrite("bookings", resolveClientIp(c), business.id);
+    if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
+
+    const booking = addBooking({
+      businessId: business.id,
+      mode: business.bookingMode,
+      customerName: parsed.value.customerName,
+      customerEmail: parsed.value.customerEmail,
+      customerPhone: parsed.value.customerPhone,
+      startDate: parsed.value.startDate,
+      endDate: parsed.value.endDate,
+      timeSlot: parsed.value.timeSlot,
+      guests: parsed.value.guests,
+      tickets: parsed.value.tickets,
+      notes: parsed.value.notes,
+      // Request-only launch: ignore client amounts; not a verified price.
+      totalAmount: 0,
+      currency: "IDR",
+    });
+    if (idemKey) {
+      rememberBookingIdempotency(`${business.id}:${idemKey}`, booking.id, parsed.value);
+    }
+    return c.json(
+      {
+        booking,
+        notice:
+          "Request recorded as pending. This is not a confirmed reservation or price quote.",
+      },
+      201,
+    );
+  },
+);
 
 app.get("/v1/bookings", requireAuth, (c) => {
   const user = c.get("user");

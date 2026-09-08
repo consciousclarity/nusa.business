@@ -18,8 +18,10 @@
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/v1/portal/listings?ownerId=` | Inventory |
-| POST | `/v1/portal/listings` | Create |
-| PATCH | `/v1/portal/listings/:id` | Update |
+| POST | `/v1/portal/listings` | Create as draft or published; claimed requires claim approval |
+| PATCH | `/v1/portal/listings/:id` | Update (allowlisted fields only; status is server-controlled) |
+
+Listing writes return `409` if another listing occupies the same `(placeId, slug)`, including drafts. The JSON store enforces the check and save synchronously within the single API process.
 
 ## Claims & reviews
 
@@ -28,16 +30,21 @@
 | POST | `/v1/claims` | `{ businessId, claimantUserId, note? }` |
 | GET | `/v1/claims` | List |
 | POST | `/v1/claims/:id/decide` | `{ status: approved\|rejected }` |
-| POST | `/v1/businesses/:id/reviews` | Multi-criteria review |
+| POST | `/v1/businesses/:id/reviews` | Multi-criteria review (runtime-validated) |
 
 ## Bookings
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/v1/businesses/:id/bookings` | Requires `bookingMode != none` |
+| POST | `/v1/businesses/:id/bookings` | Pending request only; `bookingMode != none`; optional `Idempotency-Key` |
 | GET | `/v1/bookings?businessId=` | Inbox |
 
 Booking body supports `startDate`, `endDate`, `timeSlot`, `guests`, `tickets` depending on mode.
+Client `totalAmount` is ignored — not a priced inventory hold.
+Dates must be actual calendar dates in `YYYY-MM-DD` format.
+
+An `Idempotency-Key` (up to 128 characters) can replay only the same normalized booking payload for the same business. Reusing it with a changed payload returns `409` without booking data. Unchanged retries return the original booking without creating another request; use a new key after editing the request. Replay records are in memory and reset on API restart.
+Customer bookings are available through the authenticated owner/admin inbox, not public listing responses.
 
 ## Field ops
 

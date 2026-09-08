@@ -273,6 +273,12 @@ ol {
   margin: 0 0 0.75rem;
 }
 
+.meta.error {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+}
+
 .review-note {
   margin-top: 0.75rem;
 }

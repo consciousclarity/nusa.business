@@ -202,7 +202,7 @@ const stamp =
 
       <form class="stack" method="POST" id="review-form">
         <h3>Add review</h3>
-        <label>Name <input name="authorName" required /></label>
+        <label>Name <input name="authorName" required autocomplete="nickname" /></label>
         <label>Comment <textarea name="comment" required rows="3"></textarea></label>
         <label>Service <input type="number" name="service" min="1" max="5" value="5" /></label>
         <label>Value <input type="number" name="value" min="1" max="5" value="5" /></label>
@@ -212,15 +212,20 @@ const stamp =
           <input type="number" name="cleanliness" min="1" max="5" value="5" />
         </label>
         <button type="submit">Submit review</button>
+        <p class="meta" id="review-msg" role="status" aria-live="polite"></p>
       </form>
     </section>
 
     {data.business.bookingMode !== "none" && (
       <section class="section" id="book">
-        <h2>Book · {data.business.bookingMode}</h2>
+        <h2>Request a booking · {data.business.bookingMode}</h2>
+        <p class="meta">
+          Sends a pending request to the business. This is not a confirmed
+          reservation and does not lock a price or inventory.
+        </p>
         <form class="stack" id="booking-form">
-          <label>Name <input name="customerName" required /></label>
-          <label>Email <input type="email" name="customerEmail" required /></label>
+          <label>Name <input name="customerName" required autocomplete="name" /></label>
+          <label>Email <input type="email" name="customerEmail" required autocomplete="email" /></label>
           <label>Date <input type="date" name="startDate" required /></label>
           {data.business.bookingMode === "service" && (
             <label>Time slot <input name="timeSlot" placeholder="10:00" /></label>
@@ -231,8 +236,8 @@ const stamp =
           {data.business.bookingMode === "event" && (
             <label>Tickets <input type="number" name="tickets" min="1" value="1" /></label>
           )}
-          <button type="submit">Request booking</button>
-          <p class="meta" id="booking-msg"></p>
+          <button type="submit">Submit request</button>
+          <p class="meta" id="booking-msg" role="status" aria-live="polite"></p>
         </form>
       </section>
     )}
@@ -240,48 +245,131 @@ const stamp =
 </Base>
 
 <script define:vars={{ apiBase: browserApiOrigin(), businessId: data.business.id }}>
+  function setStatus(el, text, isError) {
+    if (!el) return;
+    el.textContent = text;
+    el.classList.toggle("error", !!isError);
+  }
+
+  function lockForm(form, locked) {
+    form.querySelectorAll("button, input, textarea, select").forEach((node) => {
+      node.disabled = locked;
+    });
+  }
+
   const reviewForm = document.getElementById("review-form");
+  const reviewMsg = document.getElementById("review-msg");
   reviewForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (reviewForm.dataset.busy === "1") return;
     const fd = new FormData(reviewForm);
-    await fetch(`${apiBase}/v1/businesses/${businessId}/reviews`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        authorName: fd.get("authorName"),
-        comment: fd.get("comment"),
-        service: Number(fd.get("service")),
-        value: Number(fd.get("value")),
-        location: Number(fd.get("location")),
-        cleanliness: Number(fd.get("cleanliness")),
-      }),
-    });
-    location.reload();
+    reviewForm.dataset.busy = "1";
+    lockForm(reviewForm, true);
+    setStatus(reviewMsg, "Submitting review…", false);
+    try {
+      const res = await fetch(`${apiBase}/v1/businesses/${businessId}/reviews`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          authorName: fd.get("authorName"),
+          comment: fd.get("comment"),
+          service: Number(fd.get("service")),
+          value: Number(fd.get("value")),
+          location: Number(fd.get("location")),
+          cleanliness: Number(fd.get("cleanliness")),
+        }),
+      });
+      if (res.ok) {
+        location.reload();
+        return;
+      }
+      let detail = `Review failed (${res.status}).`;
+      try {
+        const data = await res.json();
+        if (data?.error) detail = data.error;
+      } catch {}
+      if (res.status === 429) {
+        const ra = res.headers.get("Retry-After");
+        detail = ra ? `Too many reviews — retry in ${ra}s.` : "Too many reviews — try later.";
+      }
+      setStatus(reviewMsg, detail, true);
+    } catch {
+      setStatus(reviewMsg, "Network error — check your connection and try again.", true);
+    } finally {
+      reviewForm.dataset.busy = "0";
+      lockForm(reviewForm, false);
+    }
   });
 
   const bookingForm = document.getElementById("booking-form");
+  const bookingMsg = document.getElementById("booking-msg");
+  let bookingIdempotencyKey = crypto.randomUUID();
+  let lastBookingPayload;
   bookingForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (bookingForm.dataset.busy === "1") return;
+    // Disabled controls are omitted by FormData, so capture values before locking.
     const fd = new FormData(bookingForm);
-    const res = await fetch(`${apiBase}/v1/businesses/${businessId}/bookings`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        customerName: fd.get("customerName"),
-        customerEmail: fd.get("customerEmail"),
-        startDate: fd.get("startDate"),
-        endDate: fd.get("endDate") || undefined,
-        timeSlot: fd.get("timeSlot") || undefined,
-        tickets: fd.get("tickets") ? Number(fd.get("tickets")) : undefined,
-      }),
-    });
-    const msg = document.getElementById("booking-msg");
-    if (res.ok) {
-      const data = await res.json();
-      if (msg) msg.textContent = `Booking ${data.booking.id} submitted (${data.booking.status}).`;
-      bookingForm.reset();
-    } else if (msg) {
-      msg.textContent = "Booking failed.";
+    bookingForm.dataset.busy = "1";
+    lockForm(bookingForm, true);
+    setStatus(bookingMsg, "Sending request…", false);
+    const payload = {
+      customerName: fd.get("customerName"),
+      customerEmail: fd.get("customerEmail"),
+      startDate: fd.get("startDate"),
+      endDate: fd.get("endDate") || undefined,
+      timeSlot: fd.get("timeSlot") || undefined,
+      tickets: fd.get("tickets") ? Number(fd.get("tickets")) : undefined,
+    };
+    const serializedPayload = JSON.stringify(payload);
+    if (lastBookingPayload !== undefined && lastBookingPayload !== serializedPayload) {
+      bookingIdempotencyKey = crypto.randomUUID();
+    }
+    lastBookingPayload = serializedPayload;
+    try {
+      const res = await fetch(`${apiBase}/v1/businesses/${businessId}/bookings`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": bookingIdempotencyKey,
+        },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const notice =
+          data.notice ||
+          "Request recorded as pending. This is not a confirmed reservation.";
+        setStatus(
+          bookingMsg,
+          `Request ${data.booking.id} submitted (${data.booking.status}). ${notice}`,
+          false,
+        );
+        bookingForm.reset();
+        bookingIdempotencyKey = crypto.randomUUID();
+      } else {
+        let detail = `Request failed (${res.status}).`;
+        try {
+          const data = await res.json();
+          if (data?.error) detail = data.error;
+        } catch {}
+        if (res.status === 429) {
+          const ra = res.headers.get("Retry-After");
+          detail = ra
+            ? `Too many requests — retry in ${ra}s. Your form was kept.`
+            : "Too many requests — try later. Your form was kept.";
+        }
+        setStatus(bookingMsg, detail, true);
+      }
+    } catch {
+      setStatus(
+        bookingMsg,
+        "Network error — your details were kept. Try again.",
+        true,
+      );
+    } finally {
+      bookingForm.dataset.busy = "0";
+      lockForm(bookingForm, false);
     }
   });
 </script>

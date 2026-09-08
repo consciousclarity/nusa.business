@@ -35,7 +35,16 @@ export function atomicWriteFile(
   const tmpPath = `${targetPath}.${process.pid}.${Date.now()}.tmp`;
   const fd = openSync(tmpPath, "w");
   try {
-    writeSync(fd, contents, undefined, "utf8");
+    const buffer = Buffer.from(contents, "utf8");
+    let offset = 0;
+    // A successful write can still be short; retry the remaining UTF-8 bytes.
+    while (offset < buffer.length) {
+      const written = writeSync(fd, buffer, offset, buffer.length - offset, null);
+      if (written === 0) {
+        throw new Error("Unable to write store file: writeSync made no progress");
+      }
+      offset += written;
+    }
     fsyncSync(fd);
   } catch (err) {
     try {

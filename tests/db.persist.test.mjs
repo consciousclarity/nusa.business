@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
-import {
+import fs, {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   writeFileSync,
 } from "node:fs";
 import { mkdtempSync } from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
@@ -19,6 +21,25 @@ const { atomicWriteFile, backupPathFor } = await import(
 );
 const db = await import("../packages/db/dist/repository.js");
 
+const realWriteSync = fs.writeSync;
+
+function mockWriteSync(t, implementation) {
+  const write = t.mock.method(fs, "writeSync", implementation);
+  syncBuiltinESMExports();
+  t.after(() => {
+    write.mock.restore();
+    syncBuiltinESMExports();
+  });
+}
+
+// Exercise a real partial filesystem write with either writeSync overload.
+function writeOneByte(fd, data, offset, length, position) {
+  if (typeof data === "string") {
+    return realWriteSync(fd, Buffer.from(data, length), 0, 1, offset);
+  }
+  return realWriteSync(fd, data, offset, Math.min(1, length), position);
+}
+
 describe("atomicWriteFile", () => {
   it("replaces the target and keeps a .bak of the previous bytes", () => {
     const path = join(dataDir, "sample.json");
@@ -31,6 +52,60 @@ describe("atomicWriteFile", () => {
     assert.equal(readFileSync(backupPathFor(path), "utf8"), '{"v":1}');
     assert.equal(existsSync(`${path}.tmp`), false);
   });
+
+  it("completes short writes without splitting UTF-8 characters", (t) => {
+    const dir = mkdtempSync(join(dataDir, "short-write-"));
+    const path = join(dir, "store.json");
+    const initial = JSON.stringify({ name: "Café 🌴 東京" });
+    const updated = JSON.stringify({ name: "Warung é 🍚 Bali" });
+    mockWriteSync(t, writeOneByte);
+
+    atomicWriteFile(path, initial);
+    assert.deepEqual(readFileSync(path), Buffer.from(initial));
+    assert.equal(existsSync(backupPathFor(path)), false);
+
+    atomicWriteFile(path, updated);
+    assert.deepEqual(readFileSync(path), Buffer.from(updated));
+    assert.deepEqual(readFileSync(backupPathFor(path)), Buffer.from(initial));
+    assert.deepEqual(readdirSync(dir).sort(), ["store.json", "store.json.bak"]);
+  });
+
+  for (const existing of [false, true]) {
+    for (const failure of ["zero progress", "ENOSPC"]) {
+      it(`aborts on ${failure} after a short write (${existing ? "existing" : "initial"} store)`, (t) => {
+        const dir = mkdtempSync(join(dataDir, "failed-write-"));
+        const path = join(dir, "store.json");
+        const previous = '{"v":1}';
+        const backup = '{"v":0}';
+        if (existing) {
+          writeFileSync(path, previous);
+          writeFileSync(backupPathFor(path), backup);
+        }
+
+        let calls = 0;
+        mockWriteSync(t, (...args) => {
+          if (calls++ === 0) return writeOneByte(...args);
+          if (failure === "zero progress") return 0;
+          throw Object.assign(new Error("no space left on device"), {
+            code: "ENOSPC",
+          });
+        });
+
+        assert.throws(
+          () => atomicWriteFile(path, '{"v":2}'),
+          failure === "zero progress" ? /no progress/i : { code: "ENOSPC" },
+        );
+        if (existing) {
+          assert.equal(readFileSync(path, "utf8"), previous);
+          assert.equal(readFileSync(backupPathFor(path), "utf8"), backup);
+        }
+        assert.deepEqual(
+          readdirSync(dir).sort(),
+          existing ? ["store.json", "store.json.bak"] : [],
+        );
+      });
+    }
+  }
 });
 
 describe("store durability", () => {

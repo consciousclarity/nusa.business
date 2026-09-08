@@ -172,7 +172,6 @@ export {
 } from "./api-origins.js";
 
 export {
-export {
   contactDigits,
   telHref,
   whatsappHref,

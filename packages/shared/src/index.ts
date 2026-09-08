@@ -172,10 +172,17 @@ export {
 } from "./api-origins.js";
 
 export {
+export {
   contactDigits,
   telHref,
   whatsappHref,
 } from "./contact-links.js";
+
+export {
+  parseCorsOriginAllowlist,
+  resolveCorsAllowOrigin,
+  type CorsOriginOptions,
+} from "./cors-origins.js";
 
 export {
   businessIdFromReturnTo,

@@ -232,3 +232,16 @@ the origin), or a shared Redis counter.
 
 - Consider HTTP-only cookies scoped to `.nusa.business` for SSO across
   subdomains, instead of `localStorage`.
+
+## CORS
+
+Browser calls must present an `Origin` that is allowlisted:
+
+| Environment | Allowed |
+|---|---|
+| Non-production | `http://localhost:*`, `http://127.0.0.1:*`, plus HTTPS apex/subdomains of `NUSA_CORS_APEX` (default `nusa.business`) |
+| Production | HTTPS apex/subdomains of `NUSA_CORS_APEX` only (no loopback) |
+| Either | Exact origins in `NUSA_CORS_ORIGINS` (comma-separated) |
+
+Foreign Origins receive no `Access-Control-Allow-Origin` header. The previous
+reflect-any-origin behaviour is intentionally gone.

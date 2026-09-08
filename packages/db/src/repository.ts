@@ -1,10 +1,15 @@
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
+import {
+  mkdirSync,
+  readFileSync,
+  existsSync,
+} from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { canonicalizeIslandSlug } from "@nusa/shared";
 import { migrateStore } from "./migrations.js";
 import { hashPassword, isHashed, verifyPassword } from "./password.js";
+import { atomicWriteFile, backupPathFor } from "./persist.js";
 import { createReferenceStore, createSeed } from "./seed-data.js";
 import type {
   Booking,
@@ -74,17 +79,46 @@ function bootstrapAdminFromEnv(): User | undefined {
   };
 }
 
+function parseStoreJson(raw: string, label: string): DataStore | null {
+  try {
+    return JSON.parse(raw) as DataStore;
+  } catch (err) {
+    console.error(`[db] ${label} is not valid JSON:`, err);
+    return null;
+  }
+}
+
+function readStoreFromDisk(path: string): DataStore | null {
+  if (!existsSync(path)) return null;
+  return parseStoreJson(readFileSync(path, "utf8"), path);
+}
+
 function ensureStore(): DataStore {
   const path = storePath();
-  if (existsSync(path)) {
-    return JSON.parse(readFileSync(path, "utf8")) as DataStore;
+  const primary = readStoreFromDisk(path);
+  if (primary) return primary;
+
+  const bakPath = backupPathFor(path);
+  const backup = readStoreFromDisk(bakPath);
+  if (backup) {
+    console.warn(`[db] recovered store from ${bakPath}`);
+    // Do not rotate the good .bak over the corrupt primary.
+    save(backup, { rotateBackup: false });
+    return backup;
+  }
+
+  if (existsSync(path) || existsSync(bakPath)) {
+    throw new Error(
+      `Data store at ${path} is unreadable and no usable ${bakPath} backup was found. ` +
+        "Restore a known-good backup into NUSA_DATA_DIR before restarting.",
+    );
   }
 
   mkdirSync(dataDir(), { recursive: true });
 
   if (allowDemoSeed()) {
     const seed = createSeed();
-    writeFileSync(path, JSON.stringify(seed, null, 2));
+    save(seed);
     return seed;
   }
 
@@ -102,13 +136,12 @@ function ensureStore(): DataStore {
     );
   }
 
-  writeFileSync(path, JSON.stringify(store, null, 2));
+  save(store);
   return store;
 }
 
-function save(store: DataStore) {
-  mkdirSync(dataDir(), { recursive: true });
-  writeFileSync(storePath(), JSON.stringify(store, null, 2));
+function save(store: DataStore, opts: { rotateBackup?: boolean } = {}) {
+  atomicWriteFile(storePath(), JSON.stringify(store, null, 2), opts);
 }
 
 export function resetSeed(): DataStore {

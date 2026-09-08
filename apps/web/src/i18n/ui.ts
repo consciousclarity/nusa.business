@@ -1,0 +1,112 @@
+import {
+  alternateLocale,
+  detectLocale,
+  withLocale,
+  type Locale,
+} from "@nusa/shared";
+
+export type { Locale };
+export { alternateLocale, detectLocale, withLocale };
+
+const ui = {
+  en: {
+    navClaim: "Claim",
+    navPortal: "Portal",
+    navPrimary: "Primary",
+    navPath: "Path",
+    langSwitch: "Bahasa Indonesia",
+    langSwitchShort: "ID",
+    footer:
+      "Free local listings across the archipelago. No registration fees. No commission at launch.",
+    nationTitle: "nusa.business — Local businesses across Indonesia",
+    nationH1: "Indonesia",
+    nationLede:
+      "Local business directory indexed by nested geography — nation, island, place, record. Free listings. No commission at launch.",
+    islands: "Islands",
+    places: "Places",
+    featured: "Featured listings",
+    businessesIn: "Businesses in",
+    comingSoon: "Coming soon",
+    claimListing: "Claim a listing",
+    openBali: "Open bali index",
+    claimTitle: "Claim a listing — nusa.business",
+    claimH1: "Claim a listing",
+    claimLede:
+      "Field teams register businesses for free. Owners claim listings at no cost — customize details, reply to reviews, and optionally open a vendor shop.",
+    claimOpen: "Open claim portal",
+    claimLogin: "Owner login",
+    claimInvite: "Have an invite?",
+    hostResolver: "Host resolver",
+    query: "Query",
+    resolved: "Resolved",
+    records: "Records",
+    overview: "Overview",
+    openingHours: "Opening hours",
+    reviews: "Reviews",
+    book: "Book",
+    claimThis: "Claim this listing",
+    day: "Day",
+    hours: "Hours",
+    closed: "Closed",
+    category: "Category",
+    allCategories: "All categories",
+    apply: "Apply",
+    noCategoryMatches: "No listings in this category.",
+    showAll: "Show all",
+    justRegistered: "Just registered by field team:",
+    metaDescription: "Local businesses across Indonesia",
+  },
+  id: {
+    navClaim: "Klaim",
+    navPortal: "Portal",
+    navPrimary: "Utama",
+    navPath: "Jalur",
+    langSwitch: "English",
+    langSwitchShort: "EN",
+    footer:
+      "Direktori bisnis lokal gratis di seluruh nusantara. Tanpa biaya daftar. Tanpa komisi saat peluncuran.",
+    nationTitle: "nusa.business — Bisnis lokal di seluruh Indonesia",
+    nationH1: "Indonesia",
+    nationLede:
+      "Direktori bisnis lokal berdasarkan geografi bertingkat — nasional, pulau, tempat, catatan. Listing gratis. Tanpa komisi saat peluncuran.",
+    islands: "Pulau",
+    places: "Tempat",
+    featured: "Listing unggulan",
+    businessesIn: "Bisnis di",
+    comingSoon: "Segera hadir",
+    claimListing: "Klaim listing",
+    openBali: "Buka indeks bali",
+    claimTitle: "Klaim listing — nusa.business",
+    claimH1: "Klaim listing",
+    claimLede:
+      "Tim lapangan mendaftarkan bisnis secara gratis. Pemilik mengklaim listing tanpa biaya — ubah detail, balas ulasan, dan opsional buka toko vendor.",
+    claimOpen: "Buka portal klaim",
+    claimLogin: "Login pemilik",
+    claimInvite: "Punya undangan?",
+    hostResolver: "Resolver host",
+    query: "Kueri",
+    resolved: "Terurai",
+    records: "Catatan",
+    overview: "Ringkasan",
+    openingHours: "Jam buka",
+    reviews: "Ulasan",
+    book: "Pesan",
+    claimThis: "Klaim listing ini",
+    day: "Hari",
+    hours: "Jam",
+    closed: "Tutup",
+    category: "Kategori",
+    allCategories: "Semua kategori",
+    apply: "Terapkan",
+    noCategoryMatches: "Tidak ada listing di kategori ini.",
+    showAll: "Tampilkan semua",
+    justRegistered: "Baru didaftarkan tim lapangan:",
+    metaDescription: "Bisnis lokal di seluruh Indonesia",
+  },
+} as const;
+
+export type UiKey = keyof typeof ui.en;
+
+export function t(locale: Locale, key: UiKey): string {
+  return ui[locale][key] ?? ui.en[key];
+}

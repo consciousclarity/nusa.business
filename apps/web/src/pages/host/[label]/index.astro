@@ -2,10 +2,12 @@
 import Base from "../../../layouts/Base.astro";
 import { api } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
+import { t, withLocale, type Locale } from "../../../i18n/ui";
 
 const label = Astro.params.label!;
 const parts = label.split(".");
 const req = Astro.request;
+const locale: Locale = Astro.locals.locale ?? "en";
 
 type IslandPayload = {
   island: { slug: string; name: string; tagline: string; status?: string };
@@ -47,7 +49,7 @@ if (parts.length === 1) {
     `/v1/islands/${parts[1]}/places/${parts[0]}`,
   );
 } else {
-  return Astro.redirect("/");
+  return Astro.redirect(withLocale("/", locale));
 }
 
 const placeById = islandData
@@ -69,19 +71,20 @@ const queryHost =
     title={`${islandData.island.name} — nusa.business`}
     description={islandData.island.tagline}
     crumb={[{ label: islandData.island.slug }]}
+    locale={locale}
   >
     <section class="lede">
       <h1>{islandData.island.name}</h1>
       <p class="prose">{islandData.island.tagline}</p>
     </section>
 
-    <aside class="resolver" aria-label="Host resolver">
+    <aside class="resolver" aria-label={t(locale, "hostResolver")}>
       <dl>
-        <dt>Query</dt>
+        <dt>{t(locale, "query")}</dt>
         <dd>{queryHost}</dd>
-        <dt>Resolved</dt>
+        <dt>{t(locale, "resolved")}</dt>
         <dd>island={islandData.island.slug}</dd>
-        <dt>Records</dt>
+        <dt>{t(locale, "records")}</dt>
         <dd>
           {islandData.places.length} places · {islandData.businesses.length} listings
         </dd>
@@ -89,7 +92,7 @@ const queryHost =
     </aside>
 
     <section class="section">
-      <h2>Places</h2>
+      <h2>{t(locale, "places")}</h2>
       <ol class="index-list">
         {islandData.places.map((place, i) => (
           <li>
@@ -97,10 +100,7 @@ const queryHost =
               <span class="n">{String(i + 1).padStart(2, "0")}</span>
               <a
                 class="name"
-                href={tenantHref(req, {
-                  island: islandData!.island.slug,
-                  place: place.slug,
-                })}
+                href={tenantHref(req, { island: islandData!.island.slug,                   place: place.slug, locale })}
               >
                 {place.name}
               </a>
@@ -113,7 +113,7 @@ const queryHost =
     </section>
 
     <section class="section">
-      <h2>Featured listings</h2>
+      <h2>{t(locale, "featured")}</h2>
       <ol class="index-list">
         {islandData.businesses.slice(0, 9).map((b, i) => {
           const place = placeById[b.placeId];
@@ -125,11 +125,7 @@ const queryHost =
                   class="name"
                   href={
                     place
-                      ? tenantHref(req, {
-                          island: islandData!.island.slug,
-                          place: place.slug,
-                          slug: b.slug,
-                        })
+                      ? tenantHref(req, { island: islandData!.island.slug,                           place: place.slug,                           slug: b.slug, locale })
                       : "#"
                   }
                 >
@@ -153,38 +149,39 @@ const queryHost =
     crumb={[
       {
         label: placeData.island.slug,
-        href: tenantHref(req, { island: placeData.island.slug }),
+        href: tenantHref(req, { island: placeData.island.slug, locale }),
       },
       { label: placeData.place.slug },
     ]}
+    locale={locale}
   >
     <section class="lede">
       <h1>{placeData.place.name}</h1>
       <p class="prose">{placeData.place.summary}</p>
     </section>
 
-    <aside class="resolver" aria-label="Host resolver">
+    <aside class="resolver" aria-label={t(locale, "hostResolver")}>
       <dl>
-        <dt>Query</dt>
+        <dt>{t(locale, "query")}</dt>
         <dd>{queryHost}</dd>
-        <dt>Resolved</dt>
+        <dt>{t(locale, "resolved")}</dt>
         <dd>
           island={placeData.island.slug} · place={placeData.place.slug} · type=
           {placeData.place.type}
         </dd>
-        <dt>Records</dt>
+        <dt>{t(locale, "records")}</dt>
         <dd>{placeData.businesses.length} published</dd>
       </dl>
     </aside>
 
     {recent.length > 0 && (
       <div class="banner">
-        Just registered by field team: {recent.map((b) => b.name).join(" · ")}
+        {t(locale, "justRegistered")} {recent.map((b) => b.name).join(" · ")}
       </div>
     )}
 
     <section class="section">
-      <h2>Businesses in {placeData.place.name}</h2>
+      <h2>{t(locale, "businessesIn")} {placeData.place.name}</h2>
       <ol class="index-list">
         {placeData.businesses.map((b, i) => (
           <li>
@@ -192,11 +189,7 @@ const queryHost =
               <span class="n">{String(i + 1).padStart(2, "0")}</span>
               <a
                 class="name"
-                href={tenantHref(req, {
-                  island: placeData!.island.slug,
-                  place: placeData!.place.slug,
-                  slug: b.slug,
-                })}
+                href={tenantHref(req, { island: placeData!.island.slug,                   place: placeData!.place.slug,                   slug: b.slug, locale })}
               >
                 {b.name}
               </a>

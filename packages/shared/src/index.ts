@@ -175,3 +175,11 @@ export {
   businessIdFromReturnTo,
   safePortalReturnTo,
 } from "./portal-return.js";
+
+export {
+  alternateLocale,
+  detectLocale,
+  withLocale,
+  type Locale,
+  LOCALES,
+} from "./locale.js";

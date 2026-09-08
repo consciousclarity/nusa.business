@@ -19,7 +19,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | Paid packages | planned | Model later; launch is free like bali.business |
 | Private messages | planned | Phase 6 |
 | Bookmarks | planned | Phase 6 |
-| i18n en/id | partial | English UI; id routes next |
+| i18n en/id | partial | Public `/id` prefix + chrome copy; listing body stays author language |
 | AI local guide | planned | Optional |
 
 ## Marketplace capabilities

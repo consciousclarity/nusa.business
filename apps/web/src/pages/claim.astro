@@ -1,30 +1,30 @@
 ---
 import Base from "../layouts/Base.astro";
+import { t, type Locale } from "../i18n/ui";
+
+const locale: Locale = Astro.locals.locale ?? "en";
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 ---
-<Base title="Claim a listing — nusa.business">
+<Base title={t(locale, "claimTitle")} locale={locale}>
   <section class="lede">
-    <h1>Claim a listing</h1>
-    <p class="prose">
-      Field teams register businesses for free. Owners claim listings at no cost —
-      customize details, reply to reviews, and optionally open a vendor shop.
-    </p>
+    <h1>{t(locale, "claimH1")}</h1>
+    <p class="prose">{t(locale, "claimLede")}</p>
   </section>
 
-  <aside class="resolver" aria-label="Claim entry">
+  <aside class="resolver" aria-label={t(locale, "hostResolver")}>
     <dl>
-      <dt>Query</dt>
+      <dt>{t(locale, "query")}</dt>
       <dd>claim</dd>
-      <dt>Resolved</dt>
+      <dt>{t(locale, "resolved")}</dt>
       <dd>action=claim · fee=0 · commission=0%</dd>
-      <dt>Next</dt>
+      <dt>{t(locale, "records")}</dt>
       <dd>portal authentication</dd>
     </dl>
   </aside>
 
   <p class="actions">
-    <a class="cta" href={`${portal}/claim`}>Open claim portal</a>
-    <a class="cta secondary" href={`${portal}/login?returnTo=${encodeURIComponent("/claim")}`}>Owner login</a>
-    <a class="cta secondary" href={`${portal}/register`}>Have an invite?</a>
+    <a class="cta" href={`${portal}/claim`}>{t(locale, "claimOpen")}</a>
+    <a class="cta secondary" href={`${portal}/login?returnTo=${encodeURIComponent("/claim")}`}>{t(locale, "claimLogin")}</a>
+    <a class="cta secondary" href={`${portal}/register`}>{t(locale, "claimInvite")}</a>
   </p>
 </Base>

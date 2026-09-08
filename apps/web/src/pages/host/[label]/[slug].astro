@@ -119,10 +119,10 @@ const stamp =
     </section>
 
     {data.business.openingHours?.length > 0 && (
-      <section class="section">
+      <section class="section" aria-labelledby="hours-caption">
         <div class="table-wrap">
           <table class="data">
-            <caption>Opening hours</caption>
+            <caption id="hours-caption">Opening hours</caption>
             <thead>
               <tr>
                 <th scope="col">Day</th>
@@ -204,13 +204,16 @@ const stamp =
         <h3>Add review</h3>
         <label>Name <input name="authorName" required autocomplete="nickname" /></label>
         <label>Comment <textarea name="comment" required rows="3"></textarea></label>
-        <label>Service <input type="number" name="service" min="1" max="5" value="5" /></label>
-        <label>Value <input type="number" name="value" min="1" max="5" value="5" /></label>
-        <label>Location <input type="number" name="location" min="1" max="5" value="5" /></label>
-        <label>
-          Cleanliness
-          <input type="number" name="cleanliness" min="1" max="5" value="5" />
-        </label>
+        <fieldset class="scores">
+          <legend>Scores (1–5)</legend>
+          <label>Service <input type="number" name="service" min="1" max="5" value="5" required /></label>
+          <label>Value <input type="number" name="value" min="1" max="5" value="5" required /></label>
+          <label>Location <input type="number" name="location" min="1" max="5" value="5" required /></label>
+          <label>
+            Cleanliness
+            <input type="number" name="cleanliness" min="1" max="5" value="5" required />
+          </label>
+        </fieldset>
         <button type="submit">Submit review</button>
         <p class="meta" id="review-msg" role="status" aria-live="polite"></p>
       </form>
@@ -219,11 +222,15 @@ const stamp =
     {data.business.bookingMode !== "none" && (
       <section class="section" id="book">
         <h2>Request a booking · {data.business.bookingMode}</h2>
-        <p class="meta">
+        <p class="meta" id="booking-notice">
           Sends a pending request to the business. This is not a confirmed
           reservation and does not lock a price or inventory.
         </p>
-        <form class="stack" id="booking-form">
+        <form
+          class="stack"
+          id="booking-form"
+          aria-describedby="booking-notice"
+        >
           <label>Name <input name="customerName" required autocomplete="name" /></label>
           <label>Email <input type="email" name="customerEmail" required autocomplete="email" /></label>
           <label>Date <input type="date" name="startDate" required /></label>
@@ -249,6 +256,11 @@ const stamp =
     if (!el) return;
     el.textContent = text;
     el.classList.toggle("error", !!isError);
+    const form = el.closest("form");
+    if (form) {
+      if (isError) form.setAttribute("aria-invalid", "true");
+      else form.removeAttribute("aria-invalid");
+    }
   }
 
   function lockForm(form, locked) {

@@ -217,11 +217,15 @@ not the compromise.
 
 - Visible `:focus-visible` — `2px solid var(--link)`, `outline-offset: 2px`.
   Never remove outlines.
+- Skip link (`Skip to content` → `#main-content`) is the first focusable control.
 - Body text meets WCAG AA against `--paper` in both themes. `--ink-faint` is for
-  non-essential metadata only; never body copy.
+  non-essential metadata only; never body copy or form labels (labels/th use
+  `--ink-soft`).
 - Semantic elements: `<nav aria-label>`, `<table>` with `<caption>` and `<th>`,
-  one `<h1>` per page, headings in order.
-- Links are underlined. Colour is never the only signal.
+  one `<h1>` per page, headings in order. Path crumbs use `aria-current="page"`;
+  decorative `/` separators are `aria-hidden`.
+- Links are underlined. Colour is never the only signal (form errors also use
+  weight + stamp underline + left border).
 - Honour `prefers-reduced-motion`. There is almost no motion in this system by
   design.
 
@@ -263,5 +267,7 @@ authenticated tool with different needs. Align it in a later pass.
 - [ ] No `border-radius`, `box-shadow` or `gradient` in `global.css`
 - [ ] `/host/gianyar.bali/babi-guling-pande-egi` shows opening hours as a real
       table with a caption
-- [ ] Keyboard tab through a page: every focused element visibly indicated
+- [ ] Keyboard tab through a page: every focused element visibly indicated;
+      first Tab reveals **Skip to content** and Enter jumps to `#main-content`
 - [ ] Page body does not scroll horizontally at 320px width
+- [ ] Form labels / table headers remain legible (not `--ink-faint`) in light and dark

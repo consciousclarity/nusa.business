@@ -26,6 +26,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Onboarding / claims | `tests/api.onboarding-claims.test.mjs` | Invite register, safe returnTo, duplicate pending claims, audited decisions, recovery tokens. |
 | API origins | `tests/shared.api-origins.test.mjs` | Browser origins must be public HTTPS in production; SSR may use Compose-internal URLs; `http://api:8787` is rejected for browsers. |
 | Production bootstrap | `tests/db.bootstrap.test.mjs` | Production missing store refuses demo seed; bootstrap admin creates geography-only store; existing stores are preserved. |
+| JSON durability | `tests/db.persist.test.mjs` | Atomic write + `.bak` rotation; recover truncated `store.json`; refuse silent re-seed when both files are corrupt. |
 | Public privacy | `tests/api.public-privacy.test.mjs` | Anonymous listing/search responses omit bookings, review emails, and ownership internals; drafts 404; owners cannot read each other's bookings. |
 
 ## Adding a test

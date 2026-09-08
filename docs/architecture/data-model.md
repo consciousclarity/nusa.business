@@ -1,6 +1,8 @@
 # Data model
 
-MVP persistence: JSON file via `packages/db` (`.data/store.json`). Production target: PostgreSQL + PostGIS (`packages/db/src/schema.sql.ts`).
+MVP persistence: JSON file via `packages/db` (`.data/store.json`), written with
+temp-file + `fsync` + `rename` and a sibling `store.json.bak` for crash recovery.
+Production target: PostgreSQL + PostGIS (`packages/db/src/schema.sql.ts`).
 
 ## Entities
 

@@ -4,7 +4,7 @@
 |---|---|
 | Status | `exploring` — MVP on listing page |
 | Captured | 2026-09-08 |
-| Updated | 2026-09-08 |
+| Updated | 2026-09-09 |
 | Related | [roadmap Maps](../product/roadmap.md), listing record page, lat/lng on `Business` |
 
 ## Problem / itch
@@ -42,3 +42,7 @@ Map and list always show the **same** nearby results for the active category. No
 - `GET .../businesses/:slug/discovery?category=&radiusKm=2`
 - Seed Bali coords so Gianyar cluster demos co-location + 2 km.
 - Public page SSR sections + small client script to refetch discovery on category change and sync markers.
+
+Production `store.json` is never re-seeded. Listings that landed without
+lat/lng (Ibu Oka live returned `origin: null`) need the operator backfill in
+[docs/ops/backfill-listing-coords.md](../ops/backfill-listing-coords.md).

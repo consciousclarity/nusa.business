@@ -64,6 +64,7 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 - [Docker Compose](./ops/docker.md)
 - [Environments](./ops/environments.md)
 - [Security](./ops/security.md)
+- [Backfill listing coordinates](./ops/backfill-listing-coords.md)
 
 ### Migration & marketplace
 

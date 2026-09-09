@@ -1,7 +1,7 @@
 ---
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
-import { api } from "../../../lib/api";
+import { apiOrNull } from "../../../lib/api";
 import { geoHref, tenantHref } from "../../../lib/links";
 import {
   absoluteUrl,
@@ -57,14 +57,18 @@ let placeData: PlacePayload | null = null;
 
 if (parts.length === 1) {
   mode = "island";
-  islandData = await api<IslandPayload>(`/v1/islands/${parts[0]}`);
+  islandData = await apiOrNull<IslandPayload>(`/v1/islands/${parts[0]}`);
 } else if (parts.length === 2) {
   mode = "place";
-  placeData = await api<PlacePayload>(
+  placeData = await apiOrNull<PlacePayload>(
     `/v1/islands/${parts[1]}/places/${parts[0]}`,
   );
 } else {
   return Astro.redirect(withLocale("/", locale));
+}
+
+if ((mode === "island" && !islandData) || (mode === "place" && !placeData)) {
+  return Astro.rewrite(withLocale("/404", locale));
 }
 
 if (placeData) {

@@ -837,7 +837,7 @@ app.post(
         }
         const existing = listBookings(business.id).find((b) => b.id === prior.bookingId);
         if (existing) {
-          return c.json({ booking: existing, idempotentReplay: true }, 200);
+          return c.json({ ok: true, idempotentReplay: true }, 200);
         }
       }
     }
@@ -881,14 +881,7 @@ app.post(
     if (idemKey) {
       rememberBookingIdempotency(`${business.id}:${idemKey}`, booking.id, parsed.value);
     }
-    return c.json(
-      {
-        booking,
-        notice:
-          "Request recorded as pending. This is not a confirmed reservation or price quote.",
-      },
-      201,
-    );
+    return c.json({ ok: true }, 201);
   },
 );
 

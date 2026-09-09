@@ -161,5 +161,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(notFound, /withLocale\("\/search", locale\)/);
     assert.match(listing, /Astro\.rewrite\(withLocale\("\/404", locale\)\)/);
     assert.doesNotMatch(listing, /new Response\(null, \{ status: 404 \}/);
+    assert.match(island, /apiOrNull/);
+    assert.match(island, /Astro\.rewrite\(withLocale\("\/404", locale\)\)/);
   });
 });

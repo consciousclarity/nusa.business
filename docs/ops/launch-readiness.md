@@ -38,6 +38,7 @@ and the operator list below.
 | F17 | Sitemap listed English `/host` paths only; `/id` pages existed with hreflang but were not submitted. | P1 | `sitemap.xml.ts`, `localeSitemapPaths` | Emit `/id` counterparts; `og:locale` + `hreflang="x-default"` | `tests/web.seo.test.mjs`, `tests/web.visitor-chrome.test.mjs` |
 | F18 | `/id` listing forms showed English API `error` strings and the English booking `notice`. Missing tenant routes returned an empty 404 body. | P1 | listing widgets, `404.astro`, booking `code` | Localized `visitorError` + codes; HTML 404 with search | `tests/web.visitor-chrome.test.mjs`, `tests/api.validate.test.mjs` |
 | F19 | Listing JSON-LD omitted opening hours even when the page showed them. | P1 | `localBusinessJsonLd` | `openingHoursSpecification` from listing hours | `tests/web.seo.test.mjs` |
+| F20 | Unknown island/place hubs threw API errors (500). Public booking POST returned the full booking row (id, email, status). | P0/P1 | island `index.astro`, `POST /v1/businesses/:id/bookings` | `apiOrNull` + HTML 404; `{ ok: true }` without `booking` | `tests/web.visitor-chrome.test.mjs`, `tests/api.public-privacy.test.mjs`, `tests/api.write-security.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -98,7 +99,8 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Sitemap includes `/id` URLs | pass (this branch) | English + `/id` locs; Search Console submission still operator |
 | `og:locale` / hreflang x-default | pass (this branch) | `en_GB` / `id_ID`; x-default is English |
 | Listing form errors localized | pass (this branch) | Codes mapped in widgets; English API `error` not shown |
-| Public HTML 404 | pass (this branch) | Search + home; `noindex`; empty 404 bodies removed |
+| Public HTML 404 | pass (this branch) | Search + home; unknown island/place hubs too |
+| Public booking POST omits booking row | pass (this branch) | `{ ok: true }` only; owners still GET `/v1/bookings` |
 | JSON-LD opening hours | pass (this branch) | `openingHoursSpecification` when hours exist |
 | Booking success omits request id/status | pass (this branch) | Visitor notice only; not submitted to production |
 | Field “just registered” without agent ids | pass (this branch) | `fieldRegistered` on public cards |

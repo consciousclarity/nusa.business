@@ -289,11 +289,12 @@ if (!hub && !areaFacet && !data) return Astro.rewrite(withLocale("/404", locale)
 
 const placeMeta = hub || areaFacet
   ? null
-  : await api<{
+  : await apiOrNull<{
       island: { name: string; slug: string };
       place: HubPlace;
       parent?: HubPlace | null;
     }>(`/v1/islands/${islandSlug}/places/${placeSlug}`);
+if (data && !placeMeta) return Astro.rewrite(withLocale("/404", locale));
 
 const listingNest = placeMeta
   ? geoNesting(placeMeta.place, {

@@ -66,7 +66,9 @@ it("rejects every changed booking field without disclosing or duplicating the fi
   const headers = { "idempotency-key": "predictable-key" };
   const first = await request(path, body, undefined, headers);
   assert.equal(first.status, 201);
-  const created = (await first.json()).booking;
+  const created = await first.json();
+  assert.equal(created.ok, true);
+  assert.equal(Object.hasOwn(created, "booking"), false);
   const changes = { customerName: "Second Customer", customerEmail: "second@example.test", customerPhone: "5678", startDate: "2027-02-27", endDate: "2027-03-02", timeSlot: "11:00", guests: 4, tickets: 5, notes: "Different note" };
   for (const [key, value] of Object.entries(changes)) {
     const res = await request(path, { ...body, [key]: value }, undefined, headers);
@@ -78,7 +80,7 @@ it("rejects every changed booking field without disclosing or duplicating the fi
   const reordered = Object.fromEntries(Object.entries(body).reverse());
   const replay = await request(path, { ...reordered, customerName: " First Customer ", totalAmount: 123 }, undefined, headers);
   assert.equal(replay.status, 200);
-  assert.deepEqual(await replay.json(), { booking: created, idempotentReplay: true });
+  assert.deepEqual(await replay.json(), { ok: true, idempotentReplay: true });
   assert.equal(db.listBookings(bookingBusiness.id).length, 1);
   assert.equal((await request(path, body, undefined, { "idempotency-key": "x".repeat(129) })).status, 400);
   const other = makeBusiness("security-other-booking");

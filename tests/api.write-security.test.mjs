@@ -69,6 +69,7 @@ it("rejects every changed booking field without disclosing or duplicating the fi
   const created = await first.json();
   assert.equal(created.ok, true);
   assert.equal(Object.hasOwn(created, "booking"), false);
+  assert.equal(Object.hasOwn(created, "notice"), false);
   const changes = { customerName: "Second Customer", customerEmail: "second@example.test", customerPhone: "5678", startDate: "2027-02-27", endDate: "2027-03-02", timeSlot: "11:00", guests: 4, tickets: 5, notes: "Different note" };
   for (const [key, value] of Object.entries(changes)) {
     const res = await request(path, { ...body, [key]: value }, undefined, headers);

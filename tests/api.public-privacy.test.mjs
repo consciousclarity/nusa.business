@@ -420,4 +420,16 @@ describe("C01 booking authorization matrix", () => {
     assert.equal(mine.business.ownerUserId, "usr-owner-a");
     assert.equal(mine.business.registeredByAgentId, "usr-agent");
   });
+
+  it("hides GET /v1/host in production", async () => {
+    const prev = process.env.NODE_ENV;
+    process.env.NODE_ENV = "production";
+    try {
+      const { status, data } = await json("GET", "/v1/host");
+      assert.equal(status, 404);
+      assert.equal(data.error, "Not found");
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
+  });
 });

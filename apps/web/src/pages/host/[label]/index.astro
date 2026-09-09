@@ -154,7 +154,7 @@ const placeCanonical =
   <Base
     title={`${islandData.island.name} — nusa.business`}
     description={islandData.island.tagline}
-    crumb={[{ label: islandData.island.slug }]}
+    crumb={[{ label: islandData.island.name }]}
     locale={locale}
     canonical={islandCanonical!}
     jsonLd={[
@@ -293,10 +293,10 @@ const placeCanonical =
     description={placeData.place.summary}
     crumb={[
       {
-        label: placeData.island.slug,
+        label: placeData.island.name,
         href: tenantHref(req, { island: placeData.island.slug, locale }),
       },
-      { label: placeData.place.slug },
+      { label: placeData.place.name },
     ]}
     locale={locale}
     canonical={placeCanonical!}

@@ -20,7 +20,7 @@ and the operator list below.
 | ID | Evidence | Severity | Files | Fix in this PR | Verification |
 |---|---|---|---|---|---|
 | F01 | Production bootstrap already refuses demo seed; portal prefills only in Vite `DEV`. README still listed passwords. | P0 (docs) | `README.md`, `docs/features-parity.md` | Point public docs at local-only bootstrap; keep passwords in getting-started / AGENTS for local agents | `tests/db.bootstrap.test.mjs` (existing) + doc review |
-| F02 | Browser API origin already rejects `http://api:8787`. Live HTML with that host is a **VPS env** miss, not missing code. | P0 (ops) | `packages/shared/src/api-origins.ts` | No code change; operator must set `PUBLIC_BROWSER_API_URL` | `tests/shared.api-origins.test.mjs` |
+| F02 | Live listing HTML (2026-09-09 GET `https://gianyar.bali.nusa.business/babi-guling-pande-egi`) uses `https://api.nusa.business`, not `http://api:8787`. Browser origin still fails closed in production builds. Live **homepage** still shows the old resolver chrome until this PR deploys. | P0 (ops) | `packages/shared/src/api-origins.ts` | Code already closed; operator must deploy this PR for visitor chrome | Live GET + `tests/shared.api-origins.test.mjs` |
 | F03 | Review/booking widgets already checked `res.ok`, busy flags, and kept fields on failure. | P0 (done earlier) | listing `[...path].astro` | Unchanged behaviour; report form added with the same pattern | `tests/web.booking-form.test.mjs` |
 | F04 | Bookings ignored client prices but accepted past dates and duplicate pending rows. No inventory calendar exists. | P0 | `apps/api/src/validate.ts`, `app.ts` | Reject past dates, require rental `endDate` / event `tickets`, 409 duplicate pending | `tests/api.validate.test.mjs`, `tests/api.write-security.test.mjs` |
 | F05 | Claims already stay pending until admin approve; PATCH is owner/admin. Register was invite-only, so a new owner could not complete onboarding. | P0 | API register + portal `/register` | Public owner self-signup; clients cannot set `role`; pending claim still 403 on PATCH | `tests/api.onboarding-claims.test.mjs` |
@@ -32,7 +32,8 @@ and the operator list below.
 
 ### Assumptions (not treated as proven bugs)
 
-- Live `nusa.business` HTML still embedding `http://api:8787` — reported historically; **unverified in this environment** (no production fetch). Hermes must confirm `PUBLIC_BROWSER_API_URL`.
+- Live `nusa.business` homepage (2026-09-09 GET) still has `kind=nation` resolver chrome and `/host/…` footer — this PR’s visitor chrome is **not deployed**.
+- Live listing HTML already embeds `https://api.nusa.business` (not `http://api:8787`). Hermes should still confirm env after deploy.
 - Live `.data/store.json` may still contain seed emails — **unverified**. Dry-run in [demo-bootstrap.md](./demo-bootstrap.md).
 - Process supervisor is PM2 vs Compose — Hermes 2026-09-07 saw PM2.
 
@@ -58,12 +59,12 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 |---|---|---|
 | Production cannot auto-create demo users | pass (code) | Live store inventory unverified |
 | Public docs do not present demo passwords as production logins | pass | Local table remains in getting-started |
-| Browser API origin fails closed in production builds | pass (code) | Live env unverified |
+| Browser API origin fails closed in production builds | pass (code + live listing HTML) | Live homepage still old chrome; env re-check after deploy |
 | Reviews check HTTP status; keep text on failure | pass | Not submitted to production |
 | Bookings reject past dates, bad quantities, duplicates | pass (code) | No priced inventory yet — request-only |
 | Claim does not grant edit until approved | pass (API tests) | Owner self-register + invite; pending PATCH 403 |
 | Owners cannot PATCH another listing | pass | `tests/api.authz-cors.test.mjs` (incl. field agent) |
-| Visitor pages omit resolver jargon | pass | |
+| Visitor pages omit resolver jargon | pass (this branch) | Live homepage still has `kind=nation` until deploy |
 | Homepage search + shareable `/search?q=` | pass | Category filter in the same query URL |
 | Listing Directions / Call / Website / WhatsApp | pass | Seed website on one listing; maps from lat/lng |
 | Sample listings labelled | pass (local seed) | Production must not publish this catalog |

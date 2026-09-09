@@ -73,4 +73,13 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(search, /name="category"/);
     assert.match(search, /robots="noindex,follow"/);
   });
+
+  it("breadcrumbs use human names, not URL slugs", () => {
+    assert.match(island, /label: islandData.island.name/);
+    assert.doesNotMatch(island, /label: islandData.island.slug/);
+    assert.match(listing, /label: data.business.name/);
+    assert.doesNotMatch(listing, /label: data.business.slug/);
+    assert.doesNotMatch(listing, /label: islandSlug!/);
+    assert.doesNotMatch(base, /crumb.length > 0 && <span class="sep"/);
+  });
 });

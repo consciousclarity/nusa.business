@@ -458,11 +458,11 @@ if (hub && categoryParam) {
     description={`${areaFacet.listings.length} listings in ${areaFacet.area.name}.`}
     crumb={[
       {
-        label: islandSlug!,
+        label: islandDetail.island.name,
         href: tenantHref(req, { island: islandSlug!, locale }),
       },
       {
-        label: hostPlaceSlug!,
+        label: hostPlace.name,
         href: tenantHref(req, {
           island: islandSlug!,
           place: hostPlaceSlug!,
@@ -470,7 +470,7 @@ if (hub && categoryParam) {
         }),
       },
       {
-        label: areaFacet.area.slug,
+        label: areaFacet.area.name,
         href: tenantHref(req, {
           island: islandSlug!,
           place: hostPlaceSlug!,
@@ -478,7 +478,7 @@ if (hub && categoryParam) {
           locale,
         }),
       },
-      { label: areaFacet.browse.category },
+      { label: areaFacet.titleCore },
     ]}
     locale={locale}
     canonical={areaFacet.canonical}
@@ -530,18 +530,18 @@ if (hub && categoryParam) {
     description={hub.place.summary}
     crumb={[
       {
-        label: hub.island.slug,
+        label: hub.island.name,
         href: tenantHref(req, { island: hub.island.slug, locale }),
       },
       {
-        label: hostPlaceSlug!,
+        label: hostPlace.name,
         href: tenantHref(req, {
           island: hub.island.slug,
           place: hostPlaceSlug!,
           locale,
         }),
       },
-      { label: hub.place.slug },
+      { label: hub.place.name },
     ]}
     locale={locale}
     canonical={hubCanonical}
@@ -594,11 +594,11 @@ if (hub && categoryParam) {
   title={`${data.business.name} — ${placeMeta.place.name}`}
   description={data.business.summary}
   crumb={[
-    { label: islandSlug!, href: tenantHref(req, { island: islandSlug!, locale }) },
+    { label: placeMeta.island.name, href: tenantHref(req, { island: islandSlug!, locale }) },
     ...(listingNest.area
       ? [
           {
-            label: listingNest.hostPlace,
+            label: placeMeta.parent?.name ?? listingNest.hostPlace,
             href: tenantHref(req, {
               island: islandSlug!,
               place: listingNest.hostPlace,
@@ -606,7 +606,7 @@ if (hub && categoryParam) {
             }),
           },
           {
-            label: listingNest.area,
+            label: placeMeta.place.name,
             href: tenantHref(req, {
               island: islandSlug!,
               place: listingNest.hostPlace,
@@ -617,7 +617,7 @@ if (hub && categoryParam) {
         ]
       : [
           {
-            label: listingNest.hostPlace,
+            label: placeMeta.place.name,
             href: tenantHref(req, {
               island: islandSlug!,
               place: listingNest.hostPlace,
@@ -625,7 +625,7 @@ if (hub && categoryParam) {
             }),
           },
         ]),
-    { label: data.business.slug },
+    { label: data.business.name },
   ]}
   locale={locale}
   canonical={listingUrl}

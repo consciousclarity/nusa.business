@@ -146,13 +146,13 @@ const formAction = tenantHref(req, {
   description={`${listings.length} ${categoryLabel(browse.category)} listings in ${where}.`}
   crumb={[
     {
-      label: islandSlug,
+      label: islandDetail.island.name,
       href: tenantHref(req, { island: islandSlug, locale }),
     },
-    ...(hostPlaceSlug
+    ...(hostPlace
       ? [
           {
-            label: hostPlaceSlug,
+            label: hostPlace.name,
             href: tenantHref(req, {
               island: islandSlug,
               place: hostPlaceSlug,
@@ -161,8 +161,10 @@ const formAction = tenantHref(req, {
           },
         ]
       : []),
-    { label: browse.category },
-    ...(browse.pathFacet ? [{ label: browse.pathFacet.value }] : []),
+    { label: categoryLabel(browse.category) },
+    ...(browse.pathFacet
+      ? [{ label: facetValueLabel(browse.pathFacet.key, browse.pathFacet.value) }]
+      : []),
   ]}
   locale={locale}
   canonical={canonical}

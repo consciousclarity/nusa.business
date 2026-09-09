@@ -9,8 +9,8 @@ import {
   hostPath,
   websiteJsonLd,
 } from "../../../lib/seo";
-import { t, withLocale, type Locale } from "../../../i18n/ui";
-import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory } from "@nusa/shared";
+import { t, withLocale, placeTypeLabel, type Locale } from "../../../i18n/ui";
+import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory, TAXONOMY } from "@nusa/shared";
 
 const label = Astro.params.label!;
 const parts = label.split(".");
@@ -199,6 +199,15 @@ const placeCanonical =
           maxlength="120"
         />
       </label>
+      <label>
+        {t(locale, "category")}
+        <select name="category">
+          <option value="">{t(locale, "allCategories")}</option>
+          {TAXONOMY.map((group) => (
+            <option value={group.slug}>{group.label}</option>
+          ))}
+        </select>
+      </label>
       <button type="submit">{t(locale, "search")}</button>
     </form>
 
@@ -225,7 +234,7 @@ const placeCanonical =
                   {place.name}
                 </a>
                 <span class="rhs">
-                  {place.type.replaceAll("_", " ")}
+                  {placeTypeLabel(locale, place.type)}
                   {parent ? ` · ${parent.name}` : ""}
                 </span>
               </div>

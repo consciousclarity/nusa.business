@@ -1,7 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import { api } from "../lib/api";
-import { publicUrl } from "@nusa/shared";
+import { TAXONOMY } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
 import { absoluteUrl, websiteJsonLd } from "../lib/seo";
 import { t, withLocale, type Locale } from "../i18n/ui";
@@ -73,6 +73,15 @@ const searchAction = withLocale("/search", locale);
         <option value="">{t(locale, "allIslands")}</option>
         {active.map((island) => (
           <option value={island.slug}>{island.name}</option>
+        ))}
+      </select>
+    </label>
+    <label>
+      {t(locale, "category")}
+      <select name="category">
+        <option value="">{t(locale, "allCategories")}</option>
+        {TAXONOMY.map((group) => (
+          <option value={group.slug}>{group.label}</option>
         ))}
       </select>
     </label>

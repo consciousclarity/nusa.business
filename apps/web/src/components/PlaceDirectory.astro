@@ -1,6 +1,6 @@
 ---
 import { geoHref, tenantHref } from "../lib/links";
-import { t, type Locale } from "../i18n/ui";
+import { t, placeTypeLabel, type Locale } from "../i18n/ui";
 import {
   canonicalizeCategory,
   categoryFilterOptions,
@@ -142,7 +142,7 @@ const hubHref = geoHref(req, {
             >
               {child.name}
             </a>
-            <span class="rhs">{child.type.replaceAll("_", " ")}</span>
+            <span class="rhs">{placeTypeLabel(locale, child.type)}</span>
           </div>
           <p class="index-desc">{child.summary}</p>
         </li>

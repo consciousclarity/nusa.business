@@ -4,7 +4,7 @@ import { api } from "../lib/api";
 import { tenantHref } from "../lib/links";
 import { absoluteUrl } from "../lib/seo";
 import { t, withLocale, type Locale } from "../i18n/ui";
-import { categoryLabel } from "@nusa/shared";
+import { categoryLabel, TAXONOMY } from "@nusa/shared";
 
 const locale: Locale = Astro.locals.locale ?? "en";
 const q = (Astro.url.searchParams.get("q") || "").trim();
@@ -80,6 +80,17 @@ const title = q
         ))}
       </select>
     </label>
+    <label>
+      {t(locale, "category")}
+      <select name="category">
+        <option value="">{t(locale, "allCategories")}</option>
+        {TAXONOMY.map((group) => (
+          <option value={group.slug} selected={group.slug === category}>
+            {group.label}
+          </option>
+        ))}
+      </select>
+    </label>
     <button type="submit">{t(locale, "search")}</button>
   </form>
 
@@ -88,6 +99,7 @@ const title = q
       {hits.length} {t(locale, "resultsIn")}
       {q ? ` · ${q}` : ""}
       {island ? ` · ${island}` : ""}
+      {category ? ` · ${categoryLabel(category)}` : ""}
     </h2>
     {hits.length === 0 ? (
       <p class="prose">

@@ -34,6 +34,7 @@ const search = readFileSync(
 describe("visitor chrome (no debug resolver)", () => {
   it("homepage is search-first and omits host-resolver jargon", () => {
     assert.match(home, /name="q"/);
+    assert.match(home, /name="category"/);
     assert.match(home, /action=\{searchAction\}/);
     assert.doesNotMatch(home, /kind=nation/);
     assert.doesNotMatch(home, /class="resolver"/);
@@ -55,6 +56,8 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(island, /class="resolver"/);
     assert.doesNotMatch(claim, /class="resolver"/);
     assert.doesNotMatch(place, / published/);
+    assert.doesNotMatch(island, /replaceAll\("_"/);
+    assert.doesNotMatch(place, /replaceAll\("_"/);
   });
 
   it("footer points at privacy, terms, and support instead of /host paths", () => {
@@ -67,6 +70,7 @@ describe("visitor chrome (no debug resolver)", () => {
   it("search results are shareable query URLs and noindex", () => {
     assert.match(search, /name="q"/);
     assert.match(search, /name="island"/);
+    assert.match(search, /name="category"/);
     assert.match(search, /robots="noindex,follow"/);
   });
 });

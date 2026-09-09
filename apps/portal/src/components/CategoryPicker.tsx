@@ -35,12 +35,8 @@ export function CategoryPicker({
           const selectedInGroup =
             (value.includes(group.slug) ? 1 : 0) +
             group.children.filter((c) => value.includes(c.slug)).length;
-            const open =
-            group.slug === "food-drink" ||
-            selectedInGroup > 0 ||
-            (group.related?.some((r) => value.includes(r.slug)) ?? false);
           return (
-            <details key={group.slug} defaultOpen={open}>
+            <details key={group.slug}>
               <summary>
                 {group.label}
                 {selectedInGroup > 0 ? ` (${selectedInGroup})` : ""}

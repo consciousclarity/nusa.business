@@ -44,7 +44,19 @@ and the operator list below.
 
 ## Operator / Hermes (VPS) — authorized only
 
-Do **not** run these from Cursor. Hand to Warden:
+Do **not** run these from Cursor. Hand to Warden. After deploy, an
+authorized operator can run the read-only public check from anywhere:
+
+```bash
+bash scripts/live-public-check.sh
+```
+
+That script does not SSH or mutate the VPS. It currently **fails** on the
+live homepage (`class="resolver"`, `kind=nation`) until this PR is deployed.
+Listing HTML already passing the `http://api:8787` / `https://api.nusa.business`
+checks is not a substitute for homepage visitor chrome.
+
+On the VPS:
 
 1. Record `git rev-parse HEAD` under `/opt/nusa.business`.
 2. Confirm supervisor (PM2 **or** Compose), API bind, and env:
@@ -65,6 +77,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Production cannot auto-create demo users | pass (code) | Live store inventory unverified |
 | Public docs do not present demo passwords as production logins | pass | Local table remains in getting-started |
 | Browser API origin fails closed in production builds | pass (code + live listing HTML) | Live homepage still old chrome; env re-check after deploy |
+| Live homepage visitor chrome | fail (live) | `scripts/live-public-check.sh` (2026-09-09): `class="resolver"`, `kind=nation`, `/host/bali` footer |
 | Reviews check HTTP status; keep text on failure | pass | Not submitted to production |
 | Bookings reject past dates, bad quantities, duplicates | pass (code) | No priced inventory yet — request-only |
 | Claim does not grant edit until approved | pass (API tests) | Owner self-register + invite; pending PATCH 403 |
@@ -85,6 +98,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | CSP Report-Only | pass (code) | No report URI yet; unverified in browsers |
 | CORS restricted to `*.nusa.business` | pass (C06) | |
 | Sitemap / robots | pass (C11 + search noindex) | Search Console unverified |
+| Live public HTTPS smoke | fail (homepage) | Script is read-only; listing API origin already ok; homepage chrome waits on deploy |
 | WCAG 2.2 AA on phone | unverified | C10 chrome tests pass; no screen-reader run here |
 | Lighthouse / RUM | unverified | C12 lab budget in CI; no field data |
 | Staging e2e owner onboarding | unverified | Local API self-register + pending-claim PATCH 403 pass; staging HTTPS unverified |

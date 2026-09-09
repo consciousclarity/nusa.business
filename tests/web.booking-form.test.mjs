@@ -29,7 +29,6 @@ it("booking form sends enabled values, reuses keys on unchanged retries and rota
       getElementById: (id) => id === "booking-form" ? form : null,
       querySelector: () => null,
     },
-    window: {},
     crypto: { randomUUID },
     FormData: class {
       constructor() { this.values = new Map(fields.filter((field) => !field.disabled).map((field) => [field.name, field.value])); }

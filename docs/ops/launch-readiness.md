@@ -1,9 +1,14 @@
 # Launch readiness
 
 Inspected against `main` at `bfd899c` (2026-09-09). C01–C14 already
-landed; this page records what the follow-up PR verified in **code**, what
-still needs a **Hermes/Warden operator** on the VPS, and what remains
-unverified because it needs live HTTPS or field data.
+landed (PRs #23–#39); this page records what the follow-up PR verified in
+**code**, what still needs a **Hermes/Warden operator** on the VPS, and what
+remains unverified because it needs live HTTPS or field data.
+
+Local HTTP checks (synthetic seed, not production): homepage search,
+`/search?q=`, listing contact actions, booking past-date 400 and duplicate 409.
+`npm test` and `npm run seed` passed in this PR. Do not treat that as a live
+HTTPS pass.
 
 Cursor agents must not deploy or mutate production without explicit
 authorization. Long-running on-box work belongs to **Warden** (Hermes on the

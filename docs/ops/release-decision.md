@@ -10,23 +10,24 @@ agents must not deploy without explicit human authorization.
 
 | ID | Topic | Status | Notes |
 |---|---|---|---|
-| C01 | Public response privacy | merged / on `main` | |
-| C02 | Production bootstrap safe | merged / on `main` | Confirm live store is not demo-seeded |
-| C03 | SSR / browser API origins | merged / on `main` | Confirm `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL` on VPS |
-| C04 | Write validation / forms | merged / on `main` | |
-| C05 | Owner onboarding / claims | merged + follow-ups | Invite returnTo `/invites` may still be an open PR |
-| C06 | Authz / CORS / rate limits | open PR | Must land before public browser clients |
-| C07 | JSON store durability | open PR | Required before trusting `.data` on disk |
-| C08 | Mobile discovery / contact | open PR | |
-| C09 | i18n en/id | open PR | |
-| C10 | Public a11y | open PR | |
-| C11 | Public SEO | open PR | |
-| C12 | Public perf budget | open PR | |
-| C13 | Ops runtime verification | open PR | PM2 vs Compose must be confirmed on box |
+| C01 | Public response privacy | merged (#23) | |
+| C02 | Production bootstrap safe | merged (#24) | Confirm live store is not demo-seeded |
+| C03 | SSR / browser API origins | merged (#25) | Confirm `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL` on VPS |
+| C04 | Write validation / forms | merged (#26) | |
+| C05 | Owner onboarding / claims | merged (#28, #30) | Invite-only; claim stays pending until approve |
+| C06 | Authz / CORS / rate limits | merged (#31) | |
+| C07 | JSON store durability | merged (#32) | Isolated restore drill still unverified |
+| C08 | Mobile discovery / contact | merged (#33) | Follow-up visitor chrome in launch-readiness PR |
+| C09 | i18n en/id | merged (#34) | Listing body stays author language |
+| C10 | Public a11y | merged (#35) | Chrome tests only; no screen-reader pass |
+| C11 | Public SEO | merged (#36) | Search Console submission is operator |
+| C12 | Public perf budget | merged (#37) | Lab CI only; no RUM |
+| C13 | Ops runtime verification | merged (#38) | PM2 vs Compose must still be confirmed on box |
 | C14 | Release decision | **HOLD** | [launch-readiness.md](./launch-readiness.md) — remaining operator/Hermes gates |
 
-Exact PR numbers drift; use GitHub’s open PRs titled `C0x` / `C1x` against
-`main`.
+C01–C14 code is on `main`. Remaining launch work is operator verification plus
+the follow-up in [launch-readiness.md](./launch-readiness.md) (booking date/duplicate
+rules, visitor search, sample stamps). Do not treat merged code as a live GO.
 
 ## Operator gates (live VPS)
 
@@ -45,8 +46,8 @@ Complete only with authorization. Record answers in the ops channel / ticket:
 
 Change the decision line at the top to **GO** only when:
 
-- C06–C13 (and remaining C05 follow-ups) are merged or explicitly waived
-- Operator gates 1–6 are checked
+- Operator gates 1–6 are checked on the VPS
+- Launch-readiness follow-up (booking rules, visitor chrome, sample labels) is merged or waived
 - A human names the release SHA and authorizes deploy
 
 Until then: **HOLD**.

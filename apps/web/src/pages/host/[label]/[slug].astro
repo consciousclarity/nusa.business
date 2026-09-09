@@ -645,12 +645,12 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
     }
   });
   // Written by apps/web/scripts/copy-vendor.mjs into public/vendor/.
-  const leafletJs = "/vendor/leaflet/leaflet.js";
-  const leafletCss = "/vendor/leaflet/leaflet.css";
+  const mapLibreJs = "/vendor/maplibre/maplibre-gl.mjs";
+  const mapLibreCss = "/vendor/maplibre/maplibre-gl.css";
 
   // —— Nearby discovery ————————————————————————————————————————————
   // The list is server-rendered; this only adds category switching and the
-  // map. Leaflet (~148 KB) is fetched from our own origin the first time the
+  // map. MapLibre GL JS is fetched from our own origin the first time the
   // map is about to come into view, so readers who never scroll there — the
   // 3G phone case the performance budget is written for — never pay for it.
   const nearbyRoot = document.querySelector("[data-nearby-root]");
@@ -665,8 +665,12 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
     if (!endpoint || !listEl || !mapEl) return;
 
     const hrefTemplate = root.dataset.hrefTemplate || "";
+    const SOURCE_ID = "nearby-points";
+    const LAYER_ID = "nearby-points-circles";
+    let maplibregl = null;
     let map = null;
-    let layer = null;
+    let mapStyleReady = false;
+    let openPopup = null;
     let seq = 0;
 
     // Seeded from the server so the map agrees with the rendered list the
@@ -725,73 +729,150 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
       listEl.replaceChildren(ol);
     }
 
+    // MapLibre note: coordinates are [lng, lat] everywhere below, the
+    // opposite order from the {lat, lng} shape the discovery API returns.
     function syncMap() {
-      if (!map || !layer) return;
-      const L = window.L;
-      layer.clearLayers();
-      const bounds = [];
+      if (!map || !mapStyleReady) return;
+      if (openPopup) {
+        openPopup.remove();
+        openPopup = null;
+      }
+
+      const features = [];
       if (latest.origin) {
-        layer.addLayer(
-          L.circleMarker([latest.origin.lat, latest.origin.lng], {
-            radius: 7,
-            color: "#1a1c22",
-            fillColor: "#1a1c22",
-            fillOpacity: 1,
-            weight: 1,
-          }).bindPopup("Here"),
-        );
-        bounds.push([latest.origin.lat, latest.origin.lng]);
+        features.push({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [latest.origin.lng, latest.origin.lat] },
+          properties: { kind: "origin", popupHtml: "Here" },
+        });
       }
       latest.items.forEach((n, i) => {
         if (typeof n.business.lat !== "number" || typeof n.business.lng !== "number") {
           return;
         }
-        layer.addLayer(
-          L.circleMarker([n.business.lat, n.business.lng], {
-            radius: 6,
-            color: "#1a29c4",
-            fillColor: "#1a29c4",
-            fillOpacity: 0.85,
-            weight: 1,
-          }).bindPopup(
-            `<strong>${String(i + 1).padStart(2, "0")}. ${escapeHtml(n.business.name)}</strong><br>${n.distanceKm.toFixed(2)} km`,
-          ),
-        );
-        bounds.push([n.business.lat, n.business.lng]);
+        features.push({
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [n.business.lng, n.business.lat] },
+          properties: {
+            kind: "neighbor",
+            popupHtml: `<strong>${String(i + 1).padStart(2, "0")}. ${escapeHtml(n.business.name)}</strong><br>${n.distanceKm.toFixed(2)} km`,
+          },
+        });
       });
-      if (bounds.length > 0) {
-        map.fitBounds(L.latLngBounds(bounds), { padding: [24, 24], maxZoom: 15 });
+      map.getSource(SOURCE_ID).setData({ type: "FeatureCollection", features });
+
+      if (features.length > 0) {
+        const bounds = new maplibregl.LngLatBounds();
+        features.forEach((f) => bounds.extend(f.geometry.coordinates));
+        map.fitBounds(bounds, { padding: 24, maxZoom: 15 });
       }
-      map.invalidateSize();
+      map.resize();
     }
+
+    // A raster-only style (no `glyphs`/`sprite` keys): the map draws a
+    // single circle layer, so it never needs a font or icon sheet — the
+    // OSM tile PNGs are the only network request beyond the library itself.
+    const OSM_STYLE = {
+      version: 8,
+      sources: {
+        osm: {
+          type: "raster",
+          tiles: [
+            "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://b.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          ],
+          tileSize: 256,
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        },
+      },
+      layers: [{ id: "osm", type: "raster", source: "osm" }],
+    };
 
     let mapReady = null;
     function loadMap() {
       if (mapReady) return mapReady;
-      mapReady = new Promise((resolve, reject) => {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = leafletCss;
-        document.head.appendChild(link);
-        const tag = document.createElement("script");
-        tag.src = leafletJs;
-        tag.onload = () => resolve(window.L);
-        tag.onerror = () => reject(new Error("leaflet failed to load"));
-        document.head.appendChild(tag);
-      })
-        .then((L) => {
+
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = mapLibreCss;
+      document.head.appendChild(link);
+
+      // MapLibre ships ESM only, so it's loaded with a dynamic import
+      // rather than an injected script element — that also means no
+      // polling for a window global, and load failure surfaces as a
+      // rejected promise.
+      mapReady = import(/* @vite-ignore */ mapLibreJs)
+        .then((mod) => {
+          maplibregl = mod;
           mapEl.hidden = false;
-          map = L.map(mapEl, { scrollWheelZoom: false, attributionControl: true });
-          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-            attribution:
-              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-          }).addTo(map);
-          layer = L.layerGroup().addTo(map);
-          map.setView([-8.54, 115.32], 13);
-          // Leaflet measures its pane after layout.
-          requestAnimationFrame(() => {
-            map.invalidateSize();
+          map = new maplibregl.Map({
+            container: mapEl,
+            style: OSM_STYLE,
+            center: [115.32, -8.54],
+            zoom: 13,
+            scrollZoom: false,
+            dragRotate: false,
+            pitchWithRotate: false,
+            touchPitch: false,
+            attributionControl: { compact: true },
+          });
+          map.addControl(
+            new maplibregl.NavigationControl({ showCompass: false }),
+            "top-right",
+          );
+
+          map.on("load", () => {
+            map.addSource(SOURCE_ID, {
+              type: "geojson",
+              data: { type: "FeatureCollection", features: [] },
+            });
+            map.addLayer({
+              id: LAYER_ID,
+              type: "circle",
+              source: SOURCE_ID,
+              paint: {
+                "circle-radius": ["case", ["==", ["get", "kind"], "origin"], 7, 6],
+                "circle-color": [
+                  "case",
+                  ["==", ["get", "kind"], "origin"],
+                  "#1a1c22",
+                  "#1a29c4",
+                ],
+                "circle-stroke-width": 1,
+                "circle-stroke-color": [
+                  "case",
+                  ["==", ["get", "kind"], "origin"],
+                  "#1a1c22",
+                  "#1a29c4",
+                ],
+                "circle-opacity": [
+                  "case",
+                  ["==", ["get", "kind"], "origin"],
+                  1,
+                  0.85,
+                ],
+              },
+            });
+            map.on("click", LAYER_ID, (e) => {
+              const feature = e.features && e.features[0];
+              if (!feature) return;
+              if (openPopup) openPopup.remove();
+              openPopup = new maplibregl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(feature.properties.popupHtml)
+                .addTo(map);
+            });
+            map.on("mouseenter", LAYER_ID, () => {
+              map.getCanvas().style.cursor = "pointer";
+            });
+            map.on("mouseleave", LAYER_ID, () => {
+              map.getCanvas().style.cursor = "";
+            });
+
+            mapStyleReady = true;
+            map.resize();
             syncMap();
           });
         })
@@ -911,9 +992,9 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
     isolation: isolate;
   }
 
-  /* Leaflet builds this element at runtime, so it never carries Astro's
+  /* MapLibre builds this element at runtime, so it never carries Astro's
      scope attribute. */
-  .nearby-map :global(.leaflet-container) {
+  .nearby-map :global(.maplibregl-map) {
     width: 100%;
     height: 100%;
     font: inherit;

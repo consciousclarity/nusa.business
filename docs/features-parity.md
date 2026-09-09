@@ -10,7 +10,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | Geo regions as first-class places | done | Island / Place model + host parser |
 | Nested hosts `place.island.nusa.business` | done | `@nusa/shared` `parseHost` + `/host/` dev routes |
 | Search / filters | partial | API `/v1/search`; place-hub category filter (`?category=`) |
-| Map search | planned | MapLibre + PostGIS (schema outlined); listing nearby uses Leaflet + haversine MVP |
+| Map search | planned | MapLibre + PostGIS (schema outlined); listing nearby uses MapLibre GL JS + haversine MVP |
 | Opening hours / gallery / FAQ fields | partial | Hours seeded; gallery/FAQ schema present; lat/lng seeded for discovery |
 | Claim listing | done | Portal `/claim` + API `/v1/claims` (invite onboarding, returnTo, decision audit) |
 | Multi-criteria reviews | done | service/value/location/cleanliness on listing + API |

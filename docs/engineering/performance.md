@@ -19,16 +19,23 @@ Run `npm run build -w @nusa/web` before relying on the built-CSS assertion;
 
 ## On-demand vendor assets
 
-A library only some readers need does not belong in a route's bundle. Leaflet
-is the working example: importing it from the listing page put ~148 KB of JS
-and its 14.8 KB stylesheet into the eager payload of every listing view, which
-the CSS budget rejects.
+A library only some readers need does not belong in a route's bundle. MapLibre
+GL JS is the working example: it ships ESM-only, ~1.15 MB raw (~300 KB gzip)
+across its main bundle, a shared chunk, and a worker script. Importing any of
+that from the listing page would put it in the eager payload of every listing
+view, which the CSS budget rejects outright and the JS weight would violate
+even if it didn't.
 
 Instead `apps/web/scripts/copy-vendor.mjs` (wired to `prebuild`) copies the
-published build into `public/vendor/`, and the page injects the `<link>` and
-`<script>` when the map is about to scroll into view. Nothing is vendored into
-git — `package.json` stays the single source of the version — and readers who
-never reach the map never download it.
+published build into `public/vendor/`, and the page injects the stylesheet
+`<link>` and dynamically `import()`s the JS when the map is about to scroll
+into view. Nothing is vendored into git — `package.json` stays the single
+source of the version — and readers who never reach the map never download
+any of it. MapLibre's own relative imports (`maplibre-gl.mjs` → `./maplibre-gl-shared.mjs`,
+and a module Worker at `./maplibre-gl-worker.mjs`) mean all three JS files
+have to ship from the same directory with their filenames unchanged, or the
+library breaks at runtime looking for a sibling file that isn't there —
+`tests/web.perf-budget.test.mjs` checks all three are present together.
 
 Reach for this when a dependency is (a) big, (b) needed by one route, and (c)
 an enhancement rather than the content. Otherwise bundle normally: an asset

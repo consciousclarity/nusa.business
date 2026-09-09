@@ -35,7 +35,7 @@ Map and list always show the **same** nearby results for the active category. No
 - Distance: haversine; origin = listing `lat`/`lng`. If missing coords, omit geo sections.
 - Similar: overlap ≥1 category with current listing, exclude self and same-address block, sort by distance, cap 10, radius 2 km.
 - Nearby-by-category: all listed businesses in radius with that category; default chip = first category of current listing that has neighbors, else first available nearby category.
-- Teletype: text lists; map is a progressive island (Leaflet tiles). Label map region; keep claim/review/booking free of map chrome.
+- Teletype: text lists; map is a progressive island (MapLibre GL JS, raster OSM tiles). Label map region; keep claim/review/booking free of map chrome.
 
 ## Implementation sketch
 

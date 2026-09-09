@@ -211,17 +211,25 @@ describe("public performance budget (C12)", () => {
       // pretest does not build web; run `npm run build -w @nusa/web`.
       return;
     }
-    // Importing Leaflet from the page would bundle ~148 KB of JS and its
-    // 14.8 KB stylesheet into the listing route. It is served from
+    // Importing MapLibre GL JS from the page would bundle its JS and
+    // stylesheet into the listing route's eager payload. It is served from
     // public/vendor instead and fetched only when the map scrolls into view.
     const bundled = readdirSync(join(client, "_astro")).filter((f) =>
-      /leaflet/i.test(f),
+      /maplibre/i.test(f),
     );
-    assert.deepEqual(bundled, [], "Leaflet must not be bundled into _astro");
+    assert.deepEqual(bundled, [], "MapLibre must not be bundled into _astro");
 
-    for (const file of ["leaflet.js", "leaflet.css"]) {
+    // maplibre-gl.mjs imports maplibre-gl-shared.mjs and spawns
+    // maplibre-gl-worker.mjs by relative URL, so all three must ship
+    // together — see apps/web/scripts/copy-vendor.mjs.
+    for (const file of [
+      "maplibre-gl.mjs",
+      "maplibre-gl-shared.mjs",
+      "maplibre-gl-worker.mjs",
+      "maplibre-gl.css",
+    ]) {
       assert.ok(
-        existsSync(join(client, "vendor/leaflet", file)),
+        existsSync(join(client, "vendor/maplibre", file)),
         `expected on-demand ${file} in public/vendor`,
       );
     }
@@ -229,10 +237,10 @@ describe("public performance budget (C12)", () => {
     const src = readFileSync(listingPath, "utf8");
     assert.doesNotMatch(
       src,
-      /from\s+["']leaflet|import\s+["']leaflet/,
-      "listing page must not import Leaflet through the bundler",
+      /from\s+["']maplibre-gl|import\s+["']maplibre-gl/,
+      "listing page must not import MapLibre through the bundler",
     );
-    assert.match(src, /\/vendor\/leaflet\/leaflet\.js/);
+    assert.match(src, /\/vendor\/maplibre\/maplibre-gl\.mjs/);
   });
 
   it("keeps built CSS under budget when dist is present", () => {

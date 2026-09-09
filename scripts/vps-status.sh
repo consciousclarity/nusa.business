@@ -9,6 +9,14 @@
 
 set -uo pipefail
 
+
+# Load .env so docker compose can interpolate NUSA_AUTH_SECRET
+if [ -f /opt/nusa.business/.env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . /opt/nusa.business/.env
+  set +a
+fi
 API_PORT="${API_PORT:-4101}"
 WEB_PORT="${WEB_PORT:-4321}"
 PORTAL_PORT="${PORTAL_PORT:-4103}"

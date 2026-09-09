@@ -28,6 +28,8 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | API origins | `tests/shared.api-origins.test.mjs` | Browser origins must be public HTTPS in production; SSR may use Compose-internal URLs; `http://api:8787` is rejected for browsers. |
 | Locale paths | `tests/shared.locale.test.mjs` | `/id` prefix detect/strip/`withLocale` for public bilingual routes. |
 | Contact links | `tests/shared.contact-links.test.mjs` | WhatsApp `wa.me` and `tel:` normalisation for Indonesian numbers. |
+| Geo helpers | `tests/shared.geo.test.mjs` | Address normalisation + haversine for listing discovery. |
+| Listing discovery | `tests/db.discovery.test.mjs` | Same-address peers, similar ≤2 km, category nearby filter. |
 | Production bootstrap | `tests/db.bootstrap.test.mjs` | Production missing store refuses demo seed; bootstrap admin creates geography-only store; existing stores are preserved. |
 | JSON durability | `tests/db.persist.test.mjs` | Atomic write + `.bak` rotation; recover truncated `store.json`; refuse silent re-seed when both files are corrupt. |
 | Public privacy | `tests/api.public-privacy.test.mjs` | Anonymous listing/search responses omit bookings, review emails, and ownership internals; drafts 404; owners cannot read each other's bookings. |

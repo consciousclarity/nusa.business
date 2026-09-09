@@ -205,6 +205,36 @@ describe("public performance budget (C12)", () => {
     assert.equal(boom.headers.get("x-content-type-options"), null);
   });
 
+  it("keeps the map library out of the eager bundle", () => {
+    const client = join(root, "apps/web/dist/client");
+    if (!existsSync(join(client, "_astro"))) {
+      // pretest does not build web; run `npm run build -w @nusa/web`.
+      return;
+    }
+    // Importing Leaflet from the page would bundle ~148 KB of JS and its
+    // 14.8 KB stylesheet into the listing route. It is served from
+    // public/vendor instead and fetched only when the map scrolls into view.
+    const bundled = readdirSync(join(client, "_astro")).filter((f) =>
+      /leaflet/i.test(f),
+    );
+    assert.deepEqual(bundled, [], "Leaflet must not be bundled into _astro");
+
+    for (const file of ["leaflet.js", "leaflet.css"]) {
+      assert.ok(
+        existsSync(join(client, "vendor/leaflet", file)),
+        `expected on-demand ${file} in public/vendor`,
+      );
+    }
+
+    const src = readFileSync(listingPath, "utf8");
+    assert.doesNotMatch(
+      src,
+      /from\s+["']leaflet|import\s+["']leaflet/,
+      "listing page must not import Leaflet through the bundler",
+    );
+    assert.match(src, /\/vendor\/leaflet\/leaflet\.js/);
+  });
+
   it("keeps built CSS under budget when dist is present", () => {
     const client = join(root, "apps/web/dist/client/_astro");
     if (!existsSync(client)) {

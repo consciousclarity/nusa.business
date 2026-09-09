@@ -210,6 +210,11 @@ Non-negotiable, and the reason for the aesthetic rather than a side effect:
   gzip of source ≤ 4 KB. Responsive media queries plus the C10/C11 chrome
   pushed past the original ~8 KB aspirational line — gate with
   `tests/web.perf-budget.test.mjs`.
+- **Map (listing discovery):** Leaflet is not bundled. It is served from
+  `public/vendor/` and fetched only when the nearby panel scrolls into view, so
+  a reader who never scrolls there pays nothing for it — see
+  [performance.md](../engineering/performance.md#on-demand-vendor-assets).
+  The nearby list itself is server-rendered and works without JavaScript.
 - HTML responses send `Cache-Control: public, max-age=60, stale-while-revalidate=600`
   (middleware). Edge gzip/brotli remains the reverse proxy’s job.
 

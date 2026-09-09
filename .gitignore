@@ -10,6 +10,7 @@ coverage/
 
 # App outputs
 apps/web/dist/
+apps/web/public/vendor/
 apps/portal/build/
 apps/portal/dist/
 apps/api/dist/

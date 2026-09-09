@@ -5,15 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev --port 4321",
+    "prebuild": "node scripts/copy-vendor.mjs",
+    "predev": "node scripts/copy-vendor.mjs",
     "build": "astro build",
     "preview": "astro preview --port 4321"
   },
   "dependencies": {
     "@astrojs/node": "^9.1.3",
     "@nusa/shared": "*",
-    "astro": "^5.5.3"
+    "astro": "^5.5.3",
+    "leaflet": "^1.9.4"
   },
   "devDependencies": {
+    "@types/leaflet": "^1.9.16",
     "typescript": "^5.8.2"
   }
 }

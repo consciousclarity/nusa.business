@@ -208,3 +208,5 @@ export {
   type Locale,
   LOCALES,
 } from "./locale.js";
+
+export { normalizeAddress, haversineKm } from "./geo.js";

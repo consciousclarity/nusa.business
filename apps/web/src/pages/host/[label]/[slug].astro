@@ -76,6 +76,85 @@ const stamp =
 
 const wa = whatsappHref(data.business.whatsapp);
 const phoneLink = telHref(data.business.phone);
+
+type DiscoveryNeighbor = {
+  business: {
+    id: string;
+    name: string;
+    slug: string;
+    summary: string;
+    categories: string[];
+    lat?: number;
+    lng?: number;
+  };
+  place: { slug: string; name: string };
+  island: { slug: string };
+  distanceKm: number;
+};
+
+type DiscoveryPayload = {
+  origin: { lat: number; lng: number; address?: string } | null;
+  sameAddress: DiscoveryNeighbor[];
+  similar: DiscoveryNeighbor[];
+  nearbyCategories: string[];
+  nearby: DiscoveryNeighbor[];
+  activeCategory: string | null;
+  radiusKm: number;
+};
+
+const emptyDiscovery: DiscoveryPayload = {
+  origin: null,
+  sameAddress: [],
+  similar: [],
+  nearbyCategories: [],
+  nearby: [],
+  activeCategory: null,
+  radiusKm: 0,
+};
+
+// Discovery is an enhancement on top of the record. `api()` throws on a
+// non-2xx or a network error, so without this an outage limited to this one
+// endpoint would take down an otherwise perfectly renderable listing.
+const discovery = await api<DiscoveryPayload>(
+  `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`,
+).catch(() => emptyDiscovery);
+
+function neighborHref(n: DiscoveryNeighbor) {
+  return tenantHref(req, {
+    island: n.island.slug,
+    place: n.place.slug,
+    slug: n.business.slug,
+    locale,
+  });
+}
+
+const discoveryApi = `${browserApiOrigin()}/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`;
+
+// Links for results the browser refetches have to match the ones rendered
+// here: the right host on production tenants, and the /id prefix on
+// Indonesian pages. Rather than reimplement tenantHref in the script, ask it
+// for one templated URL and substitute. The tokens are lowercase and are
+// valid hostname labels, so URL normalisation leaves them intact.
+const HREF_TOKEN = { island: "x-island-x", place: "x-place-x", slug: "x-slug-x" };
+const neighborHrefTemplate = tenantHref(req, {
+  island: HREF_TOKEN.island,
+  place: HREF_TOKEN.place,
+  slug: HREF_TOKEN.slug,
+  locale,
+});
+
+// --- Fix 3: seed the map from what the server already rendered ---
+// Marker set for the categories the page opens on. Without it the map would
+// open empty on the fallback view and only agree with the list after a chip
+// click.
+const nearbySeed = JSON.stringify({
+  origin: discovery.origin,
+  nearby: discovery.nearby,
+});
+const nearbyWithHref = discovery.nearby.map((n) => ({
+  ...n,
+  href: neighborHref(n),
+}));
 ---
 <Base
   title={`${data.business.name} — ${placeMeta.place.name}`}
@@ -199,6 +278,105 @@ const phoneLink = telHref(data.business.phone);
       <h2>{t(locale, "overview")}</h2>
       <p class="prose">{data.business.description}</p>
     </section>
+
+    {discovery.sameAddress.length > 0 && (
+      <section class="section" aria-labelledby="same-address-heading">
+        <h2 id="same-address-heading">{t(locale, "otherAtAddress")}</h2>
+        <p class="meta">{data.business.address}</p>
+        <ol class="index-list">
+          {discovery.sameAddress.map((n, i) => (
+            <li>
+              <div class="index-row">
+                <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                <a class="name" href={neighborHref(n)}>{n.business.name}</a>
+                <span class="rhs">{n.business.categories[0] ?? n.place.name}</span>
+              </div>
+              <p class="index-desc">{n.business.summary}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {discovery.similar.length > 0 && (
+      <section class="section" aria-labelledby="similar-heading">
+        <h2 id="similar-heading">{t(locale, "similarNearby")}</h2>
+        <ol class="index-list">
+          {discovery.similar.map((n, i) => (
+            <li>
+              <div class="index-row">
+                <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                <a class="name" href={neighborHref(n)}>{n.business.name}</a>
+                <span class="rhs">
+                  {n.distanceKm.toFixed(2)} {t(locale, "kmAway")} · {n.place.name}
+                </span>
+              </div>
+              <p class="index-desc">{n.business.summary}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {discovery.origin && discovery.nearbyCategories.length > 0 && (
+      <section
+        class="section nearby-discovery"
+        aria-labelledby="nearby-cat-heading"
+        data-nearby-root
+        data-endpoint={discoveryApi}
+        data-active-category={discovery.activeCategory ? encodeURIComponent(discovery.activeCategory) : ""}
+        data-empty-label={t(locale, "noNearbyInCategory")}
+        data-href-template={neighborHrefTemplate}
+        data-initial={nearbySeed}
+      >
+        <h2 id="nearby-cat-heading">{t(locale, "nearbyByCategory")}</h2>
+        <div
+          class="category-chips"
+          role="group"
+          aria-label={t(locale, "category")}
+        >
+          {discovery.nearbyCategories.map((cat) => (
+            <button
+              type="button"
+              class:list={["chip", { "is-active": cat === discovery.activeCategory }]}
+              data-category={encodeURIComponent(cat)}
+              aria-pressed={cat === discovery.activeCategory ? "true" : "false"}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+        <div class="nearby-layout">
+          <div
+            class="nearby-map"
+            data-nearby-map
+            hidden
+            role="img"
+            aria-label={t(locale, "nearbyMap")}
+          ></div>
+          <div data-nearby-list>
+            {nearbyWithHref.length === 0 ? (
+              <p class="meta">{t(locale, "noNearbyInCategory")}</p>
+            ) : (
+              <ol class="index-list">
+                {nearbyWithHref.map((n, i) => (
+                  <li>
+                    <div class="index-row">
+                      <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                      <a class="name" href={n.href}>{n.business.name}</a>
+                      <span class="rhs">
+                        {n.distanceKm.toFixed(2)} {t(locale, "kmAway")}
+                      </span>
+                    </div>
+                    <p class="index-desc">{n.business.summary}</p>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
+        </div>
+      </section>
+    )}
 
     {data.business.openingHours?.length > 0 && (
       <section class="section" aria-labelledby="hours-caption">
@@ -466,4 +644,288 @@ const phoneLink = telHref(data.business.phone);
       lockForm(bookingForm, false);
     }
   });
+  // Written by apps/web/scripts/copy-vendor.mjs into public/vendor/.
+  const leafletJs = "/vendor/leaflet/leaflet.js";
+  const leafletCss = "/vendor/leaflet/leaflet.css";
+
+  // —— Nearby discovery ————————————————————————————————————————————
+  // The list is server-rendered; this only adds category switching and the
+  // map. Leaflet (~148 KB) is fetched from our own origin the first time the
+  // map is about to come into view, so readers who never scroll there — the
+  // 3G phone case the performance budget is written for — never pay for it.
+  const nearbyRoot = document.querySelector("[data-nearby-root]");
+  if (nearbyRoot) initNearby(nearbyRoot);
+
+  function initNearby(root) {
+    const endpoint = root.dataset.endpoint;
+    const emptyLabel = root.dataset.emptyLabel || "";
+    const listEl = root.querySelector("[data-nearby-list]");
+    const mapEl = root.querySelector("[data-nearby-map]");
+    const chips = Array.from(root.querySelectorAll("[data-category]"));
+    if (!endpoint || !listEl || !mapEl) return;
+
+    const hrefTemplate = root.dataset.hrefTemplate || "";
+    let map = null;
+    let layer = null;
+    let seq = 0;
+
+    // Seeded from the server so the map agrees with the rendered list the
+    // moment it opens, without spending a request to re-fetch what is
+    // already on the page.
+    let latest = { origin: null, items: [] };
+    try {
+      const seed = JSON.parse(root.dataset.initial || "null");
+      if (seed) latest = { origin: seed.origin, items: seed.nearby || [] };
+    } catch {
+      // Keep the empty default; the map simply opens without markers.
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    // Substituted into the template tenantHref produced for this request, so
+    // refetched links keep the locale prefix and the canonical tenant host.
+    // One pass: chained replaces would re-scan text they had just inserted,
+    // so a slug that happens to read "x-slug-x" could rewrite the hostname.
+    function hrefFor(n) {
+      const values = {
+        "x-place-x": n.place.slug,
+        "x-island-x": n.island.slug,
+        "x-slug-x": n.business.slug,
+      };
+      return hrefTemplate.replace(
+        /x-(?:place|island|slug)-x/g,
+        (token) => values[token],
+      );
+    }
+
+    function renderList(items) {
+      if (items.length === 0) {
+        listEl.innerHTML = `<p class="meta">${escapeHtml(emptyLabel)}</p>`;
+        return;
+      }
+      const ol = document.createElement("ol");
+      ol.className = "index-list";
+      items.forEach((n, i) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+      <div class="index-row">
+        <span class="n">${String(i + 1).padStart(2, "0")}</span>
+        <a class="name" href="${escapeHtml(hrefFor(n))}">${escapeHtml(n.business.name)}</a>
+        <span class="rhs">${n.distanceKm.toFixed(2)} km</span>
+      </div>
+      <p class="index-desc">${escapeHtml(n.business.summary)}</p>`;
+        ol.appendChild(li);
+      });
+      listEl.replaceChildren(ol);
+    }
+
+    function syncMap() {
+      if (!map || !layer) return;
+      const L = window.L;
+      layer.clearLayers();
+      const bounds = [];
+      if (latest.origin) {
+        layer.addLayer(
+          L.circleMarker([latest.origin.lat, latest.origin.lng], {
+            radius: 7,
+            color: "#1a1c22",
+            fillColor: "#1a1c22",
+            fillOpacity: 1,
+            weight: 1,
+          }).bindPopup("Here"),
+        );
+        bounds.push([latest.origin.lat, latest.origin.lng]);
+      }
+      latest.items.forEach((n, i) => {
+        if (typeof n.business.lat !== "number" || typeof n.business.lng !== "number") {
+          return;
+        }
+        layer.addLayer(
+          L.circleMarker([n.business.lat, n.business.lng], {
+            radius: 6,
+            color: "#1a29c4",
+            fillColor: "#1a29c4",
+            fillOpacity: 0.85,
+            weight: 1,
+          }).bindPopup(
+            `<strong>${String(i + 1).padStart(2, "0")}. ${escapeHtml(n.business.name)}</strong><br>${n.distanceKm.toFixed(2)} km`,
+          ),
+        );
+        bounds.push([n.business.lat, n.business.lng]);
+      });
+      if (bounds.length > 0) {
+        map.fitBounds(L.latLngBounds(bounds), { padding: [24, 24], maxZoom: 15 });
+      }
+      map.invalidateSize();
+    }
+
+    let mapReady = null;
+    function loadMap() {
+      if (mapReady) return mapReady;
+      mapReady = new Promise((resolve, reject) => {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = leafletCss;
+        document.head.appendChild(link);
+        const tag = document.createElement("script");
+        tag.src = leafletJs;
+        tag.onload = () => resolve(window.L);
+        tag.onerror = () => reject(new Error("leaflet failed to load"));
+        document.head.appendChild(tag);
+      })
+        .then((L) => {
+          mapEl.hidden = false;
+          map = L.map(mapEl, { scrollWheelZoom: false, attributionControl: true });
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          }).addTo(map);
+          layer = L.layerGroup().addTo(map);
+          map.setView([-8.54, 115.32], 13);
+          // Leaflet measures its pane after layout.
+          requestAnimationFrame(() => {
+            map.invalidateSize();
+            syncMap();
+          });
+        })
+        .catch(() => {
+          // No map is fine — the list above it is the real content.
+          mapEl.hidden = true;
+        });
+      return mapReady;
+    }
+
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            io.disconnect();
+            void loadMap();
+          }
+        },
+        { rootMargin: "200px" },
+      );
+      io.observe(root);
+    } else {
+      void loadMap();
+    }
+
+    async function load(category) {
+      const mine = ++seq;
+      const url = new URL(endpoint);
+      if (category) url.searchParams.set("category", category);
+      else url.searchParams.delete("category");
+      let data;
+      try {
+        const res = await fetch(url.toString());
+        if (!res.ok || mine !== seq) return;
+        data = await res.json();
+      } catch {
+        return;
+      }
+      if (mine !== seq) return;
+      chips.forEach((btn) => {
+        const cat = decodeURIComponent(btn.dataset.category || "");
+        const active = cat === (data.activeCategory ?? "");
+        btn.setAttribute("aria-pressed", active ? "true" : "false");
+        btn.classList.toggle("is-active", active);
+      });
+      latest = { origin: data.origin, items: data.nearby };
+      renderList(latest.items);
+      syncMap();
+    }
+
+    chips.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const raw = btn.dataset.category || "";
+        void load(raw ? decodeURIComponent(raw) : null);
+      });
+    });
+  }
 </script>
+
+<style>
+  /* Listing-only styles: kept off global.css so every other page — and the
+     shared stylesheet's budget — stays untouched by the discovery panels. */
+  .nearby-layout {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 0.85rem;
+  }
+
+  .nearby-controls {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    position: relative;
+    z-index: 2;
+    margin-top: 0.65rem;
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--rule);
+    padding: 0.45em 0.7em;
+    cursor: pointer;
+    min-height: 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .chip.is-active,
+  .chip[aria-pressed="true"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  .chip:hover {
+    border-color: var(--ink);
+  }
+
+  .nearby-map {
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    height: min(22rem, 55vh);
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Leaflet builds this element at runtime, so it never carries Astro's
+     scope attribute. */
+  .nearby-map :global(.leaflet-container) {
+    width: 100%;
+    height: 100%;
+    font: inherit;
+    background: var(--paper-2);
+    position: absolute;
+    inset: 0;
+  }
+
+  @media (min-width: 48rem) {
+    .nearby-layout {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+</style>

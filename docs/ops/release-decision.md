@@ -60,7 +60,7 @@ Change the decision line at the top to **GO** only when:
 
 - Operator gates 1–6 are checked on the VPS
 - Launch-readiness follow-up is merged or waived
-- `bash scripts/live-public-check.sh` passes (no resolver jargon on `/` or `/id`; listing `/id` is Indonesian chrome, not `Food & Drink` / `Address` / `Status published`)
+- `bash scripts/live-public-check.sh` passes (no resolver jargon on `/` or `/id`; listing `/id` is Indonesian chrome, not `Food & Drink` / `Address` / `Host`; sitemap lists nested hosts, not `/host/bali`)
 - A human names the release SHA and authorizes deploy
 
 Until then: **HOLD**.

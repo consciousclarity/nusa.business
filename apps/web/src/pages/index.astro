@@ -1,13 +1,15 @@
 ---
 import Base from "../layouts/Base.astro";
 import { api } from "../lib/api";
+import { tenantHref } from "../lib/links";
 import { TAXONOMY, categoryLabel } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
 import { absoluteUrl, websiteJsonLd } from "../lib/seo";
 import { t, withLocale, type Locale } from "../i18n/ui";
 
 const locale: Locale = Astro.locals.locale ?? "en";
-const { context } = resolveRequestContext(Astro.request, Astro.url);
+const req = Astro.request;
+const { context } = resolveRequestContext(req, Astro.url);
 
 // Island/place hosts are rewritten to /host/... by middleware — nation only here.
 if (context.kind !== "nation") {
@@ -18,29 +20,9 @@ const data = await api<{
   islands: { slug: string; name: string; tagline: string; status: string }[];
 }>("/v1/islands");
 
-const queryHost = (
-  Astro.request.headers.get("x-forwarded-host") ||
-  Astro.request.headers.get("host") ||
-  "nusa.business"
-)
-  .split(":")[0]!
-  .toLowerCase();
-const useRealHosts =
-  queryHost === "nusa.business" || queryHost.endsWith(".nusa.business");
 const active = data.islands.filter((i) => i.status === "active");
-
-function islandHref(slug: string) {
-  if (useRealHosts) {
-    const absolute = publicUrl({ island: slug });
-    if (locale === "en") return absolute;
-    const u = new URL(absolute);
-    u.pathname = withLocale(u.pathname || "/", "id");
-    return u.toString();
-  }
-  return withLocale(`/host/${slug}`, locale);
-}
-
-const nationUrl = absoluteUrl(Astro.request, withLocale("/", locale));
+const baliHref = tenantHref(req, { island: "bali", locale });
+const nationUrl = absoluteUrl(req, withLocale("/", locale));
 const nationDescription = t(locale, "nationLede");
 const searchAction = withLocale("/search", locale);
 ---
@@ -100,7 +82,7 @@ const searchAction = withLocale("/search", locale);
           <div class="index-row">
             <span class="n">{String(i + 1).padStart(2, "0")}</span>
             {island.status === "active" ? (
-              <a class="name" href={islandHref(island.slug)}>{island.name}</a>
+              <a class="name" href={tenantHref(req, { island: island.slug, locale })}>{island.name}</a>
             ) : (
               <span class="name">{island.name}</span>
             )}
@@ -119,7 +101,7 @@ const searchAction = withLocale("/search", locale);
             {island.status !== "active" && (
               <>
                 {" "}
-                <a href={islandHref("bali")}>{t(locale, "browseBali")}</a>
+                <a href={baliHref}>{t(locale, "browseBali")}</a>
               </>
             )}
           </p>
@@ -127,7 +109,7 @@ const searchAction = withLocale("/search", locale);
       ))}
     </ol>
     <p class="actions">
-      <a class="cta" href={islandHref("bali")}>{t(locale, "openBali")}</a>
+      <a class="cta" href={baliHref}>{t(locale, "openBali")}</a>
       <a class="cta secondary" href={withLocale("/claim", locale)}>
         {t(locale, "addListing")}
       </a>

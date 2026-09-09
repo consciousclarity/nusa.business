@@ -51,6 +51,8 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(home, /categoryLabel\(group.slug, locale\)/);
     assert.doesNotMatch(home, /kind=nation/);
     assert.doesNotMatch(home, /class="resolver"/);
+    assert.match(home, /tenantHref\(/);
+    assert.doesNotMatch(home, /publicUrl\(/);
   });
 
   it("listing chrome uses i18n keys for reviews, booking, shop, and address", () => {

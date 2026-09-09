@@ -39,6 +39,7 @@ and the operator list below.
 | F18 | `/id` listing forms showed English API `error` strings and the English booking `notice`. Missing tenant routes returned an empty 404 body. | P1 | listing widgets, `404.astro`, booking `code` | Localized `visitorError` + codes; HTML 404 with search | `tests/web.visitor-chrome.test.mjs`, `tests/api.validate.test.mjs` |
 | F19 | Listing JSON-LD omitted opening hours even when the page showed them. | P1 | `localBusinessJsonLd` | `openingHoursSpecification` from listing hours | `tests/web.seo.test.mjs` |
 | F20 | Unknown island/place hubs threw API errors (500). Public booking POST returned the full booking row (id, email, status). | P0/P1 | island `index.astro`, `POST /v1/businesses/:id/bookings` | `apiOrNull` + HTML 404; `{ ok: true }` without `booking` | `tests/web.visitor-chrome.test.mjs`, `tests/api.write-security.test.mjs` |
+| F21 | Nation homepage called `publicUrl` without importing it. Local `/host` paths worked; production `nusa.business` island links would throw. | P0 | `apps/web/src/pages/index.astro` | Use `tenantHref` for island links | `tests/web.visitor-chrome.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -83,6 +84,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Public docs do not present demo passwords as production logins | pass | Local table remains in getting-started |
 | Browser API origin fails closed in production builds | pass (code + live listing HTML) | Live homepage still old chrome; env re-check after deploy |
 | Live homepage visitor chrome | fail (live) | `scripts/live-public-check.sh` (2026-09-09): `class="resolver"`, `kind=nation`, `/host/bali` footer |
+| Nation homepage island links on `nusa.business` | pass (this branch) | `tenantHref`; unbound `publicUrl` removed |
 | Reviews check HTTP status; keep text on failure | pass | Not submitted to production |
 | Bookings reject past dates, bad quantities, duplicates | pass (code) | No priced inventory yet — request-only |
 | Claim does not grant edit until approved | pass (API tests) | Owner self-register + invite; pending PATCH 403 |

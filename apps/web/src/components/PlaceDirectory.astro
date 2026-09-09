@@ -25,7 +25,7 @@ export type PlaceHubBusiness = {
   categories: string[];
   status?: string;
   sample?: boolean;
-  registeredByAgentId?: string;
+  fieldRegistered?: boolean;
 };
 
 type Props = {
@@ -57,7 +57,7 @@ const graph: PlaceHubPlace[] = [
   ...children,
 ];
 
-const recent = businesses.filter((b) => b.registeredByAgentId).slice(0, 5);
+const recent = businesses.filter((b) => b.fieldRegistered).slice(0, 5);
 
 const placeCategoryOptions = categoryFilterOptions(
   businesses.flatMap((b) => b.categories),

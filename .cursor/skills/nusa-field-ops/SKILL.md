@@ -20,7 +20,7 @@ description: >-
 
 `POST /v1/field/register` — requires `field_agent` or `admin`.
 
-`GET /v1/field/recent` — feeds place-hub “just registered” strip.
+`GET /v1/field/recent` — feeds place-hub “just registered” strip. Public payloads expose `fieldRegistered: true`, never `registeredByAgentId`.
 
 ## Portal
 

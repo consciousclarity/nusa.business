@@ -194,7 +194,8 @@ type PlaceHubPayload = {
     summary: string;
     categories: string[];
     status?: string;
-    registeredByAgentId?: string;
+    sample?: boolean;
+    fieldRegistered?: boolean;
   }[];
 };
 
@@ -406,7 +407,19 @@ const neighborHrefTemplate = tenantHref(req, {
 
 const nearbySeed = JSON.stringify({
   origin: discovery.origin,
-  nearby: discovery.nearby,
+  nearby: discovery.nearby.map((n) => ({
+    business: {
+      name: n.business.name,
+      slug: n.business.slug,
+      summary: n.business.summary,
+      lat: n.business.lat,
+      lng: n.business.lng,
+    },
+    place: { slug: n.place.slug, name: n.place.name },
+    island: { slug: n.island.slug },
+    geo: n.geo,
+    distanceKm: n.distanceKm,
+  })),
 });
 const nearbyWithHref = discovery.nearby.map((n) => ({
   ...n,
@@ -991,10 +1004,10 @@ if (hub && categoryParam) {
           <textarea name="note" required minlength="12" rows="3"></textarea>
         </label>
         <label>
-          Kind
+          {t(locale, "reportKind")}
           <select name="kind">
-            <option value="correction">Correction</option>
-            <option value="abuse">Abuse</option>
+            <option value="correction">{t(locale, "reportCorrection")}</option>
+            <option value="abuse">{t(locale, "reportAbuseKind")}</option>
           </select>
         </label>
         <button type="submit">{t(locale, "reportSend")}</button>

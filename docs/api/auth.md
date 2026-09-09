@@ -54,7 +54,7 @@ token is passed explicitly.
 | `GET /v1/host` | public **non-production only** (404 in production) |
 | `POST /v1/businesses/:id/reports` | public — visitors flag a listing without an account |
 | `GET /v1/reports` | **admin only** |
-| `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public — listing payloads omit ownership internals; drafts excluded; listing detail never returns bookings |
+| `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public — list/search/discovery use directory **cards** (no `bookingMode`, `vendorId`, or agent ids); drafts excluded; listing detail never returns bookings |
 | `POST /v1/businesses/:id/reviews` | public — visitors review without an account |
 | `POST /v1/businesses/:id/bookings` | public — customers book without an account |
 | `POST /v1/auth/register` | public — owner self-signup, or invite token for invited roles. Clients cannot set `role`. |

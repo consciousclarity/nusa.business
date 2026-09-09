@@ -59,6 +59,8 @@ import {
 import {
   isPubliclyListed,
   toPublicBusiness,
+  toPublicBusinessCard,
+  toPublicNeighbor,
   toPublicReview,
   toPublicVendor,
 } from "./public.js";
@@ -198,7 +200,7 @@ app.get("/v1/islands/:island", (c) => {
   if (!island) return c.json({ error: "Island not found" }, 404);
   const places = listPlaces(island.slug);
   const businesses = listBusinesses({ islandSlug: island.slug }).map(
-    toPublicBusiness,
+    toPublicBusinessCard,
   );
   return c.json({ island, places, businesses });
 });
@@ -217,7 +219,7 @@ app.get("/v1/islands/:island/places/:place", (c) => {
     placeSlug: place.slug,
     category: c.req.query("category") || undefined,
     q: c.req.query("q") || undefined,
-  }).map(toPublicBusiness);
+  }).map(toPublicBusinessCard);
   return c.json({ island, place, parent, children, businesses });
 });
 
@@ -259,13 +261,8 @@ app.get("/v1/islands/:island/places/:place/businesses/:slug/discovery", (c) => {
   const discovery = getBusinessDiscovery(business.id, { radiusKm, category });
   if (!discovery) return c.json({ error: "Business not found" }, 404);
 
-  const mapNeighbor = (n: (typeof discovery.nearby)[number]) => ({
-    business: toPublicBusiness(n.business),
-    place: n.place,
-    island: n.island,
-    geo: n.geo,
-    distanceKm: Math.round(n.distanceKm * 100) / 100,
-  });
+  const mapNeighbor = (n: (typeof discovery.nearby)[number]) =>
+    toPublicNeighbor(n);
 
   return c.json({
     origin: discovery.origin,
@@ -303,7 +300,7 @@ app.get("/v1/search", (c) => {
     results: businesses.map((b) => {
       const ctx = resolveBusinessContext(b.id);
       return {
-        business: toPublicBusiness(b),
+        business: toPublicBusinessCard(b),
         place: ctx?.place,
         island: ctx?.island,
         geo: ctx?.geo,
@@ -993,7 +990,7 @@ app.get("/v1/field/recent", (c) => {
     .slice(0, 12);
   return c.json({
     businesses: businesses.map((b) => ({
-      business: toPublicBusiness(b),
+      business: toPublicBusinessCard(b),
       context: resolveBusinessContext(b.id),
     })),
   });

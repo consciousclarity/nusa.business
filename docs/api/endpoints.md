@@ -5,10 +5,10 @@
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/v1/islands` | All islands |
-| GET | `/v1/islands/:island` | Island + places + businesses |
-| GET | `/v1/islands/:island/places/:place` | Place hub payload |
-| GET | `/v1/islands/:island/places/:place/businesses/:slug` | Public listing + scrubbed reviews + vendor (no bookings; drafts 404) |
-| GET | `/v1/islands/:island/places/:place/businesses/:slug/discovery` | Same-address peers, similar ≤10 within `radiusKm` (default 2), nearby-by-category + map payload |
+| GET | `/v1/islands/:island` | Island + places + **card** businesses (no `bookingMode`) |
+| GET | `/v1/islands/:island/places/:place` | Place hub payload (card businesses; `fieldRegistered` not agent ids) |
+| GET | `/v1/islands/:island/places/:place/businesses/:slug` | Public listing + scrubbed reviews + vendor (no bookings, no `vendorId`; drafts 404) |
+| GET | `/v1/islands/:island/places/:place/businesses/:slug/discovery` | Same-address peers, similar ≤10 within `radiusKm` (default 2), nearby-by-category as cards |
 | GET | `/v1/places?island=` | Place list |
 | GET | `/v1/search?q=&island=&place=&category=&{facet}=` | Flat search. Facet keys (cuisine, dietary, availability, …) are repeated query params; optional `lat`/`lng` for distance |
 | GET | `/v1/meta/categories` | Flat `categories` labels, `taxonomy` tree, and `facets` catalog (`global`, `byGroup`, `indexable` paths) |

@@ -47,6 +47,12 @@ describe("listing discovery wiring", () => {
     // only agrees with the list after a category chip is clicked.
     assert.match(script, /root\.dataset\.initial/);
     assert.match(src, /data-initial=\{nearbySeed\}/);
+    const seed = src.slice(
+      src.indexOf("const nearbySeed"),
+      src.indexOf("const nearbyWithHref"),
+    );
+    assert.match(seed, /discovery\.nearby\.map/);
+    assert.doesNotMatch(seed, /bookingMode/);
   });
 
   it("keeps a discovery outage from taking down the listing", () => {

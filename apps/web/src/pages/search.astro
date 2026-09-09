@@ -39,6 +39,7 @@ const search = params.toString()
   : { results: [] as Hit[] };
 
 const hits = search.results.slice(0, 50);
+const islandName = active.find((row) => row.slug === island)?.name ?? island;
 const searchPath = withLocale("/search", locale) + (params.toString() ? `?${params}` : "");
 const canonical = absoluteUrl(Astro.request, searchPath);
 const title = q
@@ -98,7 +99,7 @@ const title = q
     <h2>
       {hits.length} {t(locale, "resultsIn")}
       {q ? ` · ${q}` : ""}
-      {island ? ` · ${island}` : ""}
+      {islandName ? ` · ${islandName}` : ""}
       {category ? ` · ${categoryLabel(category)}` : ""}
     </h2>
     {hits.length === 0 ? (

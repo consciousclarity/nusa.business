@@ -242,6 +242,22 @@ ol {
   text-decoration: underline;
 }
 
+.site-header nav a.nav-search {
+  color: var(--ink);
+}
+
+.site-header nav a.nav-search:visited {
+  color: var(--ink);
+}
+
+.site-header nav a.nav-owner {
+  color: var(--ink-faint);
+}
+
+.site-header nav a.nav-owner:visited {
+  color: var(--ink-faint);
+}
+
 /* —— Path —— */
 .crumbs {
   font-family: var(--mono);

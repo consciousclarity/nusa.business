@@ -14,7 +14,7 @@ agents must not deploy without explicit human authorization.
 | C02 | Production bootstrap safe | merged (#24) | Confirm live store is not demo-seeded |
 | C03 | SSR / browser API origins | merged (#25) | Confirm `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL` on VPS |
 | C04 | Write validation / forms | merged (#26) | |
-| C05 | Owner onboarding / claims | merged (#28, #30) | Invite-only; claim stays pending until approve |
+| C05 | Owner onboarding / claims | merged (#28, #30) + follow-up | Owner self-register or invite; claim stays pending until approve |
 | C06 | Authz / CORS / rate limits | merged (#31) | |
 | C07 | JSON store durability | merged (#32) | Isolated restore drill still unverified |
 | C08 | Mobile discovery / contact | merged (#33) | Follow-up visitor chrome in launch-readiness PR |

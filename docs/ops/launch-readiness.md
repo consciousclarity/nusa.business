@@ -29,6 +29,7 @@ and the operator list below.
 | F08 | No correction/abuse report path. | P1 | API + listing | `POST /v1/businesses/:id/reports` | `parseReportBody` tests |
 | F09 | No CSP header. | P1 | `apps/web/src/middleware.ts` | Report-Only CSP on public HTML | middleware source + perf header tests |
 | F10 | `GET /v1/host` was a public debug dump. | P1 | `apps/api/src/app.ts` | 404 in `NODE_ENV=production` | source + non-prod still works |
+| F11 | Header led with Claim/Portal; nearby HTML JSON dumped full listing objects including `bookingMode`. Place-hub “just registered” looked for leaked agent ids and never showed. | P1 | `Base.astro`, `apps/api/src/public.ts`, `PlaceDirectory.astro` | Search-first header; directory cards; slim `data-initial`; `fieldRegistered` flag | `tests/web.visitor-chrome.test.mjs`, `tests/api.public-privacy.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -65,8 +66,11 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Claim does not grant edit until approved | pass (API tests) | Owner self-register + invite; pending PATCH 403 |
 | Owners cannot PATCH another listing | pass | `tests/api.authz-cors.test.mjs` (incl. field agent) |
 | Visitor pages omit resolver jargon | pass (this branch) | Live homepage still has `kind=nation` until deploy |
+| Header Search first; Claim secondary | pass (this branch) | Portal remains in the footer |
 | Homepage search + shareable `/search?q=` | pass | Category filter in the same query URL |
 | Listing Directions / Call / Website / WhatsApp | pass | Seed website on one listing; maps from lat/lng |
+| Nearby HTML/JSON omits `bookingMode` | pass (this branch) | Listing detail still exposes `bookingMode` for the request form |
+| Field “just registered” without agent ids | pass (this branch) | `fieldRegistered` on public cards |
 | Sample listings labelled | pass (local seed) | Production must not publish this catalog |
 | Privacy / terms / support pages | pass | Legal text is launch-minimum, not counsel-reviewed |
 | CSP Report-Only | pass (code) | No report URI yet; unverified in browsers |

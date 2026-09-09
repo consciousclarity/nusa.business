@@ -51,6 +51,11 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.ok(directionsIdx >= 0 && claimIdx > directionsIdx);
   });
 
+  it("place hubs surface field-registered listings without agent ids", () => {
+    assert.match(place, /b\.fieldRegistered/);
+    assert.doesNotMatch(place, /registeredByAgentId/);
+  });
+
   it("place and island hubs no longer expose resolver panels", () => {
     assert.doesNotMatch(place, /class="resolver"/);
     assert.doesNotMatch(island, /class="resolver"/);
@@ -58,6 +63,18 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(place, / published/);
     assert.doesNotMatch(island, /replaceAll\("_"/);
     assert.doesNotMatch(place, /replaceAll\("_"/);
+  });
+
+  it("header leads with Search; Claim is secondary; Portal stays in the footer", () => {
+    const header = base.slice(base.indexOf("<header"), base.indexOf("</header>"));
+    assert.match(header, /nav-search/);
+    assert.match(header, /withLocale\("\/search"/);
+    const searchIdx = header.indexOf('withLocale("/search"');
+    const claimIdx = header.indexOf('withLocale("/claim"');
+    assert.ok(searchIdx >= 0 && claimIdx > searchIdx);
+    assert.match(header, /nav-owner/);
+    assert.doesNotMatch(header, /portalUrl/);
+    assert.match(base, /href=\{portalUrl\}/);
   });
 
   it("footer points at privacy, terms, and support instead of /host paths", () => {
@@ -72,6 +89,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(search, /name="island"/);
     assert.match(search, /name="category"/);
     assert.match(search, /robots="noindex,follow"/);
+    assert.match(search, /islandName/);
   });
 
   it("breadcrumbs use human names, not URL slugs", () => {

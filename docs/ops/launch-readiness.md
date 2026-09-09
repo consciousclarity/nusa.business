@@ -15,7 +15,7 @@ Three columns. Do not treat a **code** pass as a live pass.
 
 | Kind | Item | Evidence / who |
 |---|---|---|
-| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F25) | `npm test` + findings table below. Not on the VPS until deploy. |
+| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F26) | `npm test` + findings table below. Not on the VPS until deploy. |
 | **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`, `Address`, `Status published`, and English weekdays. | `bash scripts/live-public-check.sh`. Listing API origin already ok. |
 | **Operator only** | VPS SHA, PM2 vs Compose, `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL`, `NUSA_AUTH_SECRET`, demo-store inventory, store backup + isolated restore, Search Console sitemap submit | [release-decision.md](./release-decision.md) gates 1–6. Cursor must not run these. |
 | **Not this launch** | Priced booking inventory, cookie sessions/CSRF, error tracking, RUM, WCAG AA screen-reader, Dependabot/`npm audit` CI | Security / parity backlog. Do not block GO on these unless product says so. |
@@ -51,6 +51,7 @@ Local HTTP on synthetic seed (`/host/…`, booking 400/409) is not a live HTTPS 
 | F23 | `/id` island taglines were English seed copy. Category/facet browse threw when `/v1/search` failed. | P1 | `islandTagline`, `CategoryBrowse`, browse pages | Indonesian island ledes; browse uses `apiTry` + noindex when search is down | `tests/web.visitor-chrome.test.mjs`, `tests/web.facet-browse.test.mjs` |
 | F24 | Portal login embeds demo passwords in source. Vite DCE must keep them out of the production JS bundle. | P0 | `LoginPage.tsx`, portal `dist/` | Prefill only in `DEV` / `VITE_NUSA_DEMO_LOGIN`; CI greps production assets | `tests/portal.production-bundle.test.mjs` |
 | F25 | `/id` island names used English seed copy (`Java`, `Sumatra`) while category labels were already localized. | P1 | `islandName`, homepage/search/hubs/listing crumbs | Indonesian island names (`Jawa`, `Sumatera`); seed/API name stays English | `tests/web.visitor-chrome.test.mjs`, `scripts/live-public-check.sh` |
+| F26 | Listing/hub canonical + JSON-LD breadcrumbs used `hostPath` + `absoluteUrl`, so nested hosts emitted `/id/host/bali`. | P1 | `tenantAbsHref`, listing/hub/facet pages | Public canonical/JSON-LD use `tenantHref` (real hosts in production, `/host` locally) | `tests/web.visitor-chrome.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -123,6 +124,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Public HTML 500 | pass (this branch) | Search + home; hubs still 500 (not 404) when the API is down |
 | Island taglines on `/id` | pass (this branch) | `islandTagline`; seed/API tagline stays English |
 | Island names on `/id` | pass (this branch) | `islandName`; `Java`/`Sumatra` → `Jawa`/`Sumatera`; hostname slugs stay English |
+| Listing/hub canonical JSON-LD on nested hosts | pass (this branch) | `tenantAbsHref`; production must not emit `/host/bali` in listing JSON-LD |
 | Category browse if search is down | pass (this branch) | Notice + `noindex`; not a 500 and not a fake empty index |
 | Public booking POST omits booking row | pass (this branch) | `{ ok: true }` only; owners still GET `/v1/bookings` |
 | JSON-LD opening hours | pass (this branch) | `openingHoursSpecification` when hours exist |

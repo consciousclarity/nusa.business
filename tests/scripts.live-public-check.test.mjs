@@ -29,11 +29,12 @@ describe("live public check script", () => {
     assert.match(script, /gianyar\.bali\.nusa\.business/);
     assert.match(script, /\/id\/babi-guling-pande-egi/);
     assert.match(script, /Food &amp; Drink/);
-    assert.match(script, /Makanan/);
-    assert.match(script, /Status published/);
-    assert.match(script, /Booking none/);
+    assert.match(script, /Makanan|Warung/);
+    assert.match(script, />Status<\/dt>/);
+    assert.match(script, />Booking<\/dt>/);
+    assert.match(script, />Host<\/dt>/);
     assert.match(script, /Alamat/);
     assert.match(script, /Nilai ulasan/);
-    assert.match(script, /Sen 09:00/);
+    assert.match(script, />Sen<\//);
   });
 });

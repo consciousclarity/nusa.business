@@ -81,6 +81,9 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(listing, /data\.booking\.id/);
     assert.match(listing, /weekdayLabel\(locale, h\.day\)/);
     assert.match(listing, /islandName\(locale, islandSlug/);
+    assert.match(listing, /tenantAbsHref\(/);
+    assert.match(listing, /nationAbsHref\(/);
+    assert.match(listing, /const listingUrl = tenantAbsHref/);
     assert.match(listing, /categoryLabel\(cat, locale\)/);
     assert.match(listing, /localBusinessJsonLd\(\{[\s\S]*locale,/);
     assert.match(listing, /visitorError\(/);

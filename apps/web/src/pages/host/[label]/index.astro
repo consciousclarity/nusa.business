@@ -2,9 +2,8 @@
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import { apiOrNull } from "../../../lib/api";
-import { geoHref, tenantHref } from "../../../lib/links";
+import { geoHref, tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
 import {
-  absoluteUrl,
   breadcrumbJsonLd,
   hostPath,
   websiteJsonLd,
@@ -143,22 +142,14 @@ const queryHost =
 
 const islandCanonical =
   islandData &&
-  absoluteUrl(
-    req,
-    withLocale(hostPath({ island: islandData.island.slug }), locale),
-  );
+  tenantAbsHref(req, { island: islandData.island.slug, locale });
 const placeCanonical =
   placeData &&
-  absoluteUrl(
-    req,
-    withLocale(
-      hostPath({
-        island: placeData.island.slug,
-        place: placeData.place.slug,
-      }),
-      locale,
-    ),
-  );
+  tenantAbsHref(req, {
+    island: placeData.island.slug,
+    place: placeData.place.slug,
+    locale,
+  });
 ---
 
 {mode === "island" && islandData && (
@@ -176,7 +167,7 @@ const placeCanonical =
         description: islandTagline(locale, islandData.island.slug, islandData.island.tagline),
       }),
       breadcrumbJsonLd([
-        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        { name: "nusa.business", url: nationAbsHref(req, locale) },
         { name: islandHubLabel, url: islandCanonical! },
       ]),
     ]}
@@ -320,13 +311,13 @@ const placeCanonical =
         description: placeData.place.summary,
       }),
       breadcrumbJsonLd([
-        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        { name: "nusa.business", url: nationAbsHref(req, locale) },
         {
           name: placeIslandLabel,
-          url: absoluteUrl(
-            req,
-            withLocale(hostPath({ island: placeData.island.slug }), locale),
-          ),
+          url: tenantAbsHref(req, {
+            island: placeData.island.slug,
+            locale,
+          }),
         },
         { name: placeData.place.name, url: placeCanonical! },
       ]),

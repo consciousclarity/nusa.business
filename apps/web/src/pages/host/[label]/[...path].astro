@@ -3,10 +3,9 @@ import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import CategoryBrowse from "../../../components/CategoryBrowse.astro";
 import { api, apiOrNull, apiTry, browserApiOrigin } from "../../../lib/api";
-import { tenantHref } from "../../../lib/links";
+import { tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
 import { resolveFacetBrowse, searchQueryForBrowse } from "../../../lib/facet-browse";
 import {
-  absoluteUrl,
   breadcrumbJsonLd,
   hostPath as seoHostPath,
   localBusinessJsonLd,
@@ -147,8 +146,14 @@ if (isFacetBrowse) {
   const policy = facetIndexPolicy(resolved.browse, {
     resultCount: searchFailed ? 0 : listings.length,
   });
-  const canonicalPath = withLocale(
-    seoHostPath({
+  areaFacet = {
+    area: child,
+    browse: resolved.browse,
+    listings,
+    listingPlaces: Object.fromEntries(
+      (search?.results ?? []).map((r) => [r.business.placeId, r.place]),
+    ),
+    canonical: tenantAbsHref(req, {
       island: islandSlug!,
       place: hostPlaceSlug!,
       area: areaSlug,
@@ -161,17 +166,8 @@ if (isFacetBrowse) {
         policy.canonicalKind === "facet-path"
           ? resolved.browse.pathFacet?.value
           : undefined,
+      locale,
     }),
-    locale,
-  );
-  areaFacet = {
-    area: child,
-    browse: resolved.browse,
-    listings,
-    listingPlaces: Object.fromEntries(
-      (search?.results ?? []).map((r) => [r.business.placeId, r.place]),
-    ),
-    canonical: absoluteUrl(req, canonicalPath),
     robots: searchFailed || !policy.index ? "noindex,follow" : "index,follow",
     titleCore: resolved.browse.pathFacet
       ? `${facetValueLabel(resolved.browse.pathFacet.key, resolved.browse.pathFacet.value, locale)} ${categoryLabel(resolved.browse.category, locale)}`
@@ -308,16 +304,13 @@ const listingNest = placeMeta
   : hostNest;
 
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
-const listingPath = withLocale(
-  seoHostPath({
-    island: islandSlug!,
-    place: listingNest.hostPlace,
-    area: listingNest.area,
-    slug: data ? slug : undefined,
-  }),
+const listingUrl = tenantAbsHref(req, {
+  island: islandSlug!,
+  place: listingNest.hostPlace,
+  area: listingNest.area,
+  slug: data ? slug : undefined,
   locale,
-);
-const listingUrl = absoluteUrl(req, listingPath);
+});
 const stamp = data?.business.sample
   ? t(locale, "sampleListing")
   : data?.business.status === "claimed"
@@ -459,17 +452,12 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
 
 const hubCanonical =
   hub &&
-  absoluteUrl(
-    req,
-    withLocale(
-      seoHostPath({
-        island: hub.island.slug,
-        place: hostPlaceSlug!,
-        area: hub.place.slug,
-      }),
-      locale,
-    ),
-  );
+  tenantAbsHref(req, {
+    island: hub.island.slug,
+    place: hostPlaceSlug!,
+    area: hub.place.slug,
+    locale,
+  });
 const hubQuery = hub
   ? publicHostLine({
       island: hub.island.slug,
@@ -534,23 +522,18 @@ if (hub && categoryParam) {
         name: inWhere(locale, areaFacet.titleCore, areaFacet.area.name),
       }),
       breadcrumbJsonLd([
-        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        { name: "nusa.business", url: nationAbsHref(req, locale) },
         {
           name: islandLabel,
-          url: absoluteUrl(
-            req,
-            withLocale(seoHostPath({ island: islandSlug! }), locale),
-          ),
+          url: tenantAbsHref(req, { island: islandSlug!, locale }),
         },
         {
           name: hostPlace.name,
-          url: absoluteUrl(
-            req,
-            withLocale(
-              seoHostPath({ island: islandSlug!, place: hostPlaceSlug! }),
-              locale,
-            ),
-          ),
+          url: tenantAbsHref(req, {
+            island: islandSlug!,
+            place: hostPlaceSlug!,
+            locale,
+          }),
         },
         { name: areaFacet.area.name, url: areaFacet.canonical },
       ]),
@@ -599,26 +582,18 @@ if (hub && categoryParam) {
         description: hub.place.summary,
       }),
       breadcrumbJsonLd([
-        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        { name: "nusa.business", url: nationAbsHref(req, locale) },
         {
           name: islandLabel,
-          url: absoluteUrl(
-            req,
-            withLocale(seoHostPath({ island: hub.island.slug }), locale),
-          ),
+          url: tenantAbsHref(req, { island: hub.island.slug, locale }),
         },
         {
           name: hostPlace.name,
-          url: absoluteUrl(
-            req,
-            withLocale(
-              seoHostPath({
-                island: hub.island.slug,
-                place: hostPlaceSlug!,
-              }),
-              locale,
-            ),
-          ),
+          url: tenantAbsHref(req, {
+            island: hub.island.slug,
+            place: hostPlaceSlug!,
+            locale,
+          }),
         },
         { name: hub.place.name, url: hubCanonical },
       ]),
@@ -691,44 +666,31 @@ if (hub && categoryParam) {
       openingHours: data.business.openingHours,
     }),
     breadcrumbJsonLd([
-      { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+      { name: "nusa.business", url: nationAbsHref(req, locale) },
       {
         name: islandLabel,
-        url: absoluteUrl(
-          req,
-          withLocale(seoHostPath({ island: islandSlug! }), locale),
-        ),
+        url: tenantAbsHref(req, { island: islandSlug!, locale }),
       },
       {
         name: listingNest.area
           ? (placeMeta.parent?.name ?? listingNest.hostPlace)
           : placeMeta.place.name,
-        url: absoluteUrl(
-          req,
-          withLocale(
-            seoHostPath({
-              island: islandSlug!,
-              place: listingNest.hostPlace,
-            }),
-            locale,
-          ),
-        ),
+        url: tenantAbsHref(req, {
+          island: islandSlug!,
+          place: listingNest.hostPlace,
+          locale,
+        }),
       },
       ...(listingNest.area
         ? [
             {
               name: placeMeta.place.name,
-              url: absoluteUrl(
-                req,
-                withLocale(
-                  seoHostPath({
-                    island: islandSlug!,
-                    place: listingNest.hostPlace,
-                    area: listingNest.area,
-                  }),
-                  locale,
-                ),
-              ),
+              url: tenantAbsHref(req, {
+                island: islandSlug!,
+                place: listingNest.hostPlace,
+                area: listingNest.area,
+                locale,
+              }),
             },
           ]
         : []),

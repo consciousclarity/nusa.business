@@ -3,9 +3,8 @@ import Base from "../../../../layouts/Base.astro";
 import CategoryBrowse from "../../../../components/CategoryBrowse.astro";
 import { apiOrNull, apiTry } from "../../../../lib/api";
 import { resolveFacetBrowse, searchQueryForBrowse } from "../../../../lib/facet-browse";
-import { tenantHref } from "../../../../lib/links";
+import { tenantHref, tenantAbsHref, nationAbsHref } from "../../../../lib/links";
 import {
-  absoluteUrl,
   breadcrumbJsonLd,
   hostPath as seoHostPath,
   websiteJsonLd,
@@ -117,21 +116,18 @@ const listingPlaces = Object.fromEntries(
 const policy = facetIndexPolicy(browse, {
   resultCount: searchFailed ? 0 : listings.length,
 });
-const canonicalPath = withLocale(
-  seoHostPath({
-    island: islandSlug,
-    place: hostPlaceSlug,
-    category: browse.category,
-    facet:
-      policy.canonicalKind === "facet-path" ? browse.pathFacet?.key : undefined,
-    facetValue:
-      policy.canonicalKind === "facet-path"
-        ? browse.pathFacet?.value
-        : undefined,
-  }),
+const canonical = tenantAbsHref(req, {
+  island: islandSlug,
+  place: hostPlaceSlug,
+  category: browse.category,
+  facet:
+    policy.canonicalKind === "facet-path" ? browse.pathFacet?.key : undefined,
+  facetValue:
+    policy.canonicalKind === "facet-path"
+      ? browse.pathFacet?.value
+      : undefined,
   locale,
-);
-const canonical = absoluteUrl(req, canonicalPath);
+});
 const islandLabel = islandName(locale, islandSlug, islandDetail.island.name);
 const where = hostPlace?.name ?? islandLabel;
 const titleCore = browse.pathFacet
@@ -181,25 +177,20 @@ const formAction = tenantHref(req, {
       description: `${listings.length} ${t(locale, "listingsCount")} ${t(locale, "inWhere")} ${where}.`,
     }),
     breadcrumbJsonLd([
-      { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+      { name: "nusa.business", url: nationAbsHref(req, locale) },
       {
         name: islandLabel,
-        url: absoluteUrl(
-          req,
-          withLocale(seoHostPath({ island: islandSlug }), locale),
-        ),
+        url: tenantAbsHref(req, { island: islandSlug, locale }),
       },
       ...(hostPlace
         ? [
             {
               name: hostPlace.name,
-              url: absoluteUrl(
-                req,
-                withLocale(
-                  seoHostPath({ island: islandSlug, place: hostPlaceSlug }),
-                  locale,
-                ),
-              ),
+              url: tenantAbsHref(req, {
+                island: islandSlug,
+                place: hostPlaceSlug,
+                locale,
+              }),
             },
           ]
         : []),

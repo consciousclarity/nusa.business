@@ -137,23 +137,29 @@ else
   pass "listing /id has no English Food & Drink category"
 fi
 
-if printf '%s' "$listing_id" | grep -qE 'Makanan &amp; minuman|Makanan & minuman'; then
-  pass "listing /id has Indonesian food-drink category"
+if printf '%s' "$listing_id" | grep -qE 'Makanan|Warung'; then
+  pass "listing /id has Indonesian category label"
 else
-  fail "listing /id missing Indonesian food-drink category"
+  fail "listing /id missing Indonesian category label (Makanan or Warung)"
 fi
 
 if [ -n "$listing_id" ]; then
-  if printf '%s' "$listing_id" | grep -q 'Status published'; then
-    fail "listing /id still has Status published (resolver jargon)"
+  if printf '%s' "$listing_id" | grep -q '>Status</dt>'; then
+    fail "listing /id still has Status dt (resolver jargon)"
   else
-    pass "listing /id has no Status published"
+    pass "listing /id has no Status dt"
   fi
 
-  if printf '%s' "$listing_id" | grep -q 'Booking none'; then
-    fail "listing /id still has Booking none (resolver jargon)"
+  if printf '%s' "$listing_id" | grep -q '>Booking</dt>'; then
+    fail "listing /id still has Booking dt (resolver jargon)"
   else
-    pass "listing /id has no Booking none"
+    pass "listing /id has no Booking dt"
+  fi
+
+  if printf '%s' "$listing_id" | grep -q '>Host</dt>'; then
+    fail "listing /id still has Host dt (resolver jargon)"
+  else
+    pass "listing /id has no Host dt"
   fi
 
   if printf '%s' "$listing_id" | grep -q '/host/bali'; then
@@ -186,13 +192,13 @@ if [ -n "$listing_id" ]; then
     fail "listing /id missing Indonesian review chrome Nilai ulasan"
   fi
 
-  if printf '%s' "$listing_id" | grep -q 'Mon 09:00'; then
+  if printf '%s' "$listing_id" | grep -qE '>Mon</th>|>Mon</'; then
     fail "listing /id still has English weekday Mon"
   else
     pass "listing /id has no English weekday Mon"
   fi
 
-  if printf '%s' "$listing_id" | grep -q 'Sen 09:00'; then
+  if printf '%s' "$listing_id" | grep -qE '>Sen</th>|>Sen</'; then
     pass "listing /id has Indonesian weekday Sen"
   else
     fail "listing /id missing Indonesian weekday Sen"

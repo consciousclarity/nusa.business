@@ -131,7 +131,7 @@ const canonicalPath = withLocale(
 const canonical = absoluteUrl(req, canonicalPath);
 const where = hostPlace?.name ?? islandDetail.island.name;
 const titleCore = browse.pathFacet
-  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value)} ${categoryLabel(browse.category, locale)}`
+  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value, locale)} ${categoryLabel(browse.category, locale)}`
   : categoryLabel(browse.category, locale);
 const formAction = tenantHref(req, {
   island: islandSlug,
@@ -163,7 +163,7 @@ const formAction = tenantHref(req, {
       : []),
     { label: categoryLabel(browse.category, locale) },
     ...(browse.pathFacet
-      ? [{ label: facetValueLabel(browse.pathFacet.key, browse.pathFacet.value) }]
+      ? [{ label: facetValueLabel(browse.pathFacet.key, browse.pathFacet.value, locale) }]
       : []),
   ]}
   locale={locale}

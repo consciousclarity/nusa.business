@@ -5,6 +5,7 @@ import {
   categoryLabel,
   facetValueLabel,
   facetsForCategory,
+  localizeFacetDef,
   relatedAsLabel,
   relatedForCategory,
   type FacetBrowse,
@@ -47,7 +48,9 @@ const {
 
 const req = Astro.request;
 const relatedShown = relatedForCategory(browse.category);
-const allFacets = facetsForCategory(browse.category);
+const allFacets = facetsForCategory(browse.category).map((f) =>
+  localizeFacetDef(f, locale),
+);
 const groupFacets = allFacets.filter((f) => f.source === "stored");
 const globalShown = allFacets.filter(
   (f) =>
@@ -74,7 +77,7 @@ const more = globalShown.filter((f) => !seen.has(f.key));
 const categoryTitle = categoryLabel(browse.category, locale);
 const where = area?.name || hostPlace?.name || island.name;
 const facetHeading = browse.pathFacet
-  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value)} ${categoryTitle}`
+  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value, locale)} ${categoryTitle}`
   : categoryTitle;
 
 function selectedValue(key: string): string {

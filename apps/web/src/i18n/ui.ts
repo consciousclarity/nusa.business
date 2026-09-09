@@ -14,6 +14,7 @@ const ui = {
     navPortal: "Portal",
     navPrimary: "Primary",
     navPath: "Path",
+    skipToContent: "Skip to content",
     langSwitch: "Bahasa Indonesia",
     langSwitchShort: "ID",
     footer:
@@ -189,6 +190,7 @@ const ui = {
     navPortal: "Portal",
     navPrimary: "Utama",
     navPath: "Jalur",
+    skipToContent: "Langsung ke konten",
     langSwitch: "English",
     langSwitchShort: "EN",
     footer:

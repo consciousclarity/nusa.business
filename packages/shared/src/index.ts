@@ -183,11 +183,15 @@ export {
 } from "./taxonomy.js";
 
 export {
+  FACET_KEY_LABELS_ID,
+  FACET_VALUE_LABELS_ID,
   GLOBAL_FACETS,
   INDEXABLE_FACET_PATHS,
   canonicalizeFacetValue,
+  facetKeyLabel,
   facetValueLabel,
   facetsForCategory,
+  localizeFacetDef,
   facetsForListingCategory,
   isIndexableFacetPath,
   isKnownFacetKey,

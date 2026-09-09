@@ -171,7 +171,7 @@ if (isFacetBrowse) {
     canonical: absoluteUrl(req, canonicalPath),
     robots: policy.index ? "index,follow" : "noindex,follow",
     titleCore: resolved.browse.pathFacet
-      ? `${facetValueLabel(resolved.browse.pathFacet.key, resolved.browse.pathFacet.value)} ${categoryLabel(resolved.browse.category, locale)}`
+      ? `${facetValueLabel(resolved.browse.pathFacet.key, resolved.browse.pathFacet.value, locale)} ${categoryLabel(resolved.browse.category, locale)}`
       : categoryLabel(resolved.browse.category, locale),
     formAction: tenantHref(req, {
       island: islandSlug!,

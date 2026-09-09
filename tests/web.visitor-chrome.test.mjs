@@ -119,6 +119,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(place, /categoryLabel\(b\.categories\[0\] \?\? "", locale\)/);
     assert.match(browse, /categoryLabel\(browse\.category, locale\)/);
     assert.match(browse, /inWhere\(locale, facetHeading, where\)/);
+    assert.match(browse, /localizeFacetDef\(f, locale\)/);
     assert.match(search, /categoryLabel\(group\.slug, locale\)/);
   });
 

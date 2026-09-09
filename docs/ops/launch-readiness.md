@@ -33,6 +33,7 @@ and the operator list below.
 | F12 | Listing review/booking/shop chrome was English-only; booking success dumped request id and `status`. | P1 | listing `[...path].astro`, `i18n/ui.ts` | Locale copy for listing widgets; success message is visitor notice only | `tests/web.visitor-chrome.test.mjs` |
 | F13 | `/support` still said owner registration was invite-only after self-signup shipped. Privacy/terms/support bodies were English-only. Opening-hour days stayed `Mon` on `/id`. | P0/P1 | `support.astro`, legal pages, listing hours | Support describes free owner accounts; legal pages use `t()`; weekday labels | `tests/web.visitor-chrome.test.mjs` |
 | F14 | `/id` category chips and filters used English taxonomy labels (`Banks & ATMs`). | P1 | `packages/shared` taxonomy-id + public pages | `categoryLabel(slug, locale)`; browse headings use `inWhere` | `tests/shared.taxonomy.test.mjs`, `tests/web.visitor-chrome.test.mjs` |
+| F15 | `/id` category browse filters used English facet keys (`Price level`, `Service mode`). | P1 | `packages/shared` facets-id + CategoryBrowse | `facetKeyLabel` / `facetValueLabel(..., locale)` | `tests/shared.facets.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -74,7 +75,8 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Listing Directions / Call / Website / WhatsApp | pass | Seed website on one listing; maps from lat/lng |
 | Nearby HTML/JSON omits `bookingMode` | pass (this branch) | Listing detail still exposes `bookingMode` for the request form |
 | Listing review/booking/shop chrome i18n | pass (this branch) | `/id` listing widgets; listing body still author language |
-| Category labels on `/id` | pass (this branch) | Taxonomy Indonesian labels; English remains canonical for slugs. Facet *value* labels (`facetValueLabel`) stay English |
+| Category labels on `/id` | pass (this branch) | Taxonomy Indonesian labels; English remains canonical for slugs |
+| Facet key/value labels on `/id` | pass (this branch) | Browse filters and path-facet headings; English remains canonical for slugs |
 | Booking success omits request id/status | pass (this branch) | Visitor notice only; not submitted to production |
 | Field “just registered” without agent ids | pass (this branch) | `fieldRegistered` on public cards |
 | Sample listings labelled | pass (local seed) | Production must not publish this catalog |

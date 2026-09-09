@@ -18,6 +18,7 @@ const listing = readFileSync(
 describe("public a11y chrome (C10)", () => {
   it("exposes a skip link to main content", () => {
     assert.match(base, /class="skip-link"/);
+    assert.match(base, /t\(locale, "skipToContent"\)/);
     assert.match(base, /href="#main-content"/);
     assert.match(base, /id="main-content"/);
     assert.match(base, /tabindex="-1"/);

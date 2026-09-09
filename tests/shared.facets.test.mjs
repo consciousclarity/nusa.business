@@ -1,15 +1,21 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  FACET_KEY_LABELS_ID,
+  FACET_VALUE_LABELS_ID,
   applyFacetQuery,
   extraQueryFacetCount,
   facetIndexPolicy,
+  facetKeyLabel,
+  facetValueLabel,
   indexableBrowsePathsForListings,
   isIndexableFacetPath,
   listingMatchesFacets,
+  localizeFacetDef,
   parseFacetPath,
   parseFacetQueryParams,
   promoteIndexablePath,
+  serializeFacetsCatalog,
 } from "@nusa/shared";
 
 describe("directory facet paths", () => {
@@ -188,6 +194,42 @@ describe("directory facet paths", () => {
     assert.equal(
       paths.some((p) => p.facet === "parking"),
       false,
+    );
+  });
+
+  it("has Indonesian labels for every facet key and value", () => {
+    const catalog = serializeFacetsCatalog();
+    const unusedKeys = new Set(Object.keys(FACET_KEY_LABELS_ID));
+    const unusedValues = new Set(Object.keys(FACET_VALUE_LABELS_ID));
+    function walk(defs) {
+      for (const f of defs) {
+        unusedKeys.delete(f.key);
+        assert.ok(FACET_KEY_LABELS_ID[f.key], `id key missing for ${f.key}`);
+        assert.equal(facetKeyLabel(f.key, "id"), FACET_KEY_LABELS_ID[f.key]);
+        for (const v of f.values) {
+          const ident = `${f.key}::${v.slug}`;
+          unusedValues.delete(ident);
+          assert.ok(FACET_VALUE_LABELS_ID[ident], `id value missing for ${ident}`);
+          assert.equal(
+            facetValueLabel(f.key, v.slug, "id"),
+            FACET_VALUE_LABELS_ID[ident],
+          );
+        }
+      }
+    }
+    walk(catalog.global);
+    for (const defs of Object.values(catalog.byGroup)) walk(defs);
+    assert.deepEqual([...unusedKeys], []);
+    assert.deepEqual([...unusedValues], []);
+    assert.equal(facetKeyLabel("price_level", "id"), "Tingkat harga");
+    assert.equal(facetValueLabel("price_level", "budget", "id"), "Hemat");
+    const priced = catalog.global.find((f) => f.key === "price_level");
+    assert.ok(priced);
+    const localized = localizeFacetDef(priced, "id");
+    assert.equal(localized.label, "Tingkat harga");
+    assert.equal(
+      localized.values.find((v) => v.slug === "budget")?.label,
+      "Hemat",
     );
   });
 });

@@ -58,8 +58,8 @@ Complete only with authorization. Record answers in the ops channel / ticket:
 Change the decision line at the top to **GO** only when:
 
 - Operator gates 1–6 are checked on the VPS
-- Launch-readiness follow-up (booking rules, visitor chrome, sample labels) is merged or waived
-- `bash scripts/live-public-check.sh` passes (homepage has no resolver jargon)
+- Launch-readiness follow-up is merged or waived
+- `bash scripts/live-public-check.sh` passes (no resolver jargon on `/` or `/id`; listing `/id` is Indonesian category chrome, not `Food & Drink`)
 - A human names the release SHA and authorizes deploy
 
 Until then: **HOLD**.

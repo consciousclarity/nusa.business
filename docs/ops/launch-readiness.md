@@ -1,19 +1,26 @@
 # Launch readiness
 
 Inspected against `main` at `bfd899c` (2026-09-09). C01–C14 already
-landed (PRs #23–#39); this page records what the follow-up PR verified in
-**code**, what still needs a **Hermes/Warden operator** on the VPS, and what
-remains unverified because it needs live HTTPS or field data.
+landed (PRs #23–#39). This follow-up PR (booking rules, visitor chrome,
+Indonesian `/id` labels, HTML 404/500, portal demo-bundle grep) verified
+those items in **code**. It is **not** a live GO.
 
-Local HTTP checks (synthetic seed, not production): homepage search,
-`/search?q=`, listing contact actions, booking past-date 400 and duplicate 409.
-`npm test` and `npm run seed` passed in this PR. Do not treat that as a live
-HTTPS pass.
+Cursor agents must not deploy or mutate production. Long-running on-box
+work belongs to **Warden** (Hermes on the VPS) — see
+[hermes-vps-notes-2026-09-07.md](./hermes-vps-notes-2026-09-07.md).
 
-Cursor agents must not deploy or mutate production without explicit
-authorization. Long-running on-box work belongs to **Warden** (Hermes on the
-VPS) — see [hermes-vps-notes-2026-09-07.md](./hermes-vps-notes-2026-09-07.md)
-and the operator list below.
+## Remaining before GO
+
+Three columns. Do not treat a **code** pass as a live pass.
+
+| Kind | Item | Evidence / who |
+|---|---|---|
+| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F24) | `npm test` (254) + findings table below. Not on the VPS until deploy. |
+| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`. | `bash scripts/live-public-check.sh` (2026-09-09): 10 fails. Listing API origin already ok. |
+| **Operator only** | VPS SHA, PM2 vs Compose, `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL`, `NUSA_AUTH_SECRET`, demo-store inventory, store backup + isolated restore, Search Console sitemap submit | [release-decision.md](./release-decision.md) gates 1–6. Cursor must not run these. |
+| **Not this launch** | Priced booking inventory, cookie sessions/CSRF, error tracking, RUM, WCAG AA screen-reader, Dependabot/`npm audit` CI | Security / parity backlog. Do not block GO on these unless product says so. |
+
+Local HTTP on synthetic seed (`/host/…`, booking 400/409) is not a live HTTPS pass.
 
 ## Findings (verified in this repo)
 
@@ -61,11 +68,14 @@ authorized operator can run the read-only public check from anywhere:
 bash scripts/live-public-check.sh
 ```
 
-That script does not SSH or mutate the VPS. It currently **fails** on the
-live homepage **and** `/id` (`class="resolver"`, `kind=nation`, missing
-`name="q"`) until this PR is deployed. Listing HTML already passing the
-`http://api:8787` / `https://api.nusa.business` checks is not a substitute for
-homepage visitor chrome.
+That script does not SSH or mutate the VPS. It currently **fails** (10 checks
+on 2026-09-09) until this PR is deployed:
+
+- homepage `/` and `/id`: `class="resolver"`, `kind=nation`, `/host/bali`, no `name="q"`
+- listing `/id`: English `Food & Drink` instead of `Makanan & minuman`
+
+EN listing HTML already passing `http://api:8787` / `https://api.nusa.business`
+is not a substitute for homepage visitor chrome or `/id` category labels.
 
 On the VPS:
 

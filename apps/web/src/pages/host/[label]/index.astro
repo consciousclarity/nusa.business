@@ -10,7 +10,7 @@ import {
   websiteJsonLd,
 } from "../../../lib/seo";
 import { t, withLocale, type Locale } from "../../../i18n/ui";
-import { geoNesting, publicHostLine, type NestablePlace } from "@nusa/shared";
+import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory } from "@nusa/shared";
 
 const label = Astro.params.label!;
 const parts = label.split(".");
@@ -83,6 +83,34 @@ if (placeData) {
       ),
       301,
     );
+  }
+}
+
+if (categoryParam) {
+  const slug = canonicalizeCategory(categoryParam);
+  if (slug) {
+    if (placeData) {
+      return Astro.redirect(
+        withLocale(
+          hostPath({
+            island: placeData.island.slug,
+            place: placeData.place.slug,
+            category: slug,
+          }),
+          locale,
+        ),
+        301,
+      );
+    }
+    if (islandData) {
+      return Astro.redirect(
+        withLocale(
+          hostPath({ island: islandData.island.slug, category: slug }),
+          locale,
+        ),
+        301,
+      );
+    }
   }
 }
 

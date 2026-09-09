@@ -37,9 +37,11 @@ import {
 import {
   CATEGORIES,
   parseCorsOriginAllowlist,
+  parseFacetQueryParams,
   parseHost,
   resolveCorsAllowOrigin,
   safePortalReturnTo,
+  serializeFacetsCatalog,
   taxonomyCatalog,
   toSlug,
 } from "@nusa/shared";
@@ -134,6 +136,7 @@ app.get("/v1/meta/categories", (c) =>
   c.json({
     categories: CATEGORIES,
     taxonomy: taxonomyCatalog(),
+    facets: serializeFacetsCatalog(),
   }),
 );
 
@@ -266,15 +269,25 @@ app.get("/v1/islands/:island/places/:place/businesses/:slug/discovery", (c) => {
 });
 
 app.get("/v1/search", (c) => {
+  const url = new URL(c.req.url);
   const q = c.req.query("q") || undefined;
   const island = c.req.query("island") || undefined;
   const place = c.req.query("place") || undefined;
   const category = c.req.query("category") || undefined;
+  const facets = parseFacetQueryParams(url.searchParams, category);
+  const latRaw = c.req.query("lat");
+  const lngRaw = c.req.query("lng");
+  const lat = latRaw !== undefined ? Number(latRaw) : NaN;
+  const lng = lngRaw !== undefined ? Number(lngRaw) : NaN;
+  const origin =
+    Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : undefined;
   const businesses = listBusinesses({
     q,
     islandSlug: island,
     placeSlug: place,
     category,
+    facets: Object.keys(facets).length ? facets : undefined,
+    origin,
   });
   return c.json({
     results: businesses.map((b) => {
@@ -283,6 +296,7 @@ app.get("/v1/search", (c) => {
         business: toPublicBusiness(b),
         place: ctx?.place,
         island: ctx?.island,
+        geo: ctx?.geo,
       };
     }),
   });

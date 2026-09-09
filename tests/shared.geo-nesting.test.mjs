@@ -142,4 +142,18 @@ describe("publicUrl / hostPath follow geo nesting", () => {
       "/host/gianyar.bali/ubud",
     );
   });
+
+  it("builds category and facet browse URLs", () => {
+    assert.equal(
+      publicUrl({
+        island: "bali",
+        place: "gianyar",
+        area: "ubud",
+        category: "warungs-local-food",
+        facet: "cuisine",
+        facetValue: "balinese",
+      }),
+      "https://gianyar.bali.nusa.business/ubud/c/warungs-local-food/cuisine/balinese",
+    );
+  });
 });

@@ -1,8 +1,10 @@
 ---
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
+import CategoryBrowse from "../../../components/CategoryBrowse.astro";
 import { api, apiOrNull, browserApiOrigin } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
+import { resolveFacetBrowse, searchQueryForBrowse } from "../../../lib/facet-browse";
 import {
   absoluteUrl,
   breadcrumbJsonLd,
@@ -13,6 +15,10 @@ import {
 import { t, withLocale, type Locale } from "../../../i18n/ui";
 import {
   categoryLabel,
+  canonicalizeCategory,
+  facetIndexPolicy,
+  facetQueryParams,
+  facetValueLabel,
   geoNesting,
   publicHostLine,
   telHref,
@@ -28,7 +34,13 @@ const pathParts = String(Astro.params.path ?? "")
   .filter(Boolean);
 const parts = label.split(".");
 if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
-if (pathParts.length < 1 || pathParts.length > 2) {
+
+const isFacetBrowse = pathParts[1] === "c";
+if (isFacetBrowse) {
+  if (pathParts.length !== 3 && pathParts.length !== 5) {
+    return new Response(null, { status: 404 });
+  }
+} else if (pathParts.length < 1 || pathParts.length > 2) {
   return new Response(null, { status: 404 });
 }
 
@@ -66,6 +78,109 @@ if (hostNest.area) {
   );
 }
 
+type BrowseListing = {
+  id: string;
+  placeId: string;
+  slug: string;
+  name: string;
+  summary: string;
+  categories: string[];
+  status?: string;
+};
+
+type AreaFacetPage = {
+  area: HubPlace;
+  browse: ReturnType<typeof resolveFacetBrowse> extends { ok: true; browse: infer B }
+    ? B
+    : never;
+  listings: BrowseListing[];
+  listingPlaces: Record<string, HubPlace>;
+  canonical: string;
+  robots: string;
+  titleCore: string;
+  formAction: string;
+};
+
+let areaFacet: AreaFacetPage | null = null;
+
+if (isFacetBrowse) {
+  const areaSlug = pathParts[0]!;
+  const child = islandDetail.places.find(
+    (p) =>
+      p.slug === areaSlug &&
+      p.parentPlaceId === hostPlace.id &&
+      p.type === "tourist_area",
+  );
+  if (!child) return new Response(null, { status: 404 });
+  const resolved = resolveFacetBrowse(pathParts.slice(2), Astro.url.searchParams);
+  if (!resolved.ok) return new Response(null, { status: 404 });
+  if (resolved.promoted) {
+    const q = facetQueryParams(resolved.promoted).toString();
+    return Astro.redirect(
+      withLocale(
+        seoHostPath({
+          island: islandSlug!,
+          place: hostPlaceSlug!,
+          area: areaSlug,
+          category: resolved.promoted.category,
+          facet: resolved.promoted.pathFacet?.key,
+          facetValue: resolved.promoted.pathFacet?.value,
+        }) + (q ? `?${q}` : ""),
+        locale,
+      ),
+      301,
+    );
+  }
+  const searchQs = searchQueryForBrowse(islandSlug!, areaSlug, resolved.browse);
+  const search = await api<{
+    results: {
+      business: BrowseListing;
+      place: HubPlace;
+    }[];
+  }>(`/v1/search?${searchQs}`);
+  const listings = search.results.map((r) => r.business);
+  const policy = facetIndexPolicy(resolved.browse, {
+    resultCount: listings.length,
+  });
+  const canonicalPath = withLocale(
+    seoHostPath({
+      island: islandSlug!,
+      place: hostPlaceSlug!,
+      area: areaSlug,
+      category: resolved.browse.category,
+      facet:
+        policy.canonicalKind === "facet-path"
+          ? resolved.browse.pathFacet?.key
+          : undefined,
+      facetValue:
+        policy.canonicalKind === "facet-path"
+          ? resolved.browse.pathFacet?.value
+          : undefined,
+    }),
+    locale,
+  );
+  areaFacet = {
+    area: child,
+    browse: resolved.browse,
+    listings,
+    listingPlaces: Object.fromEntries(
+      search.results.map((r) => [r.business.placeId, r.place]),
+    ),
+    canonical: absoluteUrl(req, canonicalPath),
+    robots: policy.index ? "index,follow" : "noindex,follow",
+    titleCore: resolved.browse.pathFacet
+      ? `${facetValueLabel(resolved.browse.pathFacet.key, resolved.browse.pathFacet.value)} ${categoryLabel(resolved.browse.category)}`
+      : categoryLabel(resolved.browse.category),
+    formAction: tenantHref(req, {
+      island: islandSlug!,
+      place: hostPlaceSlug!,
+      area: areaSlug,
+      category: resolved.browse.category,
+      locale,
+    }),
+  };
+}
+
 type PlaceHubPayload = {
   island: { slug: string; name: string };
   place: HubPlace;
@@ -85,6 +200,7 @@ let hub: PlaceHubPayload | null = null;
 let placeSlug = hostPlaceSlug!;
 let slug = pathParts[0]!;
 
+if (!areaFacet) {
 if (pathParts.length === 1) {
   const child = islandDetail.places.find(
     (p) =>
@@ -98,7 +214,7 @@ if (pathParts.length === 1) {
     );
     if (!hub) return new Response(null, { status: 404 });
   }
-} else {
+} else if (!isFacetBrowse) {
   const areaSlug = pathParts[0]!;
   const areaPlace = islandDetail.places.find((p) => p.slug === areaSlug);
   if (!areaPlace) return new Response(null, { status: 404 });
@@ -122,6 +238,7 @@ if (pathParts.length === 1) {
   }
   placeSlug = areaSlug;
   slug = pathParts[1]!;
+}
 }
 
 type ListingPayload = {
@@ -156,14 +273,14 @@ type ListingPayload = {
   };
 };
 
-const data = hub
+const data = hub || areaFacet
   ? null
   : await apiOrNull<ListingPayload>(
       `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}`,
     );
-if (!hub && !data) return new Response(null, { status: 404 });
+if (!hub && !areaFacet && !data) return new Response(null, { status: 404 });
 
-const placeMeta = hub
+const placeMeta = hub || areaFacet
   ? null
   : await api<{
       island: { name: string; slug: string };
@@ -306,7 +423,97 @@ const hubQuery = hub
       area: hub.place.slug,
     })
   : "";
+
+if (hub && categoryParam) {
+  const slug = canonicalizeCategory(categoryParam);
+  if (slug) {
+    return Astro.redirect(
+      withLocale(
+        seoHostPath({
+          island: hub.island.slug,
+          place: hostPlaceSlug!,
+          area: hub.place.slug,
+          category: slug,
+        }),
+        locale,
+      ),
+      301,
+    );
+  }
+}
 ---
+{areaFacet && (
+  <Base
+    title={`${areaFacet.titleCore} in ${areaFacet.area.name} — nusa.business`}
+    description={`${areaFacet.listings.length} listings in ${areaFacet.area.name}.`}
+    crumb={[
+      {
+        label: islandSlug!,
+        href: tenantHref(req, { island: islandSlug!, locale }),
+      },
+      {
+        label: hostPlaceSlug!,
+        href: tenantHref(req, {
+          island: islandSlug!,
+          place: hostPlaceSlug!,
+          locale,
+        }),
+      },
+      {
+        label: areaFacet.area.slug,
+        href: tenantHref(req, {
+          island: islandSlug!,
+          place: hostPlaceSlug!,
+          area: areaFacet.area.slug,
+          locale,
+        }),
+      },
+      { label: areaFacet.browse.category },
+    ]}
+    locale={locale}
+    canonical={areaFacet.canonical}
+    robots={areaFacet.robots}
+    jsonLd={[
+      websiteJsonLd({
+        url: areaFacet.canonical,
+        name: `${areaFacet.titleCore} in ${areaFacet.area.name}`,
+      }),
+      breadcrumbJsonLd([
+        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        {
+          name: islandDetail.island.name,
+          url: absoluteUrl(
+            req,
+            withLocale(seoHostPath({ island: islandSlug! }), locale),
+          ),
+        },
+        {
+          name: hostPlace.name,
+          url: absoluteUrl(
+            req,
+            withLocale(
+              seoHostPath({ island: islandSlug!, place: hostPlaceSlug! }),
+              locale,
+            ),
+          ),
+        },
+        { name: areaFacet.area.name, url: areaFacet.canonical },
+      ]),
+    ]}
+  >
+    <CategoryBrowse
+      island={islandDetail.island}
+      hostPlace={hostPlace}
+      area={areaFacet.area}
+      places={islandDetail.places}
+      listings={areaFacet.listings}
+      listingPlaces={areaFacet.listingPlaces}
+      browse={areaFacet.browse}
+      locale={locale}
+      formAction={areaFacet.formAction}
+    />
+  </Base>
+)}
 {hub && hubCanonical && (
   <Base
     title={`${hub.place.name}, ${hub.island.name} — nusa.business`}

@@ -47,8 +47,21 @@ export function hostPath(opts: {
   place?: string;
   area?: string;
   slug?: string;
+  category?: string;
+  facet?: string;
+  facetValue?: string;
 }): string {
   const label = opts.place ? `${opts.place}.${opts.island}` : opts.island;
+  if (opts.category) {
+    const segs = [
+      opts.area,
+      "c",
+      opts.category,
+      opts.facet,
+      opts.facetValue,
+    ].filter(Boolean);
+    return `/host/${label}/${segs.join("/")}`;
+  }
   const segs = [opts.area, opts.slug].filter(Boolean);
   return segs.length ? `/host/${label}/${segs.join("/")}` : `/host/${label}`;
 }

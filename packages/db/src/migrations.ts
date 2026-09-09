@@ -226,6 +226,19 @@ const MIGRATIONS: Migration[] = [
       return changed;
     },
   },
+  {
+    id: "2026-09-listing-facets",
+    apply: (store) => {
+      let changed = false;
+      for (const business of store.businesses) {
+        if (business.facets === undefined) {
+          business.facets = {};
+          changed = true;
+        }
+      }
+      return changed;
+    },
+  },
 ];
 
 /**

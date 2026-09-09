@@ -33,6 +33,7 @@ export type PublicBusiness = {
   faq: Business["faq"];
   bookingMode: Business["bookingMode"];
   vendorId?: string;
+  facets?: Record<string, string[]>;
   createdAt: string;
   updatedAt: string;
 };
@@ -60,6 +61,7 @@ export function toPublicBusiness(business: Business): PublicBusiness {
     faq: business.faq,
     bookingMode: business.bookingMode,
     vendorId: business.vendorId,
+    facets: business.facets,
     createdAt: business.createdAt,
     updatedAt: business.updatedAt,
   };

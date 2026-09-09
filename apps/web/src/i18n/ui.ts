@@ -65,6 +65,10 @@ const ui = {
     showAll: "Show all",
     justRegistered: "Just registered by field team:",
     metaDescription: "Local businesses across Indonesia",
+    filters: "Filters",
+    anyFilter: "Any",
+    moreFilters: "More filters",
+    relatedServices: "Also showing related services:",
   },
   id: {
     navClaim: "Klaim",
@@ -122,6 +126,10 @@ const ui = {
     showAll: "Tampilkan semua",
     justRegistered: "Baru didaftarkan tim lapangan:",
     metaDescription: "Bisnis lokal di seluruh Indonesia",
+    filters: "Filter",
+    anyFilter: "Semua",
+    moreFilters: "Filter lain",
+    relatedServices: "Juga menampilkan layanan terkait:",
   },
 } as const;
 

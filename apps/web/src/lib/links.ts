@@ -33,6 +33,10 @@ export function tenantHref(
     place?: string;
     area?: string;
     slug?: string;
+    category?: string;
+    facet?: string;
+    facetValue?: string;
+    search?: string;
     locale?: Locale;
   },
 ): string {
@@ -42,13 +46,22 @@ export function tenantHref(
     host === "nusa.business" ||
     host.endsWith(".nusa.business");
 
+  const search =
+    opts.search && opts.search.length
+      ? opts.search.startsWith("?")
+        ? opts.search
+        : `?${opts.search}`
+      : "";
+
   if (!useReal) {
     const label = opts.place ? `${opts.place}.${opts.island}` : opts.island;
-    const segs = [opts.area, opts.slug].filter(Boolean);
-    const path = segs.length
-      ? `/host/${label}/${segs.join("/")}`
+    const segs = opts.category
+      ? [opts.area, "c", opts.category, opts.facet, opts.facetValue]
+      : [opts.area, opts.slug];
+    const path = segs.filter(Boolean).length
+      ? `/host/${label}/${segs.filter(Boolean).join("/")}`
       : `/host/${label}`;
-    return withLocale(path, locale);
+    return withLocale(path, locale) + search;
   }
 
   const absolute = publicUrl({
@@ -56,12 +69,15 @@ export function tenantHref(
     place: opts.place,
     area: opts.area,
     slug: opts.slug,
+    category: opts.category,
+    facet: opts.facet,
+    facetValue: opts.facetValue,
     root: "https://nusa.business",
   });
-  if (locale === "en") return absolute;
+  if (locale === "en") return absolute + search;
   const u = new URL(absolute);
   u.pathname = withLocale(u.pathname || "/", "id");
-  return u.toString();
+  return u.toString() + search;
 }
 
 /** Listing / hub href from a place row plus the island's place graph. */
@@ -72,6 +88,9 @@ export function geoHref(
     place: NestablePlace;
     places: NestablePlace[];
     slug?: string;
+    category?: string;
+    facet?: string;
+    facetValue?: string;
     locale?: Locale;
   },
 ): string {
@@ -82,6 +101,9 @@ export function geoHref(
     place: nest.hostPlace,
     area: nest.area,
     slug: opts.slug,
+    category: opts.category,
+    facet: opts.facet,
+    facetValue: opts.facetValue,
     locale: opts.locale,
   });
 }

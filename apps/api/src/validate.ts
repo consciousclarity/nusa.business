@@ -1,4 +1,4 @@
-import { canonicalizeCategoryList } from "@nusa/shared";
+import { canonicalizeCategoryList, canonicalizeFacetMap } from "@nusa/shared";
 
 export type ValidationOk<T> = { ok: true; value: T };
 export type ValidationErr = { ok: false; error: string };
@@ -290,6 +290,7 @@ const LISTING_PATCH_ALLOW = new Set([
   "faq",
   "bookingMode",
   "slug",
+  "facets",
 ]);
 
 export type ListingPatchInput = {
@@ -310,6 +311,7 @@ export type ListingPatchInput = {
   faq?: { q: string; a: string }[];
   bookingMode?: "none" | "service" | "rental" | "event";
   slug?: string;
+  facets?: Record<string, string[]>;
 };
 
 export function parseListingPatchBody(
@@ -458,6 +460,18 @@ export function parseListingPatchBody(
       faq.push({ q: r.q, a: r.a });
     }
     out.faq = faq;
+  }
+  if ("facets" in row) {
+    const rawFacets = row.facets;
+    if (rawFacets === undefined || rawFacets === null) {
+      out.facets = {};
+    } else if (typeof rawFacets !== "object" || Array.isArray(rawFacets)) {
+      return fail("facets must be an object of string arrays");
+    } else {
+      const parsed = canonicalizeFacetMap(rawFacets as Record<string, unknown>);
+      if (!parsed.ok) return fail(parsed.error);
+      out.facets = parsed.value;
+    }
   }
 
   return { ok: true, value: out };

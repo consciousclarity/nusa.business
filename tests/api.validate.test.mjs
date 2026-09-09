@@ -99,6 +99,20 @@ describe("parseListingPatchBody", () => {
     const mapped = parseListingPatchBody({ categories: ["Food & Drink"] });
     assert.equal(mapped.ok, true);
     if (mapped.ok) assert.deepEqual(mapped.value.categories, ["food-drink"]);
+    const facets = parseListingPatchBody({
+      facets: { cuisine: ["Balinese"], dietary: ["halal"] },
+    });
+    assert.equal(facets.ok, true);
+    if (facets.ok) {
+      assert.deepEqual(facets.value.facets, {
+        cuisine: ["balinese"],
+        dietary: ["halal"],
+      });
+    }
+    assert.equal(
+      parseListingPatchBody({ facets: { nope: ["x"] } }).ok,
+      false,
+    );
   });
 });
 

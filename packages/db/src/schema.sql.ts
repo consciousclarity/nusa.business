@@ -43,7 +43,7 @@ CREATE TABLE businesses (
   owner_user_id TEXT,
   vendor_id TEXT,
   registered_by_agent_id TEXT,
-  profile JSONB NOT NULL DEFAULT '{}',
+  profile JSONB NOT NULL DEFAULT '{}', -- hours extras, gallery, faq, facets
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (place_id, slug)

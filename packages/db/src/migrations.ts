@@ -1,3 +1,4 @@
+import { canonicalizeCategory } from "@nusa/shared";
 import type { DataStore } from "./types.js";
 
 /**
@@ -195,6 +196,33 @@ const MIGRATIONS: Migration[] = [
         nest("isl-lombok", "kuta", "lombok-tengah");
       }
 
+      return changed;
+    },
+  },
+  {
+    id: "2026-09-canonicalize-category-slugs",
+    apply: (store) => {
+      let changed = false;
+      for (const business of store.businesses) {
+        const next: string[] = [];
+        const seen = new Set<string>();
+        let rowChanged = false;
+        for (const raw of business.categories) {
+          const slug = canonicalizeCategory(raw);
+          const value = slug ?? raw;
+          if (value !== raw) rowChanged = true;
+          if (seen.has(value)) {
+            rowChanged = true;
+            continue;
+          }
+          seen.add(value);
+          next.push(value);
+        }
+        if (rowChanged) {
+          business.categories = next;
+          changed = true;
+        }
+      }
       return changed;
     },
   },

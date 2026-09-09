@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { CATEGORIES, publicHostLine } from "@nusa/shared";
+import { publicHostLine } from "@nusa/shared";
 import { api, type User } from "../api";
+import { CategoryPicker } from "../components/CategoryPicker";
 
 type Island = { slug: string; name: string };
 type Place = { slug: string; name: string };
@@ -15,7 +16,7 @@ export function FieldPage({ user }: { user: User }) {
     placeSlug: "gianyar",
     name: "",
     summary: "",
-    categories: "Food & Drink",
+    categories: ["food-drink"],
     whatsapp: "",
     address: "",
     bookingMode: "none",
@@ -56,7 +57,7 @@ export function FieldPage({ user }: { user: User }) {
           placeSlug: form.placeSlug,
           name: form.name,
           summary: form.summary,
-          categories: form.categories.split(",").map((s) => s.trim()),
+          categories: form.categories,
           whatsapp: form.whatsapp,
           address: form.address,
           bookingMode: form.bookingMode,
@@ -153,20 +154,11 @@ export function FieldPage({ user }: { user: User }) {
               onChange={(e) => setForm({ ...form, address: e.target.value })}
             />
           </label>
-          <label>
-            Categories
-            <input
-              disabled={!allowed}
-              value={form.categories}
-              onChange={(e) => setForm({ ...form, categories: e.target.value })}
-              list="field-cats"
-            />
-            <datalist id="field-cats">
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-          </label>
+          <CategoryPicker
+            disabled={!allowed}
+            value={form.categories}
+            onChange={(categories) => setForm({ ...form, categories })}
+          />
           <label>
             Booking mode
             <select

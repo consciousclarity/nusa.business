@@ -7,9 +7,12 @@ import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  canonicalizeCategory,
   canonicalizeIslandSlug,
+  categoryLabel,
   geoNesting,
   haversineKm,
+  listingMatchesCategory,
   normalizeAddress,
 } from "@nusa/shared";
 import { migrateStore } from "./migrations.js";
@@ -209,7 +212,9 @@ export function listBusinesses(filters?: {
   }
 
   if (filters?.category) {
-    items = items.filter((b) => b.categories.includes(filters.category!));
+    items = items.filter((b) =>
+      listingMatchesCategory(b.categories, filters.category!),
+    );
   }
 
   if (filters?.q) {
@@ -218,7 +223,15 @@ export function listBusinesses(filters?: {
       (b) =>
         b.name.toLowerCase().includes(q) ||
         b.summary.toLowerCase().includes(q) ||
-        b.categories.some((c) => c.toLowerCase().includes(q)),
+        b.categories.some((c) => {
+          const label = categoryLabel(c).toLowerCase();
+          const slug = canonicalizeCategory(c) ?? c.toLowerCase();
+          return (
+            c.toLowerCase().includes(q) ||
+            label.includes(q) ||
+            slug.includes(q)
+          );
+        }),
     );
   }
 
@@ -600,32 +613,47 @@ export function getBusinessDiscovery(
     .filter(
       (n) =>
         !sameIds.has(n.business.id) &&
-        n.business.categories.some((c) => self.categories.includes(c)),
+        n.business.categories.some((c) => {
+          const slug = canonicalizeCategory(c);
+          return (
+            !!slug &&
+            self.categories.some((s) => canonicalizeCategory(s) === slug)
+          );
+        }),
     )
     .slice(0, similarLimit);
 
   const categoryCounts = new Map<string, number>();
   for (const n of withDistance) {
     for (const c of n.business.categories) {
-      categoryCounts.set(c, (categoryCounts.get(c) ?? 0) + 1);
+      const slug = canonicalizeCategory(c) ?? c;
+      categoryCounts.set(slug, (categoryCounts.get(slug) ?? 0) + 1);
     }
   }
   const nearbyCategories = [...categoryCounts.keys()].sort((a, b) =>
     a.localeCompare(b),
   );
 
+  const requested = opts.category
+    ? canonicalizeCategory(opts.category) ?? opts.category
+    : null;
+
   let activeCategory: string | null = null;
-  if (opts.category && nearbyCategories.includes(opts.category)) {
-    activeCategory = opts.category;
+  if (requested && nearbyCategories.includes(requested)) {
+    activeCategory = requested;
   } else {
     activeCategory =
-      self.categories.find((c) => nearbyCategories.includes(c)) ??
+      self.categories
+        .map((c) => canonicalizeCategory(c) ?? c)
+        .find((c) => nearbyCategories.includes(c)) ??
       nearbyCategories[0] ??
       null;
   }
 
   const nearby = activeCategory
-    ? withDistance.filter((n) => n.business.categories.includes(activeCategory!))
+    ? withDistance.filter((n) =>
+        listingMatchesCategory(n.business.categories, activeCategory!),
+      )
     : [];
 
   const origin =

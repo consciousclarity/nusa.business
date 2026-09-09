@@ -36,7 +36,7 @@ You do not need to remember to file things. When you brainstorm with Cursor (“
 | [Shared brainstorm memory (multi-tool)](./2026-09-07-shared-brainstorm-memory.md) | `decided` | 2026-09-07 |
 | [Complete listing profile](./2026-09-07-complete-listing-profile.md) | `exploring` | 2026-09-07 |
 | [Listing verification & badge](./2026-09-07-listing-verification.md) | `exploring` | 2026-09-07 |
-| [Indonesia-first category taxonomy](./2026-09-07-indonesia-category-taxonomy.md) | `exploring` | 2026-09-07 |
+| [Indonesia-first category taxonomy](./2026-09-07-indonesia-category-taxonomy.md) | `done` | 2026-09-09 |
 | [Fast text directory + vendor–visitor contact](./2026-09-07-fast-text-and-contact.md) | `exploring` | 2026-09-07 |
 | [Prevent platform fraud](./2026-09-07-prevent-platform-fraud.md) | `seed` | 2026-09-07 |
 

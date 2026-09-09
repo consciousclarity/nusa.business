@@ -40,6 +40,7 @@ import {
   parseHost,
   resolveCorsAllowOrigin,
   safePortalReturnTo,
+  taxonomyCatalog,
   toSlug,
 } from "@nusa/shared";
 import {
@@ -70,6 +71,7 @@ import {
 
 import {
   parseBookingBody,
+  parseCategories,
   parseListingPatchBody,
   parseReviewBody,
 } from "./validate.js";
@@ -128,7 +130,12 @@ function filterByOwner<T extends { ownerUserId?: string }>(
   return ownerId ? rows.filter((row) => row.ownerUserId === ownerId) : rows;
 }
 
-app.get("/v1/meta/categories", (c) => c.json({ categories: CATEGORIES }));
+app.get("/v1/meta/categories", (c) =>
+  c.json({
+    categories: CATEGORIES,
+    taxonomy: taxonomyCatalog(),
+  }),
+);
 
 app.get("/v1/host", (c) => {
   const host = c.req.header("x-forwarded-host") || c.req.header("host") || "";
@@ -570,13 +577,15 @@ app.post(
     if (body.status !== undefined && body.status !== "draft" && body.status !== "published") {
       return c.json({ error: "status must be draft or published; claimed requires claim approval" }, 400);
     }
+    const categories = parseCategories(body.categories);
+    if (!categories.ok) return c.json({ error: categories.error }, 400);
     const business = createBusiness({
       placeId: body.placeId,
       slug: toSlug(body.name),
       name: body.name,
       summary: body.summary,
       description: body.description,
-      categories: body.categories,
+      categories: categories.value,
       address: body.address,
       phone: body.phone,
       whatsapp: body.whatsapp,
@@ -840,6 +849,8 @@ app.post(
     }>();
     const place = getPlace(body.islandSlug, body.placeSlug);
     if (!place) return c.json({ error: "Place not found" }, 404);
+    const categories = parseCategories(body.categories);
+    if (!categories.ok) return c.json({ error: categories.error }, 400);
 
     const business = createBusiness({
       placeId: place.id,
@@ -847,7 +858,7 @@ app.post(
       name: body.name,
       summary: body.summary,
       description: body.description || body.summary,
-      categories: body.categories,
+      categories: categories.value,
       phone: body.phone,
       whatsapp: body.whatsapp,
       address: body.address,

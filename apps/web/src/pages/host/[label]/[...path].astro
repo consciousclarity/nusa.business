@@ -12,6 +12,7 @@ import {
 } from "../../../lib/seo";
 import { t, withLocale, type Locale } from "../../../i18n/ui";
 import {
+  categoryLabel,
   geoNesting,
   publicHostLine,
   telHref,
@@ -476,7 +477,7 @@ const hubQuery = hub
       <dt>Host</dt>
       <dd>{hostPath}</dd>
       <dt>{t(locale, "category")}</dt>
-      <dd>{data.business.categories.join(" · ") || "—"}</dd>
+      <dd>{data.business.categories.map(categoryLabel).join(" · ") || "—"}</dd>
       {data.business.address && (
         <>
           <dt>Address</dt>
@@ -554,7 +555,7 @@ const hubQuery = hub
               <div class="index-row">
                 <span class="n">{String(i + 1).padStart(2, "0")}</span>
                 <a class="name" href={neighborHref(n)}>{n.business.name}</a>
-                <span class="rhs">{n.business.categories[0] ?? n.place.name}</span>
+                <span class="rhs">{categoryLabel(n.business.categories[0] ?? "") || n.place.name}</span>
               </div>
               <p class="index-desc">{n.business.summary}</p>
             </li>
@@ -607,7 +608,7 @@ const hubQuery = hub
               data-category={encodeURIComponent(cat)}
               aria-pressed={cat === discovery.activeCategory ? "true" : "false"}
             >
-              {cat}
+              {categoryLabel(cat)}
             </button>
           ))}
         </div>

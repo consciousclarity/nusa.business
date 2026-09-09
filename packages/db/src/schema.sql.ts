@@ -30,7 +30,7 @@ CREATE TABLE businesses (
   slug TEXT NOT NULL,
   name TEXT NOT NULL,
   status TEXT NOT NULL,
-  categories TEXT[] NOT NULL,
+  categories TEXT[] NOT NULL, -- taxonomy slugs from @nusa/shared
   summary TEXT NOT NULL,
   description TEXT NOT NULL,
   address TEXT,

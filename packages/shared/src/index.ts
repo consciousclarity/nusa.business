@@ -149,20 +149,28 @@ export function nationHomeHref(
   return root.endsWith("/") ? root : `${root}/`;
 }
 
-export const CATEGORIES = [
-  "Accommodation",
-  "Food & Drink",
-  "Health & Wellness",
-  "Tourism & Experiences",
-  "Shopping & Retail",
-  "Arts & Culture",
-  "Professional Services",
-  "Sports & Recreation",
-  "Beauty & Personal Care",
-  "Home & Construction",
-] as const;
-
-export type Category = (typeof CATEGORIES)[number];
+export {
+  CATEGORIES,
+  TAXONOMY,
+  canonicalizeCategory,
+  canonicalizeCategoryList,
+  categoryFilterOptions,
+  categoryLabel,
+  categoryLabels,
+  categoryRecord,
+  expandCategoryFilter,
+  isKnownCategory,
+  listingMatchesCategory,
+  relatedForCategory,
+  taxonomyCatalog,
+  type Category,
+  type CategoryRecord,
+  type RelatedCategory,
+  type TaxonomyCatalogGroup,
+  type TaxonomyGroup,
+  type TaxonomyLeaf,
+  type TaxonomyRelated,
+} from "./taxonomy.js";
 
 export {
   assertBrowserSafeApiOrigin,

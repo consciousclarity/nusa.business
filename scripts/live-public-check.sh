@@ -13,6 +13,7 @@ set -uo pipefail
 HOME_URL="${LIVE_HOME_URL:-https://nusa.business/}"
 HOME_ID_URL="${LIVE_HOME_ID_URL:-https://nusa.business/id}"
 LISTING_URL="${LIVE_LISTING_URL:-https://gianyar.bali.nusa.business/babi-guling-pande-egi}"
+LISTING_ID_URL="${LIVE_LISTING_ID_URL:-https://gianyar.bali.nusa.business/id/babi-guling-pande-egi}"
 API_HEALTH_URL="${LIVE_API_HEALTH_URL:-https://api.nusa.business/health}"
 
 fails=0
@@ -64,6 +65,7 @@ echo "== live public check (read-only) =="
 echo "home    $HOME_URL"
 echo "home/id $HOME_ID_URL"
 echo "listing $LISTING_URL"
+echo "list/id $LISTING_ID_URL"
 echo
 
 home=$(fetch "$HOME_URL")
@@ -72,23 +74,46 @@ check_home "homepage" "$HOME_URL" "$home"
 home_id=$(fetch "$HOME_ID_URL")
 check_home "homepage /id" "$HOME_ID_URL" "$home_id"
 
+check_listing_origin() {
+  local label="$1"
+  local url="$2"
+  local html="$3"
+
+  if [ -z "$html" ]; then
+    fail "GET $url (empty body)"
+    return 1
+  fi
+  pass "GET $url (${#html} bytes)"
+
+  if printf '%s' "$html" | grep -q 'http://api:8787'; then
+    fail "$label HTML contains http://api:8787 (browser API origin)"
+  else
+    pass "$label HTML does not contain http://api:8787"
+  fi
+
+  if printf '%s' "$html" | grep -q 'https://api.nusa.business'; then
+    pass "$label HTML embeds https://api.nusa.business"
+  else
+    fail "$label HTML missing https://api.nusa.business"
+  fi
+}
+
 listing=$(fetch "$LISTING_URL")
-if [ -z "$listing" ]; then
-  fail "GET $LISTING_URL (empty body)"
+check_listing_origin "listing" "$LISTING_URL" "$listing"
+
+listing_id=$(fetch "$LISTING_ID_URL")
+check_listing_origin "listing /id" "$LISTING_ID_URL" "$listing_id"
+
+if printf '%s' "$listing_id" | grep -qE 'Food &amp; Drink|Food & Drink'; then
+  fail "listing /id still has English Food & Drink category"
 else
-  pass "GET $LISTING_URL (${#listing} bytes)"
+  pass "listing /id has no English Food & Drink category"
 fi
 
-if printf '%s' "$listing" | grep -q 'http://api:8787'; then
-  fail "listing HTML contains http://api:8787 (browser API origin)"
+if printf '%s' "$listing_id" | grep -qE 'Makanan &amp; minuman|Makanan & minuman'; then
+  pass "listing /id has Indonesian food-drink category"
 else
-  pass "listing HTML does not contain http://api:8787"
-fi
-
-if printf '%s' "$listing" | grep -q 'https://api.nusa.business'; then
-  pass "listing HTML embeds https://api.nusa.business"
-else
-  fail "listing HTML missing https://api.nusa.business"
+  fail "listing /id missing Indonesian food-drink category"
 fi
 
 code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "$API_HEALTH_URL" 2>/dev/null || true)

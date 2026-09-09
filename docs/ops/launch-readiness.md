@@ -47,6 +47,7 @@ and the operator list below.
 ### Assumptions (not treated as proven bugs)
 
 - Live `nusa.business/` and `/id` (2026-09-09 GET) still have `kind=nation` resolver chrome and `/host/…` footer — this PR’s visitor chrome is **not deployed**. Live `/id` also lacks the search field (`name="q"`).
+- Live listing `/id` (2026-09-09 GET `…/id/babi-guling-pande-egi`) still shows English `Food & Drink` because this PR is not deployed.
 - Live listing HTML already embeds `https://api.nusa.business` (not `http://api:8787`). Hermes should still confirm env after deploy.
 - Live `.data/store.json` may still contain seed emails — **unverified**. Dry-run in [demo-bootstrap.md](./demo-bootstrap.md).
 - Process supervisor is PM2 vs Compose — Hermes 2026-09-07 saw PM2.
@@ -121,7 +122,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | CSP Report-Only | pass (code) | No report URI yet; unverified in browsers |
 | CORS restricted to `*.nusa.business` | pass (C06) | |
 | Sitemap / robots | pass (C11 + search noindex) | Search Console unverified |
-| Live public HTTPS smoke | fail (homepage) | Script is read-only; listing API origin already ok; homepage chrome waits on deploy |
+| Live public HTTPS smoke | fail (homepage + listing `/id`) | Script is read-only; EN listing API origin already ok; homepage chrome and `/id` category labels wait on deploy |
 | WCAG 2.2 AA on phone | unverified | C10 chrome tests pass; no screen-reader run here |
 | Lighthouse / RUM | unverified | C12 lab budget in CI; no field data |
 | Staging e2e owner onboarding | unverified | Local API self-register + pending-claim PATCH 403 pass; staging HTTPS unverified |

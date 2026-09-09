@@ -23,5 +23,8 @@ describe("live public check script", () => {
     assert.match(script, /nusa\.business\/id/);
     assert.match(script, /name="q"/);
     assert.match(script, /gianyar\.bali\.nusa\.business/);
+    assert.match(script, /\/id\/babi-guling-pande-egi/);
+    assert.match(script, /Food &amp; Drink/);
+    assert.match(script, /Makanan/);
   });
 });

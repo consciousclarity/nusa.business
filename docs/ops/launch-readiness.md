@@ -1,33 +1,34 @@
 # Launch readiness
 
-Inspected against `main` at `bfd899c` (2026-09-09). C01–C14 already
-landed (PRs #23–#39). This follow-up PR (booking rules, visitor chrome,
+Inspected against `main` at `bfd899c` (2026-09-09), then deployed as
+`e3cb8c53bef6a8061088e9c3cc56761aab0d77dd` after human authorization.
+C01–C14 landed in PRs #23–#39; this follow-up (booking rules, visitor chrome,
 Indonesian `/id` labels including island names, HTML 404/500, portal
-demo-bundle grep) verified those items in **code**. It is **not** a live GO.
+demo-bundle grep, nested-host sitemap, robots search Disallow) is **live**.
 
-Cursor agents must not deploy or mutate production. Long-running on-box
-work belongs to **Warden** (Hermes on the VPS) — see
-[hermes-vps-notes-2026-09-07.md](./hermes-vps-notes-2026-09-07.md).
+**Release: GO.** See [release-decision.md](./release-decision.md). Cursor
+agents must not deploy again without a new explicit authorization.
+Long-running on-box store work still belongs to **Warden** — see
+[hermes-vps-notes-2026-09-07.md](./hermes-vps-notes-2026-09-07.md)
+(PM2 observation there is stale; live supervisor is Compose).
 
-## Remaining before GO
-
-Three columns. Do not treat a **code** pass as a live pass.
+## Remaining after GO
 
 | Kind | Item | Evidence / who |
 |---|---|---|
-| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F28) | `npm test` + findings table below. Not on the VPS until deploy. |
-| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`, `Address`, `Host`/`Status`/`Booking` dts, and English weekdays. Sitemap still lists `/host/bali`. `robots.txt` still allows `/search`. | `bash scripts/live-public-check.sh` until this PR deploys. Listing API origin already ok. |
-| **Operator only** | VPS SHA, PM2 vs Compose, `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL`, `NUSA_AUTH_SECRET`, demo-store inventory, store backup + isolated restore, Search Console sitemap submit | [release-decision.md](./release-decision.md) gates 1–6. Cursor must not run these. |
-| **Not this launch** | Priced booking inventory, cookie sessions/CSRF, error tracking, RUM, WCAG AA screen-reader, Dependabot/`npm audit` CI | Security / parity backlog. Do not block GO on these unless product says so. |
+| **Code (merged #48)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F28) | `npm test` + findings table below. On the VPS at `e3cb8c5`. |
+| **Live HTTPS** | Homepage `/` and `/id` visitor chrome; listing `/id` Indonesian labels; nested-host sitemap; robots `Disallow: /search` | `bash scripts/live-public-check.sh` → **0 fails** (2026-09-09) |
+| **Operator only (not blocking GO)** | Isolated restore drill (non-production dir); Search Console sitemap submit | [release-decision.md](./release-decision.md) |
+| **Not this launch** | Priced booking inventory, cookie sessions/CSRF, error tracking, RUM, WCAG AA screen-reader, Dependabot/`npm audit` CI | Security / parity backlog. |
 
-Local HTTP on synthetic seed (`/host/…`, booking 400/409) is not a live HTTPS pass.
+Local HTTP on synthetic seed (`/host/…`, booking 400/409) is not a substitute for the live HTTPS pass.
 
 ## Findings (verified in this repo)
 
 | ID | Evidence | Severity | Files | Fix in this PR | Verification |
 |---|---|---|---|---|---|
 | F01 | Production bootstrap already refuses demo seed; portal prefills only in Vite `DEV`. README still listed passwords. | P0 (docs) | `README.md`, `docs/features-parity.md` | Point public docs at local-only bootstrap; keep passwords in getting-started / AGENTS for local agents | `tests/db.bootstrap.test.mjs` (existing) + doc review |
-| F02 | Live listing HTML (2026-09-09 GET `https://gianyar.bali.nusa.business/babi-guling-pande-egi`) uses `https://api.nusa.business`, not `http://api:8787`. Browser origin still fails closed in production builds. Live **homepage** still shows the old resolver chrome until this PR deploys. | P0 (ops) | `packages/shared/src/api-origins.ts` | Code already closed; operator must deploy this PR for visitor chrome | Live GET + `tests/shared.api-origins.test.mjs` |
+| F02 | Live listing HTML uses `https://api.nusa.business`, not `http://api:8787`. Browser origin still fails closed in production builds. Homepage visitor chrome is live after the 2026-09-09 deploy. | P0 (ops) | `packages/shared/src/api-origins.ts` | Code already closed | Live GET + `tests/shared.api-origins.test.mjs` |
 | F03 | Review/booking widgets already checked `res.ok`, busy flags, and kept fields on failure. | P0 (done earlier) | listing `[...path].astro` | Unchanged behaviour; report form added with the same pattern | `tests/web.booking-form.test.mjs` |
 | F04 | Bookings ignored client prices but accepted past dates and duplicate pending rows. No inventory calendar exists. | P0 | `apps/api/src/validate.ts`, `app.ts` | Reject past dates, require rental `endDate` / event `tickets`, 409 duplicate pending | `tests/api.validate.test.mjs`, `tests/api.write-security.test.mjs` |
 | F05 | Claims already stay pending until admin approve; PATCH is owner/admin. Register was invite-only, so a new owner could not complete onboarding. | P0 | API register + portal `/register` | Public owner self-signup; clients cannot set `role`; pending claim still 403 on PATCH | `tests/api.onboarding-claims.test.mjs` |
@@ -53,48 +54,32 @@ Local HTTP on synthetic seed (`/host/…`, booking 400/409) is not a live HTTPS 
 | F25 | `/id` island names used English seed copy (`Java`, `Sumatra`) while category labels were already localized. | P1 | `islandName`, homepage/search/hubs/listing crumbs | Indonesian island names (`Jawa`, `Sumatera`); seed/API name stays English | `tests/web.visitor-chrome.test.mjs`, `scripts/live-public-check.sh` |
 | F26 | Listing/hub canonical + JSON-LD breadcrumbs used `hostPath` + `absoluteUrl`, so nested hosts emitted `/id/host/bali`. | P1 | `tenantAbsHref`, listing/hub/facet pages | Public canonical/JSON-LD use `tenantHref` (real hosts in production, `/host` locally) | `tests/web.visitor-chrome.test.mjs` |
 | F27 | Apex sitemap locs were `https://nusa.business/host/…` (162 `/host/` rows live). Nested hosts and `/id` hubs were not the canonical locs. | P1 | `sitemap.xml.ts` | Geo locs use `tenantAbsHref` (nested hosts + `/id`); nation pages keep apex `/id` | `tests/web.facet-browse.test.mjs`, `scripts/live-public-check.sh` |
-| F28 | Live `robots.txt` allowed `/search` (no Disallow). Search pages are `noindex` but still crawlable until this PR deploys. | P1 | `robots.txt.ts` | Disallow `/search` and `/id/search`; live check asserts apex Sitemap line | `scripts/live-public-check.sh` |
+| F28 | Live `robots.txt` Disallows `/search` and `/id/search` after deploy. Search pages remain `noindex`. | P1 | `robots.txt.ts` | Disallow `/search` and `/id/search`; live check asserts apex Sitemap line | `scripts/live-public-check.sh` |
 
-### Assumptions (not treated as proven bugs)
+### Assumptions (updated after authorized deploy)
 
-- Live `nusa.business/` and `/id` (2026-09-09 GET) still have `kind=nation` resolver chrome and `/host/…` footer — this PR’s visitor chrome is **not deployed**. Live `/id` also lacks the search field (`name="q"`).
-- Live `/id` listing (2026-09-09 GET `…/id/babi-guling-pande-egi`) still shows English `Food & Drink`, `Address`, `Host`/`Booking`/`Status` dts, and `Mon` weekdays because this PR is not deployed.
-- Live sitemap (2026-09-09) still lists `https://nusa.business/host/…` and has no `/id` locs. Live `robots.txt` has no `Disallow: /search`.
-- Live listing HTML already embeds `https://api.nusa.business` (not `http://api:8787`). Hermes should still confirm env after deploy.
-- Live `.data/store.json` may still contain seed emails — **unverified**. Dry-run in [demo-bootstrap.md](./demo-bootstrap.md).
-- Process supervisor is PM2 vs Compose — Hermes 2026-09-07 saw PM2.
+- Live `nusa.business/` and `/id` (post-deploy GET) have search-first chrome (`name="q"`, `nav-search`); no `class="resolver"` / `kind=nation` / `/host/bali`.
+- Live `/id` listing shows Indonesian chrome (`Alamat`, `Warung`, `Nilai ulasan`, `Sen`); no `Food & Drink` / `Address` / `Host` dts.
+- Live sitemap lists `https://bali.nusa.business` and nested listing locs; no `/host/bali`. Live `robots.txt` Disallows `/search` and `/id/search`.
+- Live listing HTML embeds `https://api.nusa.business` (not `http://api:8787`). Web container: `NUSA_SSR_API_URL=http://api:8787`.
+- Live store is volume `docker_api_data` (not host `.data/`): 1 admin, **no** seed emails, 39 businesses.
+- Process supervisor is **Compose** (Hermes 2026-09-07 PM2 notes are stale).
 
-## Operator / Hermes (VPS) — authorized only
+## Operator / Hermes (VPS)
 
-Do **not** run these from Cursor. Hand to Warden. After deploy, an
-authorized operator can run the read-only public check from anywhere:
+Authorized deploy completed 2026-09-09. Record is in
+[release-decision.md](./release-decision.md). Read-only public check:
 
 ```bash
 bash scripts/live-public-check.sh
 ```
 
-That script does not SSH or mutate the VPS. It currently **fails** until this PR is deployed:
+That script does not SSH or mutate the VPS. **0 fails** after deploy.
 
-- homepage `/` and `/id`: `class="resolver"`, `kind=nation`, `/host/bali`, no `name="q"`, no `nav-search`
-- homepage `/id`: missing `Pulau Dewata`, `Cari bisnis`, `Jawa`
-- listing `/id`: English `Food & Drink`, `Address`, `Host`/`Booking`/`Status` dts, `Review scores`, `Mon` instead of `Alamat` / `Sen`
-- sitemap: `/host/bali` instead of `https://bali.nusa.business`
-- robots.txt: missing `Disallow: /search` and `/id/search`
+Still operator (not blocking GO):
 
-EN listing HTML already passing `http://api:8787` / `https://api.nusa.business`
-is not a substitute for homepage visitor chrome or `/id` chrome.
-
-On the VPS:
-
-1. Record `git rev-parse HEAD` under `/opt/nusa.business`.
-2. Confirm supervisor (PM2 **or** Compose), API bind, and env:
-   `PUBLIC_BROWSER_API_URL=https://api.nusa.business`,
-   `NUSA_SSR_API_URL` loopback/internal, `NUSA_AUTH_SECRET` set,
-   `NUSA_ALLOW_DEMO_SEED` unset.
-3. Inventory store users vs seed emails (redacted). If a row is confirmed demo (known password, no real ownership): backup `store.json`, disable/remove, rotate `NUSA_AUTH_SECRET`.
-4. After this PR is merged and a human authorizes deploy: backup store, deploy, curl listing HTML and assert it does **not** contain `http://api:8787`.
-5. Restore-test a store backup in an isolated directory (not production).
-6. Search Console: submit `https://nusa.business/sitemap.xml` (operator).
+1. Restore-test a store backup in an isolated directory (not production).
+2. Search Console: submit `https://nusa.business/sitemap.xml`.
 
 ## Launch checklist
 
@@ -102,17 +87,17 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 
 | Item | Status | Notes |
 |---|---|---|
-| Production cannot auto-create demo users | pass (code) | Live store inventory unverified |
+| Production cannot auto-create demo users | pass (code + live) | Live store: 1 admin, no seed emails |
 | Production portal bundle omits demo passwords | pass (this branch) | `tests/portal.production-bundle.test.mjs`; CI builds portal before `npm test` |
 | Public docs do not present demo passwords as production logins | pass | Local table remains in getting-started |
-| Browser API origin fails closed in production builds | pass (code + live listing HTML) | Live homepage still old chrome; env re-check after deploy |
-| Live homepage visitor chrome | fail (live) | EN and `/id` (2026-09-09): `class="resolver"`, `kind=nation`, `/host/bali`, no `name="q"` |
+| Browser API origin fails closed in production builds | pass (code + live listing HTML) | `https://api.nusa.business`; no `http://api:8787` |
+| Live homepage visitor chrome | pass (live) | EN and `/id`: search field + `nav-search`; no resolver jargon |
 | Nation homepage island links on `nusa.business` | pass (this branch) | `tenantHref`; unbound `publicUrl` removed |
 | Reviews check HTTP status; keep text on failure | pass | Not submitted to production |
 | Bookings reject past dates, bad quantities, duplicates | pass (code) | No priced inventory yet — request-only |
 | Claim does not grant edit until approved | pass (API tests) | Owner self-register + invite; pending PATCH 403 |
 | Owners cannot PATCH another listing | pass | `tests/api.authz-cors.test.mjs` (incl. field agent) |
-| Visitor pages omit resolver jargon | pass (this branch) | Live homepage still has `kind=nation` until deploy |
+| Visitor pages omit resolver jargon | pass (this branch + live) | Live homepage has no `kind=nation` |
 | Header Search first; Claim secondary | pass (this branch) | Portal remains in the footer |
 | Homepage search + shareable `/search?q=` | pass | Category filter in the same query URL |
 | Listing Directions / Call / Website / WhatsApp | pass | Seed website on one listing; maps from lat/lng |
@@ -130,8 +115,8 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Island taglines on `/id` | pass (this branch) | `islandTagline`; seed/API tagline stays English |
 | Island names on `/id` | pass (this branch) | `islandName`; `Java`/`Sumatra` → `Jawa`/`Sumatera`; hostname slugs stay English |
 | Listing/hub canonical JSON-LD on nested hosts | pass (this branch) | `tenantAbsHref`; production must not emit `/host/bali` in listing JSON-LD |
-| Sitemap nested-host locs | pass (this branch) | Geo locs are `bali.nusa.business` / `gianyar.bali.nusa.business` plus `/id`; live sitemap still `/host/` until deploy |
-| robots.txt search Disallow | pass (this branch) | `/search` and `/id/search`; live robots still Allow-all until deploy |
+| Sitemap nested-host locs | pass (this branch + live) | Geo locs are `bali.nusa.business` / `gianyar.bali.nusa.business` plus `/id` |
+| robots.txt search Disallow | pass (this branch + live) | `/search` and `/id/search` |
 | Category browse if search is down | pass (this branch) | Notice + `noindex`; not a 500 and not a fake empty index |
 | Public booking POST omits booking row | pass (this branch) | `{ ok: true }` only; owners still GET `/v1/bookings` |
 | JSON-LD opening hours | pass (this branch) | `openingHoursSpecification` when hours exist |
@@ -143,7 +128,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | CSP Report-Only | pass (code) | No report URI yet; unverified in browsers |
 | CORS restricted to `*.nusa.business` | pass (C06) | |
 | Sitemap / robots | pass (C11 + search noindex) | Search Console unverified |
-| Live public HTTPS smoke | fail (homepage + listing `/id`) | Script is read-only; EN listing API origin already ok; homepage chrome and `/id` visitor labels wait on deploy |
+| Live public HTTPS smoke | pass (live) | `bash scripts/live-public-check.sh` 0 fails |
 | WCAG 2.2 AA on phone | unverified | C10 chrome tests pass; no screen-reader run here |
 | Lighthouse / RUM | unverified | C12 lab budget in CI; no field data |
 | Staging e2e owner onboarding | unverified | Local API self-register + pending-claim PATCH 403 pass; staging HTTPS unverified |
@@ -151,5 +136,5 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | DB backup restore drill | unverified | Operator |
 | Dependabot / npm audit in CI | fail | Listed in security backlog |
 
-**Release decision remains HOLD** until operator gates in
-[release-decision.md](./release-decision.md) are checked.
+**Release decision is GO** at SHA `e3cb8c53bef6a8061088e9c3cc56761aab0d77dd`.
+Isolated restore drill and Search Console submit remain operator follow-ups.

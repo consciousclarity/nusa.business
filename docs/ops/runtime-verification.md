@@ -3,7 +3,15 @@
 **Cursor / agents must not deploy or change the VPS without explicit
 authorization.** This page is a read-only checklist.
 
-## Known conflict (2026-09)
+## Confirmed runtime (2026-09-09)
+
+Authorized deploy recorded in [release-decision.md](./release-decision.md).
+Live supervisor is **Docker Compose** (`docker/compose.prod.yml`), not PM2.
+Loopback: api `4101`, web `4321`, portal `4103`. Data is volume
+`docker_api_data` → container `/data`. Hermes 2026-09-07 PM2 notes are
+historical.
+
+## Known conflict (2026-09, historical)
 
 Repo docs historically assume **Docker Compose** apps on loopback behind host
 Caddy (`docs/ops/vps-deploy.md`, `docker/compose.prod.yml`).
@@ -12,8 +20,8 @@ Hermes reconnaissance (2026-09-07) observed **PM2** processes for `web` /
 `api` / `portal` under `/opt/nusa.business`, with a stale deploy signal vs
 `main`. See [hermes-vps-notes-2026-09-07.md](./hermes-vps-notes-2026-09-07.md).
 
-Until an authorized operator confirms one long-term runtime, treat both as
-possible. Backup, rollback, and env wiring differ:
+The 2026-09-09 authorized deploy confirmed **Compose**. Keep the table as a
+rollback/history aid if a box is ever found on PM2:
 
 | Concern | Compose (`compose.prod.yml`) | PM2 |
 |---|---|---|

@@ -42,6 +42,7 @@ and the operator list below.
 | F21 | Nation homepage called `publicUrl` without importing it. Local `/host` paths worked; production `nusa.business` island links would throw. | P0 | `apps/web/src/pages/index.astro` | Use `tenantHref` for island links | `tests/web.visitor-chrome.test.mjs` |
 | F22 | Nation homepage and `/search` threw when `/v1/islands` was down, so the search form never rendered. No HTML 500. | P1 | `apiTry`, `index.astro`, `search.astro`, `500.astro` | Homepage/search degrade with a notice; other SSR throws use HTML 500 | `tests/web.visitor-chrome.test.mjs` |
 | F23 | `/id` island taglines were English seed copy. Category/facet browse threw when `/v1/search` failed. | P1 | `islandTagline`, `CategoryBrowse`, browse pages | Indonesian island ledes; browse uses `apiTry` + noindex when search is down | `tests/web.visitor-chrome.test.mjs`, `tests/web.facet-browse.test.mjs` |
+| F24 | Portal login embeds demo passwords in source. Vite DCE must keep them out of the production JS bundle. | P0 | `LoginPage.tsx`, portal `dist/` | Prefill only in `DEV` / `VITE_NUSA_DEMO_LOGIN`; CI greps production assets | `tests/portal.production-bundle.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -84,6 +85,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Item | Status | Notes |
 |---|---|---|
 | Production cannot auto-create demo users | pass (code) | Live store inventory unverified |
+| Production portal bundle omits demo passwords | pass (this branch) | `tests/portal.production-bundle.test.mjs`; CI builds portal before `npm test` |
 | Public docs do not present demo passwords as production logins | pass | Local table remains in getting-started |
 | Browser API origin fails closed in production builds | pass (code + live listing HTML) | Live homepage still old chrome; env re-check after deploy |
 | Live homepage visitor chrome | fail (live) | EN and `/id` (2026-09-09): `class="resolver"`, `kind=nation`, `/host/bali`, no `name="q"` |

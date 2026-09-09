@@ -16,7 +16,8 @@
 - [Security](./security.md)  
 - [Release decision (C14)](./release-decision.md)  
 - [Code review & approval policy](./code-review.md)  
-- [Hermes VPS notes (read-only)](./hermes-vps-notes-2026-09-07.md)  
+- [Hermes VPS notes (read-only)](./hermes-vps-notes-2026-09-07.md)
+- [Backfill listing coordinates (Warden)](./backfill-listing-coords.md)  
 
 ## Cloudflare
 

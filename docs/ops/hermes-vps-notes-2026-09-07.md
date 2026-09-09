@@ -3,6 +3,11 @@
 Captured 2026-09-07 from Hermes operator report. **No production changes
 performed from this note.** Paths and process managers only — no secrets.
 
+**Warden** is the Hermes agent that runs **on this VPS**. Coordinate backfill
+and other on-box store edits go to Warden — see
+[backfill-listing-coords.md](./backfill-listing-coords.md). Cursor agents must
+not deploy or mutate production without explicit authorization.
+
 ## Observed topology
 
 | Item | Hermes report |

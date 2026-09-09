@@ -61,6 +61,9 @@ sudo cp -a /opt/nusa.business/.data/store.json \
 Restore is copy-back + process restart under the **same** supervisor that was
 verified above. Do not mix Compose volume paths with PM2 host paths blindly.
 
+Listing `lat`/`lng` backfill (Warden / on-VPS Hermes, fill-missing only) is
+[backfill-listing-coords.md](./backfill-listing-coords.md). Same backup path.
+
 ## CI (repo)
 
 GitHub Actions (`.github/workflows/ci.yml`) already gates every PR:

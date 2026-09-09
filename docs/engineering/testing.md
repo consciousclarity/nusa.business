@@ -39,6 +39,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Public a11y chrome | `tests/web.a11y-chrome.test.mjs` | Skip link, crumb semantics, AA label colour, review fieldset, booking `aria-*` wiring. |
 | Public SEO helpers | `tests/web.seo.test.mjs` | Canonical origin, `/host` paths, LocalBusiness JSON-LD, sitemap XML escaping. |
 | Public perf budget | `tests/web.perf-budget.test.mjs` | No webfonts/islands; CSS size ceilings; HTML cache headers. See [performance.md](./performance.md). |
+| Listing coord backfill | `tests/scripts.backfill-listing-coords.test.mjs` | Standalone VPS script fills missing `lat`/`lng` from seed / place centroids without re-seeding. |
 
 ## Adding a test
 

@@ -1,4 +1,4 @@
-import { TAXONOMY, categoryLabel } from "@nusa/shared";
+import { TAXONOMY, categoryLabel, categoryLabels } from "@nusa/shared";
 
 const MAX_CATEGORIES = 12;
 
@@ -21,7 +21,7 @@ export function CategoryPicker({
     onChange([...value, slug]);
   }
 
-  const selectedLabels = value.map(categoryLabel).join(" · ");
+  const selectedLabels = categoryLabels(value).join(" · ");
 
   return (
     <fieldset className="category-picker" disabled={disabled}>

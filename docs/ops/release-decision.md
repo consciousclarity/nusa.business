@@ -23,7 +23,7 @@ agents must not deploy without explicit human authorization.
 | C11 | Public SEO | open PR | |
 | C12 | Public perf budget | open PR | |
 | C13 | Ops runtime verification | open PR | PM2 vs Compose must be confirmed on box |
-| C14 | Release decision | **HOLD** | This document |
+| C14 | Release decision | **HOLD** | [launch-readiness.md](./launch-readiness.md) — remaining operator/Hermes gates |
 
 Exact PR numbers drift; use GitHub’s open PRs titled `C0x` / `C1x` against
 `main`.

@@ -201,6 +201,9 @@ const store = {
       ],
     },
   ],
+  invites: [],
+  recoveryTokens: [],
+  reports: [],
 };
 
 writeFileSync(join(dataDir, "store.json"), JSON.stringify(store, null, 2));

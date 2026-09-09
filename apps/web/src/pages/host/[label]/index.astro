@@ -31,6 +31,7 @@ type IslandPayload = {
     summary: string;
     categories: string[];
     status?: string;
+    sample?: boolean;
   }[];
 };
 
@@ -45,6 +46,7 @@ type PlacePayload = {
     summary: string;
     categories: string[];
     status?: string;
+    sample?: boolean;
     registeredByAgentId?: string;
   }[];
 };
@@ -172,18 +174,33 @@ const placeCanonical =
       <p class="prose">{islandData.island.tagline}</p>
     </section>
 
-    <aside class="resolver" aria-label={t(locale, "hostResolver")}>
-      <dl>
-        <dt>{t(locale, "query")}</dt>
-        <dd>{queryHost}</dd>
-        <dt>{t(locale, "resolved")}</dt>
-        <dd>island={islandData.island.slug}</dd>
-        <dt>{t(locale, "records")}</dt>
-        <dd>
-          {islandData.places.length} places · {islandData.businesses.length} listings
-        </dd>
-      </dl>
-    </aside>
+    {islandData.island.status === "coming_soon" && (
+      <p class="banner">
+        {t(locale, "comingSoonNext")}{" "}
+        <a href={tenantHref(req, { island: "bali", locale })}>
+          {t(locale, "browseBali")}
+        </a>
+      </p>
+    )}
+
+    <form
+      class="section filter-bar"
+      method="get"
+      action={withLocale("/search", locale)}
+    >
+      <input type="hidden" name="island" value={islandData.island.slug} />
+      <label>
+        {t(locale, "findBusiness")}
+        <input
+          type="search"
+          name="q"
+          placeholder={t(locale, "searchPlaceholder")}
+          autocomplete="off"
+          maxlength="120"
+        />
+      </label>
+      <button type="submit">{t(locale, "search")}</button>
+    </form>
 
     <section class="section">
       <h2>{t(locale, "places")}</h2>
@@ -244,7 +261,13 @@ const placeCanonical =
                 >
                   {b.name}
                 </a>
-                <span class="rhs">{place?.name ?? ""}</span>
+                <span class="rhs">
+                  {b.sample ? (
+                    <span class="stamp">{t(locale, "sampleListing")}</span>
+                  ) : (
+                    place?.name ?? ""
+                  )}
+                </span>
               </div>
               <p class="index-desc">{b.summary}</p>
             </li>

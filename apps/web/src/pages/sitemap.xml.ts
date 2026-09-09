@@ -30,7 +30,13 @@ type Business = {
  */
 export const GET: APIRoute = async ({ request }) => {
   const origin = siteOrigin(request);
-  const urls = new Set<string>([`${origin}/`, absoluteUrl(request, "/claim")]);
+  const urls = new Set<string>([
+    `${origin}/`,
+    absoluteUrl(request, "/claim"),
+    absoluteUrl(request, "/privacy"),
+    absoluteUrl(request, "/terms"),
+    absoluteUrl(request, "/support"),
+  ]);
 
   try {
     const { islands } = await api<{ islands: Island[] }>("/v1/islands");

@@ -58,11 +58,21 @@ export function App() {
         </Link>
         <nav>
           <Link to="/">Dashboard</Link>
-          <Link to="/listings">Listings</Link>
-          <Link to="/claim">Claim</Link>
-          <Link to="/field">Field ops</Link>
-          <Link to="/bookings">Bookings</Link>
-          <Link to="/vendor">Vendor shop</Link>
+          {(user?.role === "owner" ||
+            user?.role === "vendor" ||
+            user?.role === "admin") && <Link to="/listings">Listings</Link>}
+          {user && <Link to="/claim">Claim</Link>}
+          {(user?.role === "field_agent" || user?.role === "admin") && (
+            <Link to="/field">Field ops</Link>
+          )}
+          {(user?.role === "owner" ||
+            user?.role === "vendor" ||
+            user?.role === "admin") && <Link to="/bookings">Bookings</Link>}
+          {(user?.role === "owner" ||
+            user?.role === "vendor" ||
+            user?.role === "admin") && (
+            <Link to="/vendor">Vendor shop</Link>
+          )}
           {user?.role === "admin" && <Link to="/invites">Invites</Link>}
           {user ? (
             <button type="button" onClick={onLogout}>

@@ -50,7 +50,10 @@ token is passed explicitly.
 
 | Route | Access |
 |---|---|
-| `GET /health`, `/v1/meta/*`, `/v1/host`, `/v1/tls-check` | public |
+| `GET /health`, `/v1/meta/*`, `/v1/tls-check` | public |
+| `GET /v1/host` | public **non-production only** (404 in production) |
+| `POST /v1/businesses/:id/reports` | public — visitors flag a listing without an account |
+| `GET /v1/reports` | **admin only** |
 | `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public — listing payloads omit ownership internals; drafts excluded; listing detail never returns bookings |
 | `POST /v1/businesses/:id/reviews` | public — visitors review without an account |
 | `POST /v1/businesses/:id/bookings` | public — customers book without an account |

@@ -24,6 +24,7 @@ export type PlaceHubBusiness = {
   summary: string;
   categories: string[];
   status?: string;
+  sample?: boolean;
   registeredByAgentId?: string;
 };
 
@@ -92,24 +93,12 @@ const hubHref = geoHref(req, {
   )}
 </section>
 
-<aside class="resolver" aria-label={t(locale, "hostResolver")}>
-  <dl>
-    <dt>{t(locale, "query")}</dt>
-    <dd>{queryHost}</dd>
-    <dt>{t(locale, "resolved")}</dt>
-    <dd>
-      island={island.slug} · place={place.slug} · type={place.type}
-      {parent ? ` · parent=${parent.slug}` : ""}
-    </dd>
-    <dt>{t(locale, "records")}</dt>
-    <dd>
-      {placeBusinesses.length}
-      {activeCategory ? ` in ${activeCategoryLabel}` : ` published`}
-      {activeCategory && businesses.length !== placeBusinesses.length
-        ? ` · ${businesses.length} total`
-        : ""}
-    </dd>
-  </dl>
+<aside class="banner" aria-label={t(locale, "listingsCount")}>
+  {placeBusinesses.length} {t(locale, "listingsCount")}
+  {activeCategory ? ` · ${activeCategoryLabel}` : ""}
+  {activeCategory && businesses.length !== placeBusinesses.length
+    ? ` · ${businesses.length}`
+    : ""}
 </aside>
 
 {recent.length > 0 && (
@@ -237,8 +226,10 @@ const hubHref = geoHref(req, {
               {b.name}
             </a>
             <span class="rhs">
-              {b.status === "draft" ? (
-                <span class="stamp">Unclaimed</span>
+              {b.sample ? (
+                <span class="stamp">{t(locale, "sampleListing")}</span>
+              ) : b.status === "draft" ? (
+                <span class="stamp">{t(locale, "listedUnclaimed")}</span>
               ) : (
                 categoryLabel(b.categories[0] ?? "")
               )}

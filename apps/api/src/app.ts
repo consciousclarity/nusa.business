@@ -6,6 +6,7 @@ import {
   ClaimConflictError,
   addBooking,
   addClaim,
+  addListingReport,
   addReview,
   authenticate,
   consumeRecoveryToken,
@@ -13,6 +14,7 @@ import {
   createInvite,
   createRecoveryToken,
   decideClaim,
+  findDuplicatePendingBooking,
   findValidInvite,
   getBusiness,
   getBusinessById,
@@ -27,6 +29,7 @@ import {
   listBusinesses,
   listClaims,
   listIslands,
+  listListingReports,
   listPlaces,
   listReviews,
   redeemInvite,
@@ -72,9 +75,11 @@ import {
 } from "./rate-limit.js";
 
 import {
+  assertBookingRequest,
   parseBookingBody,
   parseCategories,
   parseListingPatchBody,
+  parseReportBody,
   parseReviewBody,
 } from "./validate.js";
 
@@ -141,6 +146,9 @@ app.get("/v1/meta/categories", (c) =>
 );
 
 app.get("/v1/host", (c) => {
+  if (process.env.NODE_ENV === "production") {
+    return c.json({ error: "Not found" }, 404);
+  }
   const host = c.req.header("x-forwarded-host") || c.req.header("host") || "";
   return c.json({ host, context: parseHost(host) });
 });
@@ -777,6 +785,8 @@ app.post(
     }
     const parsed = parseBookingBody(raw);
     if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+    const scheduled = assertBookingRequest(business.bookingMode, parsed.value);
+    if (!scheduled.ok) return c.json({ error: scheduled.error }, 400);
 
     const idemKey = (c.req.header("idempotency-key") || "").trim();
     if (idemKey.length > 128) {
@@ -794,6 +804,20 @@ app.post(
           return c.json({ booking: existing, idempotentReplay: true }, 200);
         }
       }
+    }
+
+    const duplicate = findDuplicatePendingBooking({
+      businessId: business.id,
+      customerEmail: scheduled.value.customerEmail,
+      startDate: scheduled.value.startDate,
+      endDate: scheduled.value.endDate,
+      timeSlot: scheduled.value.timeSlot,
+    });
+    if (duplicate) {
+      return c.json(
+        { error: "A pending request already exists for these dates" },
+        409,
+      );
     }
 
     const limited = consumeWrite("bookings", resolveClientIp(c), business.id);
@@ -828,6 +852,43 @@ app.post(
     );
   },
 );
+
+app.post(
+  "/v1/businesses/:id/reports",
+  async (c) => {
+    const business = getBusinessById(c.req.param("id"));
+    if (!business || !isPubliclyListed(business)) {
+      return c.json({ error: "Not found" }, 404);
+    }
+    let raw: unknown;
+    try {
+      raw = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    const parsed = parseReportBody(raw);
+    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+    const limited = consumeWrite("reports", resolveClientIp(c), business.id);
+    if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
+    const report = addListingReport({
+      businessId: business.id,
+      kind: parsed.value.kind,
+      note: parsed.value.note,
+    });
+    return c.json(
+      {
+        report: { id: report.id, kind: report.kind, createdAt: report.createdAt },
+        message: "Report received. Operators will review it.",
+      },
+      201,
+    );
+  },
+);
+
+app.get("/v1/reports", requireRole("admin"), (c) => {
+  const businessId = c.req.query("businessId") || undefined;
+  return c.json({ reports: listListingReports(businessId) });
+});
 
 app.get("/v1/bookings", requireAuth, (c) => {
   const user = c.get("user");

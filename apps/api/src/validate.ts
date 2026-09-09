@@ -219,8 +219,9 @@ export type PublicBookingInput = {
 };
 
 /**
- * Request-only bookings: client-supplied amounts are ignored. Availability and
- * price are not verified server-side at launch.
+ * Request-only bookings: client-supplied amounts are ignored. Mode, dates, and
+ * quantities are checked in assertBookingRequest; there is no priced inventory
+ * hold at launch.
  */
 export function parseBookingBody(body: unknown): ValidationResult<PublicBookingInput> {
   const obj = asObject(body);
@@ -269,6 +270,54 @@ export function parseBookingBody(body: unknown): ValidationResult<PublicBookingI
       notes: notes.value,
     },
   };
+}
+
+export function utcToday(now = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * Mode-specific booking rules after the body is structurally valid.
+ * Inventory calendars are not modelled yet — this rejects past dates,
+ * missing rental/event fields, and booking-disabled listings.
+ */
+export function assertBookingRequest(
+  mode: string,
+  input: PublicBookingInput,
+  opts: { today?: string } = {},
+): ValidationResult<PublicBookingInput> {
+  if (mode !== "service" && mode !== "rental" && mode !== "event") {
+    return fail("Booking not enabled");
+  }
+  const today = opts.today ?? utcToday();
+  if (input.startDate < today) {
+    return fail("startDate must be today or later");
+  }
+  if (mode === "rental" && !input.endDate) {
+    return fail("endDate is required for rentals");
+  }
+  if (mode === "event" && input.tickets === undefined) {
+    return fail("tickets is required for events");
+  }
+  return { ok: true, value: input };
+}
+
+export type PublicReportInput = {
+  kind: "correction" | "abuse";
+  note: string;
+};
+
+export function parseReportBody(body: unknown): ValidationResult<PublicReportInput> {
+  const obj = asObject(body);
+  if (!obj.ok) return obj;
+  const row = obj.value;
+  const kindRaw = row.kind;
+  if (kindRaw !== "correction" && kindRaw !== "abuse") {
+    return fail("kind must be correction or abuse");
+  }
+  const note = requireString(row, "note", { max: 2000, min: 12 });
+  if (!note.ok) return note;
+  return { ok: true, value: { kind: kindRaw, note: note.value } };
 }
 
 /** Fields owners may PATCH. Identity, ownership, verification stay server-controlled. */

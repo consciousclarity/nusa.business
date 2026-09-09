@@ -1,0 +1,34 @@
+---
+import Base from "../layouts/Base.astro";
+import { absoluteUrl } from "../lib/seo";
+import { t, withLocale, type Locale } from "../i18n/ui";
+
+const locale: Locale = Astro.locals.locale ?? "en";
+const url = absoluteUrl(Astro.request, withLocale("/terms", locale));
+---
+<Base
+  title={t(locale, "termsTitle")}
+  description="Terms for using nusa.business listings, claims, reviews, and booking requests."
+  canonical={url}
+  locale={locale}
+>
+  <section class="lede">
+    <h1>{t(locale, "terms")}</h1>
+    <p class="prose">
+      Listings are free. There is no marketplace commission at launch. Claiming a
+      business does not transfer editing rights until an operator approves the
+      claim.
+    </p>
+  </section>
+  <section class="section">
+    <h2>Reviews and booking requests</h2>
+    <p class="prose">
+      Reviews must be your own experience. Booking forms send a pending request
+      — they are not a confirmed reservation, inventory hold, or price quote.
+    </p>
+    <p class="prose">
+      Sample listings in local/dev data are labelled. Do not treat them as live
+      vendor pages.
+    </p>
+  </section>
+</Base>

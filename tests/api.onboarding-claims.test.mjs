@@ -67,6 +67,7 @@ writeFileSync(
     vendors: [],
     invites: [],
     recoveryTokens: [],
+    reports: [],
   }),
 );
 

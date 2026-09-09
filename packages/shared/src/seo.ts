@@ -106,6 +106,8 @@ export function localBusinessJsonLd(opts: {
   address?: string;
   telephone?: string;
   categories?: string[];
+  lat?: number;
+  lng?: number;
 }): Record<string, unknown> {
   const node: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -123,6 +125,18 @@ export function localBusinessJsonLd(opts: {
   }
   if (opts.telephone) node.telephone = opts.telephone;
   if (opts.categories?.length) node.additionalType = categoryLabels(opts.categories);
+  if (
+    typeof opts.lat === "number" &&
+    Number.isFinite(opts.lat) &&
+    typeof opts.lng === "number" &&
+    Number.isFinite(opts.lng)
+  ) {
+    node.geo = {
+      "@type": "GeoCoordinates",
+      latitude: opts.lat,
+      longitude: opts.lng,
+    };
+  }
   return node;
 }
 

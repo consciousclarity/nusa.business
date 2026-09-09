@@ -12,7 +12,7 @@
 | GET | `/v1/places?island=` | Place list |
 | GET | `/v1/search?q=&island=&place=&category=&{facet}=` | Flat search. Facet keys (cuisine, dietary, availability, …) are repeated query params; optional `lat`/`lng` for distance |
 | GET | `/v1/meta/categories` | Flat `categories` labels, `taxonomy` tree, and `facets` catalog (`global`, `byGroup`, `indexable` paths) |
-| GET | `/v1/host` | Debug: parsed `Host` header |
+| GET | `/v1/host` | Debug: parsed `Host` header. **404 when `NODE_ENV=production`.** |
 
 ## Portal listings
 
@@ -32,6 +32,7 @@ Listing writes return `409` if another listing occupies the same `(placeId, slug
 | GET | `/v1/claims` | List |
 | POST | `/v1/claims/:id/decide` | `{ status: approved\|rejected }` |
 | POST | `/v1/businesses/:id/reviews` | Multi-criteria review (runtime-validated) |
+| GET | `/v1/reports?businessId=` | Admin inbox of correction/abuse reports |
 
 ## Bookings
 
@@ -42,7 +43,8 @@ Listing writes return `409` if another listing occupies the same `(placeId, slug
 
 Booking body supports `startDate`, `endDate`, `timeSlot`, `guests`, `tickets` depending on mode.
 Client `totalAmount` is ignored — not a priced inventory hold.
-Dates must be actual calendar dates in `YYYY-MM-DD` format.
+Dates must be actual calendar dates in `YYYY-MM-DD` format, **not in the past** (UTC).
+Rentals require `endDate`; events require `tickets`. A second pending request with the same customer email and dates returns `409`.
 
 An `Idempotency-Key` (up to 128 characters) can replay only the same normalized booking payload for the same business. Reusing it with a changed payload returns `409` without booking data. Unchanged retries return the original booking without creating another request; use a new key after editing the request. Replay records are in memory and reset on API restart.
 Customer bookings are available through the authenticated owner/admin inbox, not public listing responses.

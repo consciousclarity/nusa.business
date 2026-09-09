@@ -4,8 +4,10 @@ import { describe, it } from "node:test";
 process.env.NUSA_AUTH_SECRET = "test-secret-at-least-16-chars-long";
 
 const {
+  assertBookingRequest,
   parseBookingBody,
   parseListingPatchBody,
+  parseReportBody,
   parseReviewBody,
 } = await import("../apps/api/dist/validate.js");
 
@@ -139,4 +141,54 @@ it("rejects owner status patches while allowing ordinary edits", () => {
     assert.equal(parseListingPatchBody({ name: "Allowed", status }).ok, false);
   }
   assert.equal(parseListingPatchBody({ name: "Allowed", slug: "new-slug" }).ok, true);
+});
+
+describe("assertBookingRequest", () => {
+  const good = {
+    customerName: "Sam",
+    customerEmail: "sam@example.test",
+    startDate: "2027-05-01",
+  };
+
+  it("rejects past dates and booking-disabled listings", () => {
+    assert.equal(
+      assertBookingRequest("service", good, { today: "2027-05-02" }).ok,
+      false,
+    );
+    assert.equal(assertBookingRequest("none", good, { today: "2027-05-01" }).ok, false);
+  });
+
+  it("requires rental endDate and event tickets", () => {
+    assert.equal(
+      assertBookingRequest("rental", good, { today: "2027-05-01" }).ok,
+      false,
+    );
+    assert.equal(
+      assertBookingRequest(
+        "rental",
+        { ...good, endDate: "2027-05-03" },
+        { today: "2027-05-01" },
+      ).ok,
+      true,
+    );
+    assert.equal(
+      assertBookingRequest("event", good, { today: "2027-05-01" }).ok,
+      false,
+    );
+    assert.equal(
+      assertBookingRequest("event", { ...good, tickets: 2 }, { today: "2027-05-01" }).ok,
+      true,
+    );
+  });
+});
+
+describe("parseReportBody", () => {
+  it("accepts correction notes and rejects short or unknown kinds", () => {
+    assert.equal(
+      parseReportBody({ kind: "correction", note: "Hours are wrong on Sunday." }).ok,
+      true,
+    );
+    assert.equal(parseReportBody({ kind: "spam", note: "Hours are wrong on Sunday." }).ok, false);
+    assert.equal(parseReportBody({ kind: "abuse", note: "too short" }).ok, false);
+  });
 });

@@ -107,11 +107,15 @@ const jsonLdBlocks = jsonLd
     <footer class="site-footer">
       <p>{t(locale, "footer")}</p>
       <p>
-        <a href={withLocale("/host/bali", locale)}>/host/bali</a>
+        <a href={withLocale("/privacy", locale)}>{t(locale, "privacy")}</a>
         <span aria-hidden="true"> · </span>
-        <a href={withLocale("/host/gianyar.bali", locale)}>/host/gianyar.bali</a>
+        <a href={withLocale("/terms", locale)}>{t(locale, "terms")}</a>
         <span aria-hidden="true"> · </span>
-        <a href={withLocale("/host/gianyar.bali/ubud", locale)}>/host/gianyar.bali/ubud</a>
+        <a href={withLocale("/support", locale)}>{t(locale, "support")}</a>
+        <span aria-hidden="true"> · </span>
+        <a href={withLocale("/claim", locale)}>{t(locale, "claimListing")}</a>
+        <span aria-hidden="true"> · </span>
+        <a href={portalUrl}>{t(locale, "navPortal")}</a>
       </p>
     </footer>
   </body>

@@ -35,7 +35,7 @@ npm run dev:portal   # :5173
 Dev tenants (no wildcard DNS):  
 http://localhost:4321/host/gianyar.bali/babi-guling-pande-egi
 
-Demo logins: `owner@example.com` / `owner123` · `agent@nusa.business` / `agent123` · `admin@nusa.business` / `admin123`
+Demo logins (local/dev only): see [docs/getting-started.md](docs/getting-started.md). Production does not create these accounts.
 
 ## Cloudflare
 

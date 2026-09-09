@@ -224,7 +224,9 @@ export {
 
 export {
   contactDigits,
+  mapsHref,
   telHref,
+  websiteHref,
   whatsappHref,
 } from "./contact-links.js";
 

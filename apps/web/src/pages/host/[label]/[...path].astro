@@ -20,8 +20,10 @@ import {
   facetQueryParams,
   facetValueLabel,
   geoNesting,
+  mapsHref,
   publicHostLine,
   telHref,
+  websiteHref,
   whatsappHref,
   type NestablePlace,
 } from "@nusa/shared";
@@ -253,8 +255,12 @@ type ListingPayload = {
     phone?: string;
     whatsapp?: string;
     website?: string;
+    lat?: number;
+    lng?: number;
     bookingMode: string;
     status: string;
+    sample?: boolean;
+    verifiedAt?: string;
     openingHours: { day: string; open: string; close: string; closed?: boolean }[];
   };
   reviews: {
@@ -296,14 +302,6 @@ const listingNest = placeMeta
   : hostNest;
 
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
-const hostPath = data
-  ? publicHostLine({
-      island: islandSlug!,
-      place: listingNest.hostPlace,
-      area: listingNest.area,
-      slug,
-    })
-  : "";
 const listingPath = withLocale(
   seoHostPath({
     island: islandSlug!,
@@ -314,15 +312,27 @@ const listingPath = withLocale(
   locale,
 );
 const listingUrl = absoluteUrl(req, listingPath);
-const stamp =
-  data?.business.status === "draft"
-    ? "Unclaimed"
+const stamp = data?.business.sample
+  ? t(locale, "sampleListing")
+  : data?.business.status === "claimed"
+    ? t(locale, "ownerVerified")
     : data?.business.status === "published"
-      ? null
-      : null;
+      ? t(locale, "listedUnclaimed")
+      : data?.business.status === "draft"
+        ? t(locale, "listedUnclaimed")
+        : null;
 
 const wa = data ? whatsappHref(data.business.whatsapp) : null;
 const phoneLink = data ? telHref(data.business.phone) : null;
+const directionsLink = data
+  ? mapsHref({
+      address: data.business.address,
+      lat: data.business.lat,
+      lng: data.business.lng,
+    })
+  : null;
+const siteLink = data ? websiteHref(data.business.website) : null;
+const bookingToday = new Date().toISOString().slice(0, 10);
 
 type DiscoveryNeighbor = {
   business: {
@@ -628,6 +638,8 @@ if (hub && categoryParam) {
       address: data.business.address,
       telephone: data.business.phone,
       categories: data.business.categories,
+      lat: data.business.lat,
+      lng: data.business.lng,
     }),
     breadcrumbJsonLd([
       { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
@@ -681,8 +693,6 @@ if (hub && categoryParam) {
     {stamp && <span class="stamp">{stamp}</span>}
 
     <dl class="kv">
-      <dt>Host</dt>
-      <dd>{hostPath}</dd>
       <dt>{t(locale, "category")}</dt>
       <dd>{data.business.categories.map(categoryLabel).join(" · ") || "—"}</dd>
       {data.business.address && (
@@ -717,32 +727,53 @@ if (hub && categoryParam) {
           </dd>
         </>
       )}
-      <dt>Booking</dt>
-      <dd>{data.business.bookingMode}</dd>
-      <dt>Status</dt>
-      <dd>{data.business.status}</dd>
+      {data.business.verifiedAt && (
+        <>
+          <dt>{t(locale, "lastVerified")}</dt>
+          <dd>
+            {new Date(data.business.verifiedAt).toLocaleDateString(
+              locale === "id" ? "id-ID" : "en-GB",
+              { dateStyle: "medium" },
+            )}
+          </dd>
+        </>
+      )}
     </dl>
 
     <p class="actions">
-      {wa && (
-        <a class="cta" href={wa} rel="noopener noreferrer">
-          {t(locale, "chatWhatsApp")}
+      {directionsLink && (
+        <a class="cta" href={directionsLink} rel="noopener noreferrer">
+          {t(locale, "directions")}
         </a>
       )}
       {phoneLink && (
-        <a class={`cta${wa ? " secondary" : ""}`} href={phoneLink}>
+        <a class={`cta${directionsLink ? " secondary" : ""}`} href={phoneLink}>
           {t(locale, "call")}
         </a>
       )}
+      {siteLink && (
+        <a
+          class="cta secondary"
+          href={siteLink}
+          rel="noopener noreferrer"
+        >
+          {t(locale, "website")}
+        </a>
+      )}
+      {wa && (
+        <a class="cta secondary" href={wa} rel="noopener noreferrer">
+          {t(locale, "chatWhatsApp")}
+        </a>
+      )}
+      {data.business.bookingMode !== "none" && (
+        <a class="cta secondary" href="#book">{t(locale, "book")}</a>
+      )}
       <a
-        class={`cta${wa || phoneLink ? " secondary" : ""}`}
+        class="cta secondary"
         href={`${portal}/claim?businessId=${data.business.id}`}
       >
         {t(locale, "claimThis")}
       </a>
-      {data.business.bookingMode !== "none" && (
-        <a class="cta secondary" href="#book">{t(locale, "book")} ({data.business.bookingMode})</a>
-      )}
     </p>
   </article>
 
@@ -952,9 +983,28 @@ if (hub && categoryParam) {
       </form>
     </section>
 
+    <section class="section" id="report">
+      <h2>{t(locale, "suggestCorrection")}</h2>
+      <form class="stack" id="report-form">
+        <label>
+          {t(locale, "reportNote")}
+          <textarea name="note" required minlength="12" rows="3"></textarea>
+        </label>
+        <label>
+          Kind
+          <select name="kind">
+            <option value="correction">Correction</option>
+            <option value="abuse">Abuse</option>
+          </select>
+        </label>
+        <button type="submit">{t(locale, "reportSend")}</button>
+        <p class="meta" id="report-msg" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
     {data.business.bookingMode !== "none" && (
       <section class="section" id="book">
-        <h2>Request a booking · {data.business.bookingMode}</h2>
+        <h2>Request a booking</h2>
         <p class="meta" id="booking-notice">
           Sends a pending request to the business. This is not a confirmed
           reservation and does not lock a price or inventory.
@@ -966,15 +1016,15 @@ if (hub && categoryParam) {
         >
           <label>Name <input name="customerName" required autocomplete="name" /></label>
           <label>Email <input type="email" name="customerEmail" required autocomplete="email" /></label>
-          <label>Date <input type="date" name="startDate" required /></label>
+          <label>Date <input type="date" name="startDate" required min={bookingToday} /></label>
           {data.business.bookingMode === "service" && (
             <label>Time slot <input name="timeSlot" placeholder="10:00" /></label>
           )}
           {data.business.bookingMode === "rental" && (
-            <label>End date <input type="date" name="endDate" /></label>
+            <label>End date <input type="date" name="endDate" required min={bookingToday} /></label>
           )}
           {data.business.bookingMode === "event" && (
-            <label>Tickets <input type="number" name="tickets" min="1" value="1" /></label>
+            <label>Tickets <input type="number" name="tickets" min="1" value="1" required /></label>
           )}
           <button type="submit">Submit request</button>
           <p class="meta" id="booking-msg" role="status" aria-live="polite"></p>
@@ -1115,6 +1165,43 @@ if (hub && categoryParam) {
     } finally {
       bookingForm.dataset.busy = "0";
       lockForm(bookingForm, false);
+    }
+  });
+
+  const reportForm = document.getElementById("report-form");
+  const reportMsg = document.getElementById("report-msg");
+  reportForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (reportForm.dataset.busy === "1") return;
+    const fd = new FormData(reportForm);
+    reportForm.dataset.busy = "1";
+    lockForm(reportForm, true);
+    setStatus(reportMsg, "Sending report…", false);
+    try {
+      const res = await fetch(`${apiBase}/v1/businesses/${businessId}/reports`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          kind: fd.get("kind") || "correction",
+          note: fd.get("note"),
+        }),
+      });
+      if (res.ok) {
+        setStatus(reportMsg, "Report received. Operators will review it.", false);
+        reportForm.reset();
+      } else {
+        let detail = `Report failed (${res.status}).`;
+        try {
+          const data = await res.json();
+          if (data?.error) detail = data.error;
+        } catch {}
+        setStatus(reportMsg, detail, true);
+      }
+    } catch {
+      setStatus(reportMsg, "Network error — your note was kept. Try again.", true);
+    } finally {
+      reportForm.dataset.busy = "0";
+      lockForm(reportForm, false);
     }
   });
   // Written by apps/web/scripts/copy-vendor.mjs into public/vendor/.

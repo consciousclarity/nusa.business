@@ -34,6 +34,8 @@ export type PublicBusiness = {
   bookingMode: Business["bookingMode"];
   vendorId?: string;
   facets?: Record<string, string[]>;
+  sample?: boolean;
+  verifiedAt?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -62,6 +64,8 @@ export function toPublicBusiness(business: Business): PublicBusiness {
     bookingMode: business.bookingMode,
     vendorId: business.vendorId,
     facets: business.facets,
+    sample: business.sample === true ? true : undefined,
+    verifiedAt: business.verifiedAt,
     createdAt: business.createdAt,
     updatedAt: business.updatedAt,
   };

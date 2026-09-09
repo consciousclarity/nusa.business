@@ -11,6 +11,8 @@
   last-known-good; corrupt primary/backup refuse silent re-seed.
 - CORS: browser origins must match `https://*.nusa.business` (or loopback in
   non-production), plus optional `NUSA_CORS_ORIGINS` — no reflect-any-origin.
+- Public HTML sends `Content-Security-Policy-Report-Only` (inline scripts still
+  required for listing widgets). There is no report collector yet.
 - Demo catalog: **not** auto-created when `NODE_ENV=production`. See
   [demo-bootstrap.md](./demo-bootstrap.md).
 
@@ -23,6 +25,7 @@
 5. Shared rate-limit store before multiple API replicas
 6. Secrets only via env / vault — never demo passwords in production
 7. Postgres cutover when a single JSON file is no longer enough
+8. CSP report collector + tighten `script-src` once listing widgets are hashed
 
 ## Reporting
 

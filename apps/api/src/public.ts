@@ -33,6 +33,7 @@ export type PublicBusinessCard = {
   verifiedAt?: string;
   /** True when a field agent registered the listing; never the agent user id. */
   fieldRegistered?: boolean;
+  facets?: Record<string, string[]>;
   createdAt: string;
   updatedAt: string;
 };
@@ -66,6 +67,7 @@ export function toPublicBusinessCard(business: Business): PublicBusinessCard {
     sample: business.sample === true ? true : undefined,
     verifiedAt: business.verifiedAt,
     fieldRegistered: business.registeredByAgentId ? true : undefined,
+    facets: business.facets,
     createdAt: business.createdAt,
     updatedAt: business.updatedAt,
   };
@@ -82,7 +84,6 @@ export function toPublicBusiness(business: Business): PublicBusiness {
     openingHours: business.openingHours,
     faq: business.faq,
     bookingMode: business.bookingMode,
-    facets: business.facets,
   };
 }
 

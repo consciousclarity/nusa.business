@@ -41,10 +41,10 @@ if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
 const isFacetBrowse = pathParts[1] === "c";
 if (isFacetBrowse) {
   if (pathParts.length !== 3 && pathParts.length !== 5) {
-    return Astro.rewrite("/404");
+    return Astro.rewrite(withLocale("/404", locale));
   }
 } else if (pathParts.length < 1 || pathParts.length > 2) {
-  return Astro.rewrite("/404");
+  return Astro.rewrite(withLocale("/404", locale));
 }
 
 const [hostPlaceSlug, islandSlug] = parts;
@@ -55,10 +55,10 @@ const islandDetail = await apiOrNull<{
   island: { slug: string; name: string };
   places: HubPlace[];
 }>(`/v1/islands/${islandSlug}`);
-if (!islandDetail) return Astro.rewrite("/404");
+if (!islandDetail) return Astro.rewrite(withLocale("/404", locale));
 
 const hostPlace = islandDetail.places.find((p) => p.slug === hostPlaceSlug);
-if (!hostPlace) return Astro.rewrite("/404");
+if (!hostPlace) return Astro.rewrite(withLocale("/404", locale));
 
 const placesById = Object.fromEntries(
   islandDetail.places.map((p) => [p.id, p]),
@@ -113,9 +113,9 @@ if (isFacetBrowse) {
       p.parentPlaceId === hostPlace.id &&
       p.type === "tourist_area",
   );
-  if (!child) return Astro.rewrite("/404");
+  if (!child) return Astro.rewrite(withLocale("/404", locale));
   const resolved = resolveFacetBrowse(pathParts.slice(2), Astro.url.searchParams);
-  if (!resolved.ok) return Astro.rewrite("/404");
+  if (!resolved.ok) return Astro.rewrite(withLocale("/404", locale));
   if (resolved.promoted) {
     const q = facetQueryParams(resolved.promoted).toString();
     return Astro.redirect(
@@ -215,12 +215,12 @@ if (pathParts.length === 1) {
     hub = await apiOrNull<PlaceHubPayload>(
       `/v1/islands/${islandSlug}/places/${child.slug}`,
     );
-    if (!hub) return Astro.rewrite("/404");
+    if (!hub) return Astro.rewrite(withLocale("/404", locale));
   }
 } else if (!isFacetBrowse) {
   const areaSlug = pathParts[0]!;
   const areaPlace = islandDetail.places.find((p) => p.slug === areaSlug);
-  if (!areaPlace) return Astro.rewrite("/404");
+  if (!areaPlace) return Astro.rewrite(withLocale("/404", locale));
   const areaNest = geoNesting(areaPlace, placesById);
   if (areaNest.hostPlace !== hostPlaceSlug || !areaNest.area) {
     if (areaNest.area) {
@@ -237,7 +237,7 @@ if (pathParts.length === 1) {
         301,
       );
     }
-    return Astro.rewrite("/404");
+    return Astro.rewrite(withLocale("/404", locale));
   }
   placeSlug = areaSlug;
   slug = pathParts[1]!;
@@ -285,7 +285,7 @@ const data = hub || areaFacet
   : await apiOrNull<ListingPayload>(
       `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}`,
     );
-if (!hub && !areaFacet && !data) return Astro.rewrite("/404");
+if (!hub && !areaFacet && !data) return Astro.rewrite(withLocale("/404", locale));
 
 const placeMeta = hub || areaFacet
   ? null

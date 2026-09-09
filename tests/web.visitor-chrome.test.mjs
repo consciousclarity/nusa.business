@@ -69,7 +69,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(listing, /visitorError\(/);
     assert.doesNotMatch(listing, /data\?\.error\) detail = data\.error/);
     assert.doesNotMatch(listing, /data\.notice \|\|/);
-    assert.match(listing, /Astro\.rewrite\("\/404"\)/);
+    assert.match(listing, /Astro\.rewrite\(withLocale\("\/404", locale\)\)/);
   });
 
   it("listing actions put contact first and claim second", () => {
@@ -159,7 +159,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(notFound, /t\(locale, "notFoundH1"\)/);
     assert.match(notFound, /robots="noindex,follow"/);
     assert.match(notFound, /withLocale\("\/search", locale\)/);
-    assert.match(listing, /Astro\.rewrite\("\/404"\)/);
+    assert.match(listing, /Astro\.rewrite\(withLocale\("\/404", locale\)\)/);
     assert.doesNotMatch(listing, /new Response\(null, \{ status: 404 \}/);
   });
 });

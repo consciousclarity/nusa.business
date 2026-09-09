@@ -44,7 +44,7 @@ if (parts.length !== 1 && parts.length !== 2) {
 }
 
 const resolved = resolveFacetBrowse(segments, Astro.url.searchParams);
-if (!resolved.ok) return Astro.rewrite("/404");
+if (!resolved.ok) return Astro.rewrite(withLocale("/404", locale));
 
 const islandSlug = parts.length === 2 ? parts[1]! : parts[0]!;
 const hostPlaceSlug = parts.length === 2 ? parts[0] : undefined;
@@ -53,7 +53,7 @@ const islandDetail = await apiOrNull<{
   island: { slug: string; name: string };
   places: HubPlace[];
 }>(`/v1/islands/${islandSlug}`);
-if (!islandDetail) return Astro.rewrite("/404");
+if (!islandDetail) return Astro.rewrite(withLocale("/404", locale));
 
 const placesById = Object.fromEntries(
   islandDetail.places.map((p) => [p.id, p]),
@@ -64,7 +64,7 @@ let area: HubPlace | undefined;
 
 if (hostPlaceSlug) {
   hostPlace = islandDetail.places.find((p) => p.slug === hostPlaceSlug);
-  if (!hostPlace) return Astro.rewrite("/404");
+  if (!hostPlace) return Astro.rewrite(withLocale("/404", locale));
   const nest = geoNesting(hostPlace, placesById);
   if (nest.area) {
     const segs = facetPathSegments(resolved.browse);

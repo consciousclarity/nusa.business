@@ -35,9 +35,9 @@ GO. Read-only live HTML:
 bash scripts/live-public-check.sh
 ```
 
-That script currently **fails** homepage visitor chrome (`class="resolver"`,
-`kind=nation`) until the follow-up is deployed. Listing API origin may already
-pass. Cursor agents must not deploy.
+That script currently **fails** homepage visitor chrome on `/` and `/id`
+(`class="resolver"`, `kind=nation`, missing `name="q"`) until the follow-up is
+deployed. Listing API origin may already pass. Cursor agents must not deploy.
 
 ## Operator gates (live VPS)
 

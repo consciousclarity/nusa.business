@@ -45,7 +45,7 @@ and the operator list below.
 
 ### Assumptions (not treated as proven bugs)
 
-- Live `nusa.business` homepage (2026-09-09 GET) still has `kind=nation` resolver chrome and `/host/…` footer — this PR’s visitor chrome is **not deployed**.
+- Live `nusa.business/` and `/id` (2026-09-09 GET) still have `kind=nation` resolver chrome and `/host/…` footer — this PR’s visitor chrome is **not deployed**. Live `/id` also lacks the search field (`name="q"`).
 - Live listing HTML already embeds `https://api.nusa.business` (not `http://api:8787`). Hermes should still confirm env after deploy.
 - Live `.data/store.json` may still contain seed emails — **unverified**. Dry-run in [demo-bootstrap.md](./demo-bootstrap.md).
 - Process supervisor is PM2 vs Compose — Hermes 2026-09-07 saw PM2.
@@ -60,9 +60,10 @@ bash scripts/live-public-check.sh
 ```
 
 That script does not SSH or mutate the VPS. It currently **fails** on the
-live homepage (`class="resolver"`, `kind=nation`) until this PR is deployed.
-Listing HTML already passing the `http://api:8787` / `https://api.nusa.business`
-checks is not a substitute for homepage visitor chrome.
+live homepage **and** `/id` (`class="resolver"`, `kind=nation`, missing
+`name="q"`) until this PR is deployed. Listing HTML already passing the
+`http://api:8787` / `https://api.nusa.business` checks is not a substitute for
+homepage visitor chrome.
 
 On the VPS:
 
@@ -85,7 +86,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Production cannot auto-create demo users | pass (code) | Live store inventory unverified |
 | Public docs do not present demo passwords as production logins | pass | Local table remains in getting-started |
 | Browser API origin fails closed in production builds | pass (code + live listing HTML) | Live homepage still old chrome; env re-check after deploy |
-| Live homepage visitor chrome | fail (live) | `scripts/live-public-check.sh` (2026-09-09): `class="resolver"`, `kind=nation`, `/host/bali` footer |
+| Live homepage visitor chrome | fail (live) | EN and `/id` (2026-09-09): `class="resolver"`, `kind=nation`, `/host/bali`, no `name="q"` |
 | Nation homepage island links on `nusa.business` | pass (this branch) | `tenantHref`; unbound `publicUrl` removed |
 | Reviews check HTTP status; keep text on failure | pass | Not submitted to production |
 | Bookings reject past dates, bad quantities, duplicates | pass (code) | No priced inventory yet — request-only |

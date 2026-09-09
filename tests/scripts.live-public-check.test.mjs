@@ -20,6 +20,8 @@ describe("live public check script", () => {
     assert.match(script, /http:\/\/api:8787/);
     assert.match(script, /https:\/\/api\.nusa\.business/);
     assert.match(script, /nusa\.business\//);
+    assert.match(script, /nusa\.business\/id/);
+    assert.match(script, /name="q"/);
     assert.match(script, /gianyar\.bali\.nusa\.business/);
   });
 });

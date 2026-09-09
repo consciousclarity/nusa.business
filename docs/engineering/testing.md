@@ -33,13 +33,13 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Contact links | `tests/shared.contact-links.test.mjs` | WhatsApp `wa.me` and `tel:` normalisation for Indonesian numbers. |
 | Geo helpers | `tests/shared.geo.test.mjs` | Address normalisation + haversine for listing discovery. |
 | Listing discovery | `tests/db.discovery.test.mjs` | Same-address peers, similar ≤2 km, category nearby filter. |
+| Listing coord backfill | `tests/scripts.backfill-listing-coords.test.mjs` | Standalone ops script fills missing lat/lng from seed + place centroids; does not import `@nusa/db`. |
 | Production bootstrap | `tests/db.bootstrap.test.mjs` | Production missing store refuses demo seed; bootstrap admin creates geography-only store; existing stores are preserved. |
 | JSON durability | `tests/db.persist.test.mjs` | Atomic write + `.bak` rotation; recover truncated `store.json`; refuse silent re-seed when both files are corrupt. |
 | Public privacy | `tests/api.public-privacy.test.mjs` | Anonymous listing/search responses omit bookings, review emails, and ownership internals; drafts 404; owners cannot read each other's bookings. |
 | Public a11y chrome | `tests/web.a11y-chrome.test.mjs` | Skip link, crumb semantics, AA label colour, review fieldset, booking `aria-*` wiring. |
 | Public SEO helpers | `tests/web.seo.test.mjs` | Canonical origin, `/host` paths, LocalBusiness JSON-LD, sitemap XML escaping. |
 | Public perf budget | `tests/web.perf-budget.test.mjs` | No webfonts/islands; CSS size ceilings; HTML cache headers. See [performance.md](./performance.md). |
-| Listing coord backfill | `tests/scripts.backfill-listing-coords.test.mjs` | Standalone VPS script fills missing `lat`/`lng` from seed / place centroids without re-seeding. |
 
 ## Adding a test
 

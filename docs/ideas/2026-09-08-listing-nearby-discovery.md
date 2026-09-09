@@ -42,4 +42,7 @@ Map and list always show the **same** nearby results for the active category. No
 - `GET .../businesses/:slug/discovery?category=&radiusKm=2`
 - Seed Bali coords so Gianyar cluster demos co-location + 2 km.
 - Public page SSR sections + small client script to refetch discovery on category change and sync markers.
-- Live VPS listings created before seed pins have no `lat`/`lng`, so discovery `origin` is null until Warden runs [backfill-listing-coords.md](../ops/backfill-listing-coords.md). Do not re-seed production.
+
+Production `store.json` is never re-seeded. Listings that landed without
+lat/lng (Ibu Oka live returned `origin: null`) need the operator backfill in
+[docs/ops/backfill-listing-coords.md](../ops/backfill-listing-coords.md).

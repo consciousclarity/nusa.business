@@ -34,6 +34,14 @@ describe("listing discovery wiring", () => {
     }
   });
 
+  it("substitutes href tokens in a single pass", () => {
+    // Chained replaces re-scan text they just inserted, so a place slug
+    // reading "x-slug-x" rewrote the hostname and pointed the link at the
+    // wrong tenant.
+    assert.doesNotMatch(script, /\.replaceAll\("x-(?:place|island|slug)-x"/);
+    assert.match(script, /replace\(\s*\/x-\(\?:place\|island\|slug\)-x\/g/);
+  });
+
   it("seeds the map from the server-rendered set", () => {
     // Without a seed the map opens on the fallback view with no markers and
     // only agrees with the list after a category chip is clicked.

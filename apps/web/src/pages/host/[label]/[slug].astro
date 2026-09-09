@@ -690,11 +690,18 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
 
     // Substituted into the template tenantHref produced for this request, so
     // refetched links keep the locale prefix and the canonical tenant host.
+    // One pass: chained replaces would re-scan text they had just inserted,
+    // so a slug that happens to read "x-slug-x" could rewrite the hostname.
     function hrefFor(n) {
-      return hrefTemplate
-        .replaceAll("x-place-x", n.place.slug)
-        .replaceAll("x-island-x", n.island.slug)
-        .replaceAll("x-slug-x", n.business.slug);
+      const values = {
+        "x-place-x": n.place.slug,
+        "x-island-x": n.island.slug,
+        "x-slug-x": n.business.slug,
+      };
+      return hrefTemplate.replace(
+        /x-(?:place|island|slug)-x/g,
+        (token) => values[token],
+      );
     }
 
     function renderList(items) {

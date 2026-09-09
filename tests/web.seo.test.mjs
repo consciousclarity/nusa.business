@@ -103,6 +103,26 @@ describe("public SEO helpers (C11)", () => {
     ]);
   });
 
+  it("localBusinessJsonLd emits openingHoursSpecification", () => {
+    const node = localBusinessJsonLd({
+      name: "Clinic",
+      description: "24h",
+      url: "https://example.test/clinic",
+      openingHours: [
+        { day: "Mon", open: "00:00", close: "24:00" },
+        { day: "Sun", open: "09:00", close: "17:00", closed: true },
+      ],
+    });
+    assert.deepEqual(node.openingHoursSpecification, [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Monday",
+        opens: "00:00",
+        closes: "23:59",
+      },
+    ]);
+  });
+
   it("localeSitemapPaths adds /id counterparts once", () => {
     assert.deepEqual(localeSitemapPaths("/"), ["/", "/id"]);
     assert.deepEqual(localeSitemapPaths("/host/bali"), [

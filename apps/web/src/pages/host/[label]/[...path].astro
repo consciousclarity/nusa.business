@@ -35,30 +35,30 @@ const pathParts = String(Astro.params.path ?? "")
   .split("/")
   .filter(Boolean);
 const parts = label.split(".");
+const locale: Locale = Astro.locals.locale ?? "en";
 if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
 
 const isFacetBrowse = pathParts[1] === "c";
 if (isFacetBrowse) {
   if (pathParts.length !== 3 && pathParts.length !== 5) {
-    return new Response(null, { status: 404 });
+    return Astro.rewrite("/404");
   }
 } else if (pathParts.length < 1 || pathParts.length > 2) {
-  return new Response(null, { status: 404 });
+  return Astro.rewrite("/404");
 }
 
 const [hostPlaceSlug, islandSlug] = parts;
 const req = Astro.request;
-const locale: Locale = Astro.locals.locale ?? "en";
 const categoryParam = (Astro.url.searchParams.get("category") || "").trim();
 
 const islandDetail = await apiOrNull<{
   island: { slug: string; name: string };
   places: HubPlace[];
 }>(`/v1/islands/${islandSlug}`);
-if (!islandDetail) return new Response(null, { status: 404 });
+if (!islandDetail) return Astro.rewrite("/404");
 
 const hostPlace = islandDetail.places.find((p) => p.slug === hostPlaceSlug);
-if (!hostPlace) return new Response(null, { status: 404 });
+if (!hostPlace) return Astro.rewrite("/404");
 
 const placesById = Object.fromEntries(
   islandDetail.places.map((p) => [p.id, p]),
@@ -113,9 +113,9 @@ if (isFacetBrowse) {
       p.parentPlaceId === hostPlace.id &&
       p.type === "tourist_area",
   );
-  if (!child) return new Response(null, { status: 404 });
+  if (!child) return Astro.rewrite("/404");
   const resolved = resolveFacetBrowse(pathParts.slice(2), Astro.url.searchParams);
-  if (!resolved.ok) return new Response(null, { status: 404 });
+  if (!resolved.ok) return Astro.rewrite("/404");
   if (resolved.promoted) {
     const q = facetQueryParams(resolved.promoted).toString();
     return Astro.redirect(
@@ -215,12 +215,12 @@ if (pathParts.length === 1) {
     hub = await apiOrNull<PlaceHubPayload>(
       `/v1/islands/${islandSlug}/places/${child.slug}`,
     );
-    if (!hub) return new Response(null, { status: 404 });
+    if (!hub) return Astro.rewrite("/404");
   }
 } else if (!isFacetBrowse) {
   const areaSlug = pathParts[0]!;
   const areaPlace = islandDetail.places.find((p) => p.slug === areaSlug);
-  if (!areaPlace) return new Response(null, { status: 404 });
+  if (!areaPlace) return Astro.rewrite("/404");
   const areaNest = geoNesting(areaPlace, placesById);
   if (areaNest.hostPlace !== hostPlaceSlug || !areaNest.area) {
     if (areaNest.area) {
@@ -237,7 +237,7 @@ if (pathParts.length === 1) {
         301,
       );
     }
-    return new Response(null, { status: 404 });
+    return Astro.rewrite("/404");
   }
   placeSlug = areaSlug;
   slug = pathParts[1]!;
@@ -285,7 +285,7 @@ const data = hub || areaFacet
   : await apiOrNull<ListingPayload>(
       `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}`,
     );
-if (!hub && !areaFacet && !data) return new Response(null, { status: 404 });
+if (!hub && !areaFacet && !data) return Astro.rewrite("/404");
 
 const placeMeta = hub || areaFacet
   ? null
@@ -347,6 +347,16 @@ const listingCopy = {
   reportSending: t(locale, "reportSending"),
   reportReceived: t(locale, "reportReceived"),
   reportNetwork: t(locale, "reportNetwork"),
+  bookingPastDate: t(locale, "bookingPastDate"),
+  bookingNeedEndDate: t(locale, "bookingNeedEndDate"),
+  bookingNeedTickets: t(locale, "bookingNeedTickets"),
+  bookingEndBeforeStart: t(locale, "bookingEndBeforeStart"),
+  bookingDuplicate: t(locale, "bookingDuplicate"),
+  bookingDisabled: t(locale, "bookingDisabled"),
+  bookingRejected: t(locale, "bookingRejected"),
+  reviewFailed: t(locale, "reviewFailed"),
+  reportFailed: t(locale, "reportFailed"),
+  requestFailed: t(locale, "requestFailed"),
   mapHere: t(locale, "mapHere"),
   kmAway: t(locale, "kmAway"),
 };
@@ -672,6 +682,7 @@ if (hub && categoryParam) {
       lat: data.business.lat,
       lng: data.business.lng,
       locale,
+      openingHours: data.business.openingHours,
     }),
     breadcrumbJsonLd([
       { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
@@ -1073,6 +1084,33 @@ if (hub && categoryParam) {
   function withN(key, fallback, n) {
     return txt(key, fallback).replace("{n}", String(n ?? ""));
   }
+  const errorCodes = {
+    BOOKING_PAST_DATE: ["bookingPastDate", "Date must be today or later."],
+    BOOKING_NEED_END_DATE: ["bookingNeedEndDate", "Rentals need an end date."],
+    BOOKING_NEED_TICKETS: ["bookingNeedTickets", "Events need a ticket count."],
+    BOOKING_END_BEFORE_START: [
+      "bookingEndBeforeStart",
+      "End date must be on or after the start date.",
+    ],
+    BOOKING_DUPLICATE: [
+      "bookingDuplicate",
+      "A pending request already exists for these dates.",
+    ],
+    BOOKING_NOT_ENABLED: ["bookingDisabled", "Booking is not available for this listing."],
+  };
+  function visitorError(kind, status, data) {
+    const mapped = data && data.code ? errorCodes[data.code] : null;
+    if (mapped) return txt(mapped[0], mapped[1]);
+    if (kind === "booking") {
+      if (status === 409) {
+        return txt("bookingDuplicate", "A pending request already exists for these dates.");
+      }
+      return txt("bookingRejected", "Request could not be sent. Check the dates and try again.");
+    }
+    if (kind === "review") return txt("reviewFailed", "Review could not be sent. Try again.");
+    if (kind === "report") return txt("reportFailed", "Report could not be sent. Try again.");
+    return txt("requestFailed", "Could not send. Try again.");
+  }
   function setStatus(el, text, isError) {
     if (!el) return;
     el.textContent = text;
@@ -1116,11 +1154,11 @@ if (hub && categoryParam) {
         location.reload();
         return;
       }
-      let detail = `Review failed (${res.status}).`;
+      let data = {};
       try {
-        const data = await res.json();
-        if (data?.error) detail = data.error;
+        data = await res.json();
       } catch {}
+      let detail = visitorError("review", res.status, data);
       if (res.status === 429) {
         const ra = res.headers.get("Retry-After");
         detail = ra
@@ -1171,20 +1209,19 @@ if (hub && categoryParam) {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        const data = await res.json();
         setStatus(
           bookingMsg,
-          data.notice || txt("bookingPendingOk", "Request recorded as pending. This is not a confirmed reservation."),
+          txt("bookingPendingOk", "Request recorded as pending. This is not a confirmed reservation."),
           false,
         );
         bookingForm.reset();
         bookingIdempotencyKey = crypto.randomUUID();
       } else {
-        let detail = `Request failed (${res.status}).`;
+        let data = {};
         try {
-          const data = await res.json();
-          if (data?.error) detail = data.error;
+          data = await res.json();
         } catch {}
+        let detail = visitorError("booking", res.status, data);
         if (res.status === 429) {
           const ra = res.headers.get("Retry-After");
           detail = ra
@@ -1227,12 +1264,11 @@ if (hub && categoryParam) {
         setStatus(reportMsg, txt("reportReceived", "Report received. Operators will review it."), false);
         reportForm.reset();
       } else {
-        let detail = `Report failed (${res.status}).`;
+        let data = {};
         try {
-          const data = await res.json();
-          if (data?.error) detail = data.error;
+          data = await res.json();
         } catch {}
-        setStatus(reportMsg, detail, true);
+        setStatus(reportMsg, visitorError("report", res.status, data), true);
       }
     } catch {
       setStatus(reportMsg, txt("reportNetwork", "Network error — your note was kept. Try again."), true);

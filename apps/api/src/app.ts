@@ -796,7 +796,7 @@ app.post(
     // never touched the booking resource, and the owner can enable booking
     // mid-window — charging it would leave real customers blocked afterwards.
     if (business.bookingMode === "none") {
-      return c.json({ error: "Booking not enabled" }, 400);
+      return c.json({ error: "Booking not enabled", code: "BOOKING_NOT_ENABLED" }, 400);
     }
 
     let raw: unknown;
@@ -806,9 +806,23 @@ app.post(
       return c.json({ error: "Malformed JSON" }, 400);
     }
     const parsed = parseBookingBody(raw);
-    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+    if (!parsed.ok) {
+      return c.json(
+        parsed.code
+          ? { error: parsed.error, code: parsed.code }
+          : { error: parsed.error },
+        400,
+      );
+    }
     const scheduled = assertBookingRequest(business.bookingMode, parsed.value);
-    if (!scheduled.ok) return c.json({ error: scheduled.error }, 400);
+    if (!scheduled.ok) {
+      return c.json(
+        scheduled.code
+          ? { error: scheduled.error, code: scheduled.code }
+          : { error: scheduled.error },
+        400,
+      );
+    }
 
     const idemKey = (c.req.header("idempotency-key") || "").trim();
     if (idemKey.length > 128) {
@@ -837,7 +851,10 @@ app.post(
     });
     if (duplicate) {
       return c.json(
-        { error: "A pending request already exists for these dates" },
+        {
+          error: "A pending request already exists for these dates",
+          code: "BOOKING_DUPLICATE",
+        },
         409,
       );
     }

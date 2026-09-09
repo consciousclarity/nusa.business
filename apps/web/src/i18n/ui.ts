@@ -184,6 +184,21 @@ const ui = {
     supportOwnerH2: "Owner accounts",
     supportOwner:
       "Owners create a free account, then claim an existing listing or add a missing one. Editing starts only after we approve ownership. Field-agent and admin accounts still use an invite.",
+    notFoundTitle: "Page not found — nusa.business",
+    notFoundH1: "Page not found",
+    notFoundLede:
+      "That listing or page is not here. Search for a business, or go back to the homepage.",
+    backHome: "Back to homepage",
+    bookingPastDate: "Date must be today or later.",
+    bookingNeedEndDate: "Rentals need an end date.",
+    bookingNeedTickets: "Events need a ticket count.",
+    bookingEndBeforeStart: "End date must be on or after the start date.",
+    bookingDuplicate: "A pending request already exists for these dates.",
+    bookingDisabled: "Booking is not available for this listing.",
+    bookingRejected: "Request could not be sent. Check the dates and try again.",
+    reviewFailed: "Review could not be sent. Try again.",
+    reportFailed: "Report could not be sent. Try again.",
+    requestFailed: "Could not send. Try again.",
   },
   id: {
     navClaim: "Klaim",
@@ -361,6 +376,21 @@ const ui = {
     supportOwnerH2: "Akun pemilik",
     supportOwner:
       "Pemilik membuat akun gratis, lalu klaim listing yang sudah ada atau tambah yang belum ada. Hak sunting baru aktif setelah kami menyetujui kepemilikan. Akun agen lapangan dan admin tetap memakai undangan.",
+    notFoundTitle: "Halaman tidak ditemukan — nusa.business",
+    notFoundH1: "Halaman tidak ditemukan",
+    notFoundLede:
+      "Listing atau halaman itu tidak ada. Cari bisnis, atau kembali ke beranda.",
+    backHome: "Kembali ke beranda",
+    bookingPastDate: "Tanggal harus hari ini atau setelahnya.",
+    bookingNeedEndDate: "Sewa membutuhkan tanggal selesai.",
+    bookingNeedTickets: "Acara membutuhkan jumlah tiket.",
+    bookingEndBeforeStart: "Tanggal selesai harus pada atau setelah tanggal mulai.",
+    bookingDuplicate: "Permintaan tertunda untuk tanggal ini sudah ada.",
+    bookingDisabled: "Pemesanan tidak tersedia untuk listing ini.",
+    bookingRejected: "Permintaan tidak terkirim. Periksa tanggal dan coba lagi.",
+    reviewFailed: "Ulasan tidak terkirim. Coba lagi.",
+    reportFailed: "Laporan tidak terkirim. Coba lagi.",
+    requestFailed: "Tidak terkirim. Coba lagi.",
   },
 } as const;
 

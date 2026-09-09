@@ -152,11 +152,12 @@ describe("assertBookingRequest", () => {
   };
 
   it("rejects past dates and booking-disabled listings", () => {
-    assert.equal(
-      assertBookingRequest("service", good, { today: "2027-05-02" }).ok,
-      false,
-    );
-    assert.equal(assertBookingRequest("none", good, { today: "2027-05-01" }).ok, false);
+    const past = assertBookingRequest("service", good, { today: "2027-05-02" });
+    assert.equal(past.ok, false);
+    if (!past.ok) assert.equal(past.code, "BOOKING_PAST_DATE");
+    const disabled = assertBookingRequest("none", good, { today: "2027-05-01" });
+    assert.equal(disabled.ok, false);
+    if (!disabled.ok) assert.equal(disabled.code, "BOOKING_NOT_ENABLED");
   });
 
   it("requires rental endDate and event tickets", () => {

@@ -38,6 +38,10 @@ const browse = readFileSync(
   new URL("../apps/web/src/components/CategoryBrowse.astro", import.meta.url),
   "utf8",
 );
+const notFound = readFileSync(
+  new URL("../apps/web/src/pages/404.astro", import.meta.url),
+  "utf8",
+);
 
 describe("visitor chrome (no debug resolver)", () => {
   it("homepage is search-first and omits host-resolver jargon", () => {
@@ -62,6 +66,10 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(listing, /weekdayLabel\(locale, h\.day\)/);
     assert.match(listing, /categoryLabel\(cat, locale\)/);
     assert.match(listing, /localBusinessJsonLd\(\{[\s\S]*locale,/);
+    assert.match(listing, /visitorError\(/);
+    assert.doesNotMatch(listing, /data\?\.error\) detail = data\.error/);
+    assert.doesNotMatch(listing, /data\.notice \|\|/);
+    assert.match(listing, /Astro\.rewrite\("\/404"\)/);
   });
 
   it("listing actions put contact first and claim second", () => {
@@ -145,5 +153,13 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(listing, /label: data.business.slug/);
     assert.doesNotMatch(listing, /label: islandSlug!/);
     assert.doesNotMatch(base, /crumb.length > 0 && <span class="sep"/);
+  });
+
+  it("missing routes render a localized 404 with search, not a blank body", () => {
+    assert.match(notFound, /t\(locale, "notFoundH1"\)/);
+    assert.match(notFound, /robots="noindex,follow"/);
+    assert.match(notFound, /withLocale\("\/search", locale\)/);
+    assert.match(listing, /Astro\.rewrite\("\/404"\)/);
+    assert.doesNotMatch(listing, /new Response\(null, \{ status: 404 \}/);
   });
 });

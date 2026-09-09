@@ -36,6 +36,8 @@ and the operator list below.
 | F15 | `/id` category browse filters used English facet keys (`Price level`, `Service mode`). | P1 | `packages/shared` facets-id + CategoryBrowse | `facetKeyLabel` / `facetValueLabel(..., locale)` | `tests/shared.facets.test.mjs` |
 | F16 | `/id` listing JSON-LD `additionalType` used English taxonomy labels (`Food & Drink`). | P1 | `packages/shared/src/seo.ts`, listing `[...path].astro` | `localBusinessJsonLd` takes `locale`; `inLanguage` + Indonesian `additionalType` | `tests/web.seo.test.mjs` |
 | F17 | Sitemap listed English `/host` paths only; `/id` pages existed with hreflang but were not submitted. | P1 | `sitemap.xml.ts`, `localeSitemapPaths` | Emit `/id` counterparts; `og:locale` + `hreflang="x-default"` | `tests/web.seo.test.mjs`, `tests/web.visitor-chrome.test.mjs` |
+| F18 | `/id` listing forms showed English API `error` strings and the English booking `notice`. Missing tenant routes returned an empty 404 body. | P1 | listing widgets, `404.astro`, booking `code` | Localized `visitorError` + codes; HTML 404 with search | `tests/web.visitor-chrome.test.mjs`, `tests/api.validate.test.mjs` |
+| F19 | Listing JSON-LD omitted opening hours even when the page showed them. | P1 | `localBusinessJsonLd` | `openingHoursSpecification` from listing hours | `tests/web.seo.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -95,6 +97,9 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | JSON-LD `additionalType` on `/id` | pass (this branch) | Indonesian labels + `inLanguage`; listing body still author language |
 | Sitemap includes `/id` URLs | pass (this branch) | English + `/id` locs; Search Console submission still operator |
 | `og:locale` / hreflang x-default | pass (this branch) | `en_GB` / `id_ID`; x-default is English |
+| Listing form errors localized | pass (this branch) | Codes mapped in widgets; English API `error` not shown |
+| Public HTML 404 | pass (this branch) | Search + home; `noindex`; empty 404 bodies removed |
+| JSON-LD opening hours | pass (this branch) | `openingHoursSpecification` when hours exist |
 | Booking success omits request id/status | pass (this branch) | Visitor notice only; not submitted to production |
 | Field “just registered” without agent ids | pass (this branch) | `fieldRegistered` on public cards |
 | Sample listings labelled | pass (local seed) | Production must not publish this catalog |

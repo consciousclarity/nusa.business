@@ -1,0 +1,25 @@
+---
+import Base from "../layouts/Base.astro";
+import { nationHref } from "../lib/links";
+import { t, withLocale, type Locale } from "../i18n/ui";
+
+const locale: Locale = Astro.locals.locale ?? "en";
+Astro.response.status = 404;
+---
+<Base
+  title={t(locale, "notFoundTitle")}
+  description={t(locale, "notFoundLede")}
+  locale={locale}
+  robots="noindex,follow"
+>
+  <section class="lede">
+    <h1>{t(locale, "notFoundH1")}</h1>
+    <p class="prose">{t(locale, "notFoundLede")}</p>
+    <p class="actions">
+      <a class="cta" href={withLocale("/search", locale)}>{t(locale, "search")}</a>
+      <a class="cta secondary" href={nationHref(Astro.request, locale)}>
+        {t(locale, "backHome")}
+      </a>
+    </p>
+  </section>
+</Base>

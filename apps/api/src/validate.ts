@@ -1,7 +1,7 @@
 import { canonicalizeCategoryList, canonicalizeFacetMap } from "@nusa/shared";
 
 export type ValidationOk<T> = { ok: true; value: T };
-export type ValidationErr = { ok: false; error: string };
+export type ValidationErr = { ok: false; error: string; code?: string };
 export type ValidationResult<T> = ValidationOk<T> | ValidationErr;
 
 const BOOKING_MODES = new Set(["none", "service", "rental", "event"]);
@@ -10,8 +10,8 @@ const SAFE_URL = /^(https?:)\/\//i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-function fail(error: string): ValidationErr {
-  return { ok: false, error };
+function fail(error: string, code?: string): ValidationErr {
+  return code ? { ok: false, error, code } : { ok: false, error };
 }
 
 export function parseCategories(raw: unknown): ValidationResult<string[]> {
@@ -238,7 +238,7 @@ export function parseBookingBody(body: unknown): ValidationResult<PublicBookingI
   const endDate = optionalIsoDate(row, "endDate");
   if (!endDate.ok) return endDate;
   if (endDate.value && endDate.value < startDate.value) {
-    return fail("endDate must be on or after startDate");
+    return fail("endDate must be on or after startDate", "BOOKING_END_BEFORE_START");
   }
   const timeSlot = optionalString(row, "timeSlot", { max: 40 });
   if (!timeSlot.ok) return timeSlot;
@@ -287,17 +287,17 @@ export function assertBookingRequest(
   opts: { today?: string } = {},
 ): ValidationResult<PublicBookingInput> {
   if (mode !== "service" && mode !== "rental" && mode !== "event") {
-    return fail("Booking not enabled");
+    return fail("Booking not enabled", "BOOKING_NOT_ENABLED");
   }
   const today = opts.today ?? utcToday();
   if (input.startDate < today) {
-    return fail("startDate must be today or later");
+    return fail("startDate must be today or later", "BOOKING_PAST_DATE");
   }
   if (mode === "rental" && !input.endDate) {
-    return fail("endDate is required for rentals");
+    return fail("endDate is required for rentals", "BOOKING_NEED_END_DATE");
   }
   if (mode === "event" && input.tickets === undefined) {
-    return fail("tickets is required for events");
+    return fail("tickets is required for events", "BOOKING_NEED_TICKETS");
   }
   return { ok: true, value: input };
 }

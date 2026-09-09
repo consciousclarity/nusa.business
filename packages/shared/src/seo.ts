@@ -103,6 +103,42 @@ export function breadcrumbJsonLd(
   };
 }
 
+const SCHEMA_DAYS: Record<string, string> = {
+  mon: "Monday",
+  monday: "Monday",
+  tue: "Tuesday",
+  tuesday: "Tuesday",
+  wed: "Wednesday",
+  wednesday: "Wednesday",
+  thu: "Thursday",
+  thursday: "Thursday",
+  fri: "Friday",
+  friday: "Friday",
+  sat: "Saturday",
+  saturday: "Saturday",
+  sun: "Sunday",
+  sunday: "Sunday",
+};
+
+function openingHoursJsonLd(
+  rows: { day: string; open: string; close: string; closed?: boolean }[],
+): Record<string, unknown>[] {
+  const spec: Record<string, unknown>[] = [];
+  for (const row of rows) {
+    if (row.closed) continue;
+    const key = row.day.trim().toLowerCase();
+    const day = SCHEMA_DAYS[key] ?? SCHEMA_DAYS[key.slice(0, 3)];
+    if (!day || !row.open || !row.close) continue;
+    spec.push({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: day,
+      opens: row.open,
+      closes: row.close === "24:00" ? "23:59" : row.close,
+    });
+  }
+  return spec;
+}
+
 export function localBusinessJsonLd(opts: {
   name: string;
   description: string;
@@ -113,6 +149,7 @@ export function localBusinessJsonLd(opts: {
   lat?: number;
   lng?: number;
   locale?: string;
+  openingHours?: { day: string; open: string; close: string; closed?: boolean }[];
 }): Record<string, unknown> {
   const locale = opts.locale === "id" ? "id" : "en";
   const node: Record<string, unknown> = {
@@ -133,6 +170,10 @@ export function localBusinessJsonLd(opts: {
   if (opts.telephone) node.telephone = opts.telephone;
   if (opts.categories?.length) {
     node.additionalType = categoryLabels(opts.categories, locale);
+  }
+  if (opts.openingHours?.length) {
+    const hours = openingHoursJsonLd(opts.openingHours);
+    if (hours.length) node.openingHoursSpecification = hours;
   }
   if (
     typeof opts.lat === "number" &&

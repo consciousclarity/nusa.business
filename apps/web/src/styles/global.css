@@ -750,6 +750,8 @@ table.data caption {
   height: 100%;
   font: inherit;
   background: var(--paper-2);
+  position: absolute;
+  inset: 0;
 }
 
 @media (min-width: 48rem) {

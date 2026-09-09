@@ -201,6 +201,9 @@ const store = {
       ],
     },
   ],
+  invites: [],
+  recoveryTokens: [],
+  reports: [],
 };
 
 writeFileSync(join(dataDir, "store.json"), JSON.stringify(store, null, 2));
@@ -266,6 +269,10 @@ describe("C01 public listing privacy", () => {
     assert.equal(data.reviews[0].authorName, "Maya");
     assert.ok(data.vendor);
     assert.equal(data.vendor.name, "Warung A Shop");
+    assert.equal(data.business.bookingMode, "service");
+    assert.equal(Object.hasOwn(data.business, "vendorId"), false);
+    assert.equal(Object.hasOwn(data.business, "fieldRegistered"), true);
+    assert.equal(data.business.fieldRegistered, true);
   });
 
   it("anonymous place hub and search omit ownership internals", async () => {
@@ -274,7 +281,9 @@ describe("C01 public listing privacy", () => {
     assert.equal(place.data.businesses.length, 2);
     for (const b of place.data.businesses) {
       assertNoPrivateBusinessFields(b, `place.${b.slug}`);
-      assert.notEqual(b.status, "draft");
+      assert.equal(Object.hasOwn(b, "bookingMode"), false, `place.${b.slug} card omits bookingMode`);
+      assert.equal(Object.hasOwn(b, "vendorId"), false, `place.${b.slug} card omits vendorId`);
+      assert.equal(Object.hasOwn(b, "status"), false, `place.${b.slug} card omits status`);
     }
 
     const search = await json("GET", "/v1/search?q=Warung&island=bali");
@@ -282,6 +291,31 @@ describe("C01 public listing privacy", () => {
     assert.ok(search.data.results.length >= 1);
     for (const row of search.data.results) {
       assertNoPrivateBusinessFields(row.business, `search.${row.business.slug}`);
+      assert.equal(Object.hasOwn(row.business, "bookingMode"), false);
+    }
+
+    const island = await json("GET", "/v1/islands/bali");
+    assert.equal(island.status, 200);
+    for (const b of island.data.businesses) {
+      assertNoPrivateBusinessFields(b, `island.${b.slug}`);
+      assert.equal(Object.hasOwn(b, "bookingMode"), false);
+    }
+
+    const discovery = await json(
+      "GET",
+      "/v1/islands/bali/places/gianyar/businesses/warung-owner-a/discovery",
+    );
+    assert.equal(discovery.status, 200);
+    const neighbors = [
+      ...(discovery.data.sameAddress || []),
+      ...(discovery.data.similar || []),
+      ...(discovery.data.nearby || []),
+    ];
+    for (const row of neighbors) {
+      assertNoPrivateBusinessFields(row.business, `nearby.${row.business.slug}`);
+      assert.equal(Object.hasOwn(row.business, "bookingMode"), false);
+      assert.equal(Object.hasOwn(row.place, "id"), false);
+      assert.equal(Object.hasOwn(row.island, "id"), false);
     }
   });
 
@@ -294,6 +328,8 @@ describe("C01 public listing privacy", () => {
     assert.ok(data.businesses.length >= 1);
     for (const row of data.businesses) {
       assertNoPrivateBusinessFields(row.business, `recent.${row.business.slug}`);
+      assert.equal(row.business.fieldRegistered, true);
+      assert.equal(Object.hasOwn(row.business, "bookingMode"), false);
     }
   });
 
@@ -416,5 +452,17 @@ describe("C01 booking authorization matrix", () => {
     assert.ok(mine);
     assert.equal(mine.business.ownerUserId, "usr-owner-a");
     assert.equal(mine.business.registeredByAgentId, "usr-agent");
+  });
+
+  it("hides GET /v1/host in production", async () => {
+    const prev = process.env.NODE_ENV;
+    process.env.NODE_ENV = "production";
+    try {
+      const { status, data } = await json("GET", "/v1/host");
+      assert.equal(status, 404);
+      assert.equal(data.error, "Not found");
+    } finally {
+      process.env.NODE_ENV = prev;
+    }
   });
 });

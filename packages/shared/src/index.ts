@@ -157,6 +157,8 @@ export function nationHomeHref(
 
 export {
   CATEGORIES,
+  CATEGORY_LABELS_ID,
+  RELATED_AS_ID,
   TAXONOMY,
   canonicalizeCategory,
   canonicalizeCategoryList,
@@ -167,9 +169,11 @@ export {
   expandCategoryFilter,
   isKnownCategory,
   listingMatchesCategory,
+  relatedAsLabel,
   relatedForCategory,
   taxonomyCatalog,
   type Category,
+  type CategoryLocale,
   type CategoryRecord,
   type RelatedCategory,
   type TaxonomyCatalogGroup,
@@ -179,11 +183,15 @@ export {
 } from "./taxonomy.js";
 
 export {
+  FACET_KEY_LABELS_ID,
+  FACET_VALUE_LABELS_ID,
   GLOBAL_FACETS,
   INDEXABLE_FACET_PATHS,
   canonicalizeFacetValue,
+  facetKeyLabel,
   facetValueLabel,
   facetsForCategory,
+  localizeFacetDef,
   facetsForListingCategory,
   isIndexableFacetPath,
   isKnownFacetKey,
@@ -224,7 +232,9 @@ export {
 
 export {
   contactDigits,
+  mapsHref,
   telHref,
+  websiteHref,
   whatsappHref,
 } from "./contact-links.js";
 
@@ -252,6 +262,7 @@ export {
   escapeXml,
   hostPath,
   localBusinessJsonLd,
+  localeSitemapPaths,
   requestHost,
   siteOrigin,
   sitemapXml,

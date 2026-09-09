@@ -2,6 +2,7 @@ import {
   geoNesting,
   nationHomeHref,
   publicUrl,
+  absoluteUrl,
   type Locale,
   type NestablePlace,
   withLocale,
@@ -78,6 +79,23 @@ export function tenantHref(
   const u = new URL(absolute);
   u.pathname = withLocale(u.pathname || "/", "id");
   return u.toString() + search;
+}
+
+/** Make a tenant/nation href absolute for canonical and JSON-LD. */
+export function absHref(request: Request, href: string): string {
+  if (/^https?:\/\//i.test(href)) return href;
+  return absoluteUrl(request, href);
+}
+
+export function tenantAbsHref(
+  request: Request,
+  opts: Parameters<typeof tenantHref>[1],
+): string {
+  return absHref(request, tenantHref(request, opts));
+}
+
+export function nationAbsHref(request: Request, locale: Locale = "en"): string {
+  return absHref(request, nationHref(request, locale));
 }
 
 /** Listing / hub href from a place row plus the island's place graph. */

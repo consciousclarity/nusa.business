@@ -5,7 +5,7 @@
 `POST /v1/auth/login`
 
 ```json
-{ "email": "owner@example.com", "password": "owner123" }
+{ "email": "owner@example.test", "password": "<your-password>" }
 ```
 
 Response:
@@ -50,10 +50,14 @@ token is passed explicitly.
 
 | Route | Access |
 |---|---|
-| `GET /health`, `/v1/meta/*`, `/v1/host`, `/v1/tls-check` | public |
-| `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public — listing payloads omit ownership internals; drafts excluded; listing detail never returns bookings |
+| `GET /health`, `/v1/meta/*`, `/v1/tls-check` | public |
+| `GET /v1/host` | public **non-production only** (404 in production) |
+| `POST /v1/businesses/:id/reports` | public — visitors flag a listing without an account |
+| `GET /v1/reports` | **admin only** |
+| `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public — list/search/discovery use directory **cards** (no `bookingMode`, `vendorId`, or agent ids); drafts excluded; listing detail never returns bookings |
 | `POST /v1/businesses/:id/reviews` | public — visitors review without an account |
 | `POST /v1/businesses/:id/bookings` | public — customers book without an account |
+| `POST /v1/auth/register` | public — owner self-signup, or invite token for invited roles. Clients cannot set `role`. |
 | `GET /v1/me` | any authenticated user |
 | `GET /v1/portal/listings` | own listings; admin sees all |
 | `POST /v1/portal/listings` | `owner`, `vendor`, `field_agent`, `admin` |
@@ -228,10 +232,12 @@ in order of effort: a Cloudflare rate-limiting rule at the edge (the free tier
 covers one login rule, and it also protects against traffic that never reaches
 the origin), or a shared Redis counter.
 
-## Still to do before public launch
+## Not a GO blocker (post-launch)
 
-- Consider HTTP-only cookies scoped to `.nusa.business` for SSO across
-  subdomains, instead of `localStorage`.
+Portal sessions still use a signed token in `localStorage` rather than an
+HTTP-only cookie scoped to `.nusa.business`. That is listed under **Not this
+launch** in [launch-readiness.md](../ops/launch-readiness.md). Do not hold GO
+for cookie/CSRF work.
 
 ## CORS
 

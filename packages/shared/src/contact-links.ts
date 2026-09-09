@@ -32,3 +32,39 @@ export function telHref(raw: string | null | undefined): string | null {
   if (digits.length < 7) return null;
   return `tel:+${digits}`;
 }
+
+/**
+ * Google Maps destination for Directions. Prefers coordinates when present so
+ * the pin matches the listing, not a fuzzy address match.
+ */
+export function mapsHref(opts: {
+  address?: string;
+  lat?: number;
+  lng?: number;
+}): string | null {
+  if (
+    typeof opts.lat === "number" &&
+    Number.isFinite(opts.lat) &&
+    typeof opts.lng === "number" &&
+    Number.isFinite(opts.lng)
+  ) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${opts.lat},${opts.lng}`;
+  }
+  const addr = (opts.address || "").trim();
+  if (!addr) return null;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`;
+}
+
+/** http(s) website only — reject javascript: and other unsafe protocols. */
+export function websiteHref(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const value = raw.trim();
+  if (!value) return null;
+  try {
+    const u = new URL(value);
+    if (u.protocol !== "http:" && u.protocol !== "https:") return null;
+    return u.toString();
+  } catch {
+    return null;
+  }
+}

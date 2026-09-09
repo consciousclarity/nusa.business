@@ -57,6 +57,10 @@ export type Business = {
   registeredByAgentId?: string;
   /** Directory filters: facet key → value slugs. Geo location is the host, not stored here. */
   facets?: Record<string, string[]>;
+  /** Local/demo catalog listings — must be labelled on public pages. */
+  sample?: boolean;
+  /** Set when an ownership claim is approved. */
+  verifiedAt?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -103,6 +107,15 @@ export type RecoveryToken = {
   tokenHash: string;
   expiresAt: string;
   usedAt?: string;
+  createdAt: string;
+};
+
+/** Visitor correction or abuse report — no email collected on the public form. */
+export type ListingReport = {
+  id: string;
+  businessId: string;
+  kind: "correction" | "abuse";
+  note: string;
   createdAt: string;
 };
 
@@ -171,4 +184,5 @@ export type DataStore = {
   vendors: VendorStore[];
   invites: Invite[];
   recoveryTokens: RecoveryToken[];
+  reports: ListingReport[];
 };

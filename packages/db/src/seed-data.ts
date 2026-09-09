@@ -26,6 +26,7 @@ export function createReferenceStore(): DataStore {
     vendors: [],
     invites: [],
     recoveryTokens: [],
+    reports: [],
   };
 }
 
@@ -354,6 +355,7 @@ export function createSeed(): DataStore {
     createdAt: t,
     updatedAt: t,
     status: partial.status ?? ("published" as const),
+    sample: partial.sample ?? true,
     ...partial,
   });
 
@@ -386,6 +388,7 @@ export function createSeed(): DataStore {
         "Iconic surf hangout with ocean views, cold drinks, and sunset energy.",
       address: "Jl. Pura Luhur Uluwatu, Pecatu",
       phone: "+62 361 0001001",
+      website: "https://example.com/single-fin-uluwatu",
       bookingMode: "none",
       lat: -8.8291,
       lng: 115.0849,
@@ -909,5 +912,6 @@ export function createSeed(): DataStore {
     vendors,
     invites: [],
     recoveryTokens: [],
+    reports: [],
   };
 }

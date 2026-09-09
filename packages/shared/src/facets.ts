@@ -6,7 +6,10 @@
  * claimed-listing are computed at query time.
  */
 
-import { categoryRecord } from "./taxonomy.js";
+import { FACET_KEY_LABELS_ID, FACET_VALUE_LABELS_ID } from "./facets-id.js";
+import { categoryRecord, type CategoryLocale } from "./taxonomy.js";
+
+export { FACET_KEY_LABELS_ID, FACET_VALUE_LABELS_ID } from "./facets-id.js";
 
 export type FacetSource = "stored" | "computed" | "geo";
 
@@ -1086,8 +1089,10 @@ function mergeFacetDefs(base: FacetDef[], extra: FacetDef[]): FacetDef[] {
 }
 
 const facetIndex = new Map<string, Map<string, FacetValue>>();
+const facetKeyEnglish = new Map<string, string>();
 
 function indexFacet(def: FacetDef) {
+  if (!facetKeyEnglish.has(def.key)) facetKeyEnglish.set(def.key, def.label);
   let byKey = facetIndex.get(def.key);
   if (!byKey) {
     byKey = new Map();
@@ -1130,10 +1135,40 @@ export function canonicalizeFacetValue(
   return facetIndex.get(k)?.get(v)?.slug;
 }
 
-export function facetValueLabel(key: string, value: string): string {
+export function facetKeyLabel(key: string, locale: CategoryLocale = "en"): string {
+  const english = facetKeyEnglish.get(key) ?? key;
+  if (locale === "id") return FACET_KEY_LABELS_ID[key] ?? english;
+  return english;
+}
+
+export function facetValueLabel(
+  key: string,
+  value: string,
+  locale: CategoryLocale = "en",
+): string {
   const slug = canonicalizeFacetValue(key, value);
-  if (!slug) return value;
-  return facetIndex.get(key)?.get(slug)?.label ?? value;
+  const english = slug
+    ? (facetIndex.get(key)?.get(slug)?.label ?? value)
+    : value;
+  if (locale === "id" && slug) {
+    return FACET_VALUE_LABELS_ID[`${key}::${slug}`] ?? english;
+  }
+  return english;
+}
+
+export function localizeFacetDef(
+  def: FacetDef,
+  locale: CategoryLocale = "en",
+): FacetDef {
+  if (locale !== "id") return def;
+  return {
+    ...def,
+    label: facetKeyLabel(def.key, locale),
+    values: def.values.map((v) => ({
+      ...v,
+      label: facetValueLabel(def.key, v.slug, locale),
+    })),
+  };
 }
 
 export function isKnownFacetKey(key: string): boolean {

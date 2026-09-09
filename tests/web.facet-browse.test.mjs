@@ -15,9 +15,11 @@ const sitemap = new URL(
 describe("facet browse SEO wiring", () => {
   it("sets robots from the index policy and canonical without extra query", () => {
     const src = readFileSync(browse, "utf8");
-    assert.match(src, /robots=\{policy\.index \? "index,follow" : "noindex,follow"\}/);
+    assert.match(src, /robots=\{searchFailed \|\| !policy\.index \? "noindex,follow" : "index,follow"\}/);
     assert.match(src, /canonical=\{canonical\}/);
     assert.match(src, /promoteIndexablePath|resolved\.promoted/);
+    assert.match(src, /apiTry</);
+    assert.match(src, /unavailable=\{searchFailed\}/);
   });
 
   it("emits a robots meta tag from Base", () => {
@@ -28,6 +30,9 @@ describe("facet browse SEO wiring", () => {
   it("sitemaps only indexable browse paths", () => {
     const src = readFileSync(sitemap, "utf8");
     assert.match(src, /indexableBrowsePathsForListings/);
+    assert.match(src, /tenantAbsHref/);
+    assert.match(src, /localeSitemapPaths/);
     assert.doesNotMatch(src, /searchParams/);
+    assert.doesNotMatch(src, /add\(hostPath/);
   });
 });

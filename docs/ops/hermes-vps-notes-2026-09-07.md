@@ -41,5 +41,6 @@ Implications for remaining checklist items:
    `docs/ops/vps-deploy.md` accordingly.
 2. Record the running commit SHA and whether `.data/store.json` (or volume)
    contains demo seed users (C02 cleanup procedure).
-3. After merging C01–C03, plan a controlled deploy with backup + rollback —
-   Cursor must not deploy without explicit authorization.
+3. After merging launch-readiness follow-ups, plan a controlled deploy with
+   backup + rollback — Cursor must not deploy without explicit authorization.
+   Operator checklist: [launch-readiness.md](./launch-readiness.md).

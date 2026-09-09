@@ -1,0 +1,24 @@
+---
+import Base from "../layouts/Base.astro";
+import { absoluteUrl } from "../lib/seo";
+import { t, withLocale, type Locale } from "../i18n/ui";
+
+const locale: Locale = Astro.locals.locale ?? "en";
+const url = absoluteUrl(Astro.request, withLocale("/terms", locale));
+---
+<Base
+  title={t(locale, "termsTitle")}
+  description={t(locale, "termsDesc")}
+  canonical={url}
+  locale={locale}
+>
+  <section class="lede">
+    <h1>{t(locale, "terms")}</h1>
+    <p class="prose">{t(locale, "termsLede")}</p>
+  </section>
+  <section class="section">
+    <h2>{t(locale, "termsReviewsH2")}</h2>
+    <p class="prose">{t(locale, "termsReviews")}</p>
+    <p class="prose">{t(locale, "termsSample")}</p>
+  </section>
+</Base>

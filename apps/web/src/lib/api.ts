@@ -49,3 +49,23 @@ export async function apiOrNull<T>(path: string): Promise<T | null> {
   if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
   return res.json() as Promise<T>;
 }
+
+/**
+ * Homepage/search helper: any failure (down API, 5xx, timeout) is null
+ * so the search form still renders. Do not use for hubs — those must 404
+ * on missing islands and 500 when the API is down.
+ */
+export async function apiTry<T>(
+  path: string,
+  timeoutMs = 5000,
+): Promise<T | null> {
+  try {
+    const res = await fetch(`${ssrApiOrigin()}${path}`, {
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}

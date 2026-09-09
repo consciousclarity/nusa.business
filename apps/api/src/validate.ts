@@ -1,7 +1,7 @@
 import { canonicalizeCategoryList, canonicalizeFacetMap } from "@nusa/shared";
 
 export type ValidationOk<T> = { ok: true; value: T };
-export type ValidationErr = { ok: false; error: string };
+export type ValidationErr = { ok: false; error: string; code?: string };
 export type ValidationResult<T> = ValidationOk<T> | ValidationErr;
 
 const BOOKING_MODES = new Set(["none", "service", "rental", "event"]);
@@ -10,8 +10,8 @@ const SAFE_URL = /^(https?:)\/\//i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-function fail(error: string): ValidationErr {
-  return { ok: false, error };
+function fail(error: string, code?: string): ValidationErr {
+  return code ? { ok: false, error, code } : { ok: false, error };
 }
 
 export function parseCategories(raw: unknown): ValidationResult<string[]> {
@@ -219,8 +219,9 @@ export type PublicBookingInput = {
 };
 
 /**
- * Request-only bookings: client-supplied amounts are ignored. Availability and
- * price are not verified server-side at launch.
+ * Request-only bookings: client-supplied amounts are ignored. Mode, dates, and
+ * quantities are checked in assertBookingRequest; there is no priced inventory
+ * hold at launch.
  */
 export function parseBookingBody(body: unknown): ValidationResult<PublicBookingInput> {
   const obj = asObject(body);
@@ -237,7 +238,7 @@ export function parseBookingBody(body: unknown): ValidationResult<PublicBookingI
   const endDate = optionalIsoDate(row, "endDate");
   if (!endDate.ok) return endDate;
   if (endDate.value && endDate.value < startDate.value) {
-    return fail("endDate must be on or after startDate");
+    return fail("endDate must be on or after startDate", "BOOKING_END_BEFORE_START");
   }
   const timeSlot = optionalString(row, "timeSlot", { max: 40 });
   if (!timeSlot.ok) return timeSlot;
@@ -269,6 +270,114 @@ export function parseBookingBody(body: unknown): ValidationResult<PublicBookingI
       notes: notes.value,
     },
   };
+}
+
+export function utcToday(now = new Date()): string {
+  return now.toISOString().slice(0, 10);
+}
+
+/**
+ * Mode-specific booking rules after the body is structurally valid.
+ * Inventory calendars are not modelled yet — this rejects past dates,
+ * missing rental/event fields, and booking-disabled listings.
+ */
+export function assertBookingRequest(
+  mode: string,
+  input: PublicBookingInput,
+  opts: { today?: string } = {},
+): ValidationResult<PublicBookingInput> {
+  if (mode !== "service" && mode !== "rental" && mode !== "event") {
+    return fail("Booking not enabled", "BOOKING_NOT_ENABLED");
+  }
+  const today = opts.today ?? utcToday();
+  if (input.startDate < today) {
+    return fail("startDate must be today or later", "BOOKING_PAST_DATE");
+  }
+  if (mode === "rental" && !input.endDate) {
+    return fail("endDate is required for rentals", "BOOKING_NEED_END_DATE");
+  }
+  if (mode === "event" && input.tickets === undefined) {
+    return fail("tickets is required for events", "BOOKING_NEED_TICKETS");
+  }
+  return { ok: true, value: input };
+}
+
+export type PublicReportInput = {
+  kind: "correction" | "abuse";
+  note: string;
+};
+
+export type RegisterInviteInput = {
+  kind: "invite";
+  token: string;
+  name: string;
+  password: string;
+  returnTo?: string;
+};
+
+export type RegisterOwnerInput = {
+  kind: "owner";
+  email: string;
+  name: string;
+  password: string;
+  returnTo?: string;
+};
+
+export type RegisterInput = RegisterInviteInput | RegisterOwnerInput;
+
+/** Invite redeem (any invited role) or public owner self-signup. */
+export function parseRegisterBody(body: unknown): ValidationResult<RegisterInput> {
+  const obj = asObject(body);
+  if (!obj.ok) return obj;
+  const row = obj.value;
+  if (row.role !== undefined) {
+    return fail("role cannot be set by the client");
+  }
+  const name = requireString(row, "name", { max: 120 });
+  if (!name.ok) return name;
+  const password = requireString(row, "password", { max: 200, min: 12 });
+  if (!password.ok) return password;
+  const returnTo = optionalString(row, "returnTo", { max: 500 });
+  if (!returnTo.ok) return returnTo;
+  const token = optionalString(row, "token", { max: 200 });
+  if (!token.ok) return token;
+  if (token.value) {
+    return {
+      ok: true,
+      value: {
+        kind: "invite",
+        token: token.value,
+        name: name.value,
+        password: password.value,
+        returnTo: returnTo.value,
+      },
+    };
+  }
+  const email = requireEmail(row, "email");
+  if (!email.ok) return email;
+  return {
+    ok: true,
+    value: {
+      kind: "owner",
+      email: email.value,
+      name: name.value,
+      password: password.value,
+      returnTo: returnTo.value,
+    },
+  };
+}
+
+export function parseReportBody(body: unknown): ValidationResult<PublicReportInput> {
+  const obj = asObject(body);
+  if (!obj.ok) return obj;
+  const row = obj.value;
+  const kindRaw = row.kind;
+  if (kindRaw !== "correction" && kindRaw !== "abuse") {
+    return fail("kind must be correction or abuse");
+  }
+  const note = requireString(row, "note", { max: 2000, min: 12 });
+  if (!note.ok) return note;
+  return { ok: true, value: { kind: kindRaw, note: note.value } };
 }
 
 /** Fields owners may PATCH. Identity, ownership, verification stay server-controlled. */

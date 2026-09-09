@@ -6,6 +6,8 @@ import { t, withLocale, type Locale } from "../i18n/ui";
 const locale: Locale = Astro.locals.locale ?? "en";
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 const claimUrl = absoluteUrl(Astro.request, withLocale("/claim", locale));
+const claimReturn = encodeURIComponent("/claim");
+const addReturn = encodeURIComponent("/listings");
 ---
 <Base
   title={t(locale, "claimTitle")}
@@ -18,20 +20,27 @@ const claimUrl = absoluteUrl(Astro.request, withLocale("/claim", locale));
     <p class="prose">{t(locale, "claimLede")}</p>
   </section>
 
-  <aside class="resolver" aria-label={t(locale, "hostResolver")}>
-    <dl>
-      <dt>{t(locale, "query")}</dt>
-      <dd>claim</dd>
-      <dt>{t(locale, "resolved")}</dt>
-      <dd>action=claim · fee=0 · commission=0%</dd>
-      <dt>{t(locale, "records")}</dt>
-      <dd>portal authentication</dd>
-    </dl>
-  </aside>
+  <section class="section">
+    <h2>{t(locale, "claimListing")}</h2>
+    <p class="prose">{t(locale, "claimExistingHelp")}</p>
+    <p class="actions">
+      <a class="cta" href={`${portal}/claim`}>{t(locale, "claimOpen")}</a>
+      <a
+        class="cta secondary"
+        href={`${portal}/login?returnTo=${claimReturn}`}
+      >
+        {t(locale, "claimLogin")}
+      </a>
+    </p>
+  </section>
 
-  <p class="actions">
-    <a class="cta" href={`${portal}/claim`}>{t(locale, "claimOpen")}</a>
-    <a class="cta secondary" href={`${portal}/login?returnTo=${encodeURIComponent("/claim")}`}>{t(locale, "claimLogin")}</a>
-    <a class="cta secondary" href={`${portal}/register`}>{t(locale, "claimInvite")}</a>
-  </p>
+  <section class="section">
+    <h2>{t(locale, "addListing")}</h2>
+    <p class="prose">{t(locale, "addListingHelp")}</p>
+    <p class="actions">
+      <a class="cta secondary" href={`${portal}/register?returnTo=${addReturn}`}>
+        {t(locale, "addListingOpen")}
+      </a>
+    </p>
+  </section>
 </Base>

@@ -48,9 +48,11 @@ describe("store migrations", () => {
       "2026-08-rename-sumatera-to-sumatra",
       "2026-09-onboarding-collections",
       "2026-09-admin-host-parents",
+      "2026-09-listing-reports",
     ]);
     assert.deepEqual(store.invites, []);
     assert.deepEqual(store.recoveryTokens, []);
+    assert.deepEqual(store.reports, []);
     const island = store.islands.find((i) => i.slug === "java");
     assert.ok(island, "expected an island with slug java");
     assert.equal(island.id, "isl-java");
@@ -133,6 +135,7 @@ describe("store migrations", () => {
     }
     store.invites = [];
     store.recoveryTokens = [];
+    store.reports = [];
     assert.deepEqual(migrateStore(store), ["2026-09-admin-host-parents"]);
   });
 

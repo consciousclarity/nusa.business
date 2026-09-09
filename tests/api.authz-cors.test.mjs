@@ -119,6 +119,7 @@ writeFileSync(
     vendors: [],
     invites: [],
     recoveryTokens: [],
+    reports: [],
   }),
 );
 
@@ -207,6 +208,16 @@ describe("C06 authorization matrix", () => {
       headers: { Authorization: `Bearer ${otherTok}` },
     });
     assert.equal((await otherBookings.json()).bookings.length, 1);
+
+    const agentPatch = await app.request("/v1/portal/listings/biz-owned", {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${agentTok}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ summary: "agent hijack" }),
+    });
+    assert.equal(agentPatch.status, 403);
 
     const invite = await app.request("/v1/invites", {
       method: "POST",

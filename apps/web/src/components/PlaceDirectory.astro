@@ -1,11 +1,12 @@
 ---
 import { geoHref, tenantHref } from "../lib/links";
-import { t, type Locale } from "../i18n/ui";
+import { t, placeTypeLabel, type Locale } from "../i18n/ui";
 import {
   canonicalizeCategory,
   categoryFilterOptions,
   categoryLabel,
   listingMatchesCategory,
+  relatedAsLabel,
   relatedForCategory,
 } from "@nusa/shared";
 
@@ -24,7 +25,8 @@ export type PlaceHubBusiness = {
   summary: string;
   categories: string[];
   status?: string;
-  registeredByAgentId?: string;
+  sample?: boolean;
+  fieldRegistered?: boolean;
 };
 
 type Props = {
@@ -56,10 +58,11 @@ const graph: PlaceHubPlace[] = [
   ...children,
 ];
 
-const recent = businesses.filter((b) => b.registeredByAgentId).slice(0, 5);
+const recent = businesses.filter((b) => b.fieldRegistered).slice(0, 5);
 
 const placeCategoryOptions = categoryFilterOptions(
   businesses.flatMap((b) => b.categories),
+  locale,
 );
 
 const activeCategory = canonicalizeCategory(categoryParam) ?? "";
@@ -69,7 +72,7 @@ const placeBusinesses = activeCategory
   : businesses;
 
 const relatedShown = activeCategory ? relatedForCategory(activeCategory) : [];
-const activeCategoryLabel = activeCategory ? categoryLabel(activeCategory) : "";
+const activeCategoryLabel = activeCategory ? categoryLabel(activeCategory, locale) : "";
 
 const hubHref = geoHref(req, {
   island: island.slug,
@@ -92,24 +95,12 @@ const hubHref = geoHref(req, {
   )}
 </section>
 
-<aside class="resolver" aria-label={t(locale, "hostResolver")}>
-  <dl>
-    <dt>{t(locale, "query")}</dt>
-    <dd>{queryHost}</dd>
-    <dt>{t(locale, "resolved")}</dt>
-    <dd>
-      island={island.slug} · place={place.slug} · type={place.type}
-      {parent ? ` · parent=${parent.slug}` : ""}
-    </dd>
-    <dt>{t(locale, "records")}</dt>
-    <dd>
-      {placeBusinesses.length}
-      {activeCategory ? ` in ${activeCategoryLabel}` : ` published`}
-      {activeCategory && businesses.length !== placeBusinesses.length
-        ? ` · ${businesses.length} total`
-        : ""}
-    </dd>
-  </dl>
+<aside class="banner" aria-label={t(locale, "listingsCount")}>
+  {placeBusinesses.length} {t(locale, "listingsCount")}
+  {activeCategory ? ` · ${activeCategoryLabel}` : ""}
+  {activeCategory && businesses.length !== placeBusinesses.length
+    ? ` · ${businesses.length}`
+    : ""}
 </aside>
 
 {recent.length > 0 && (
@@ -153,7 +144,7 @@ const hubHref = geoHref(req, {
             >
               {child.name}
             </a>
-            <span class="rhs">{child.type.replaceAll("_", " ")}</span>
+            <span class="rhs">{placeTypeLabel(locale, child.type)}</span>
           </div>
           <p class="index-desc">{child.summary}</p>
         </li>
@@ -195,7 +186,7 @@ const hubHref = geoHref(req, {
 {relatedShown.length > 0 && (
   <p class="meta">
     {t(locale, "relatedServices")}{" "}
-    {relatedShown.map((rel) => rel.as).join(" · ")}
+    {relatedShown.map((rel) => relatedAsLabel(rel.as, locale)).join(" · ")}
   </p>
 )}
 
@@ -237,10 +228,12 @@ const hubHref = geoHref(req, {
               {b.name}
             </a>
             <span class="rhs">
-              {b.status === "draft" ? (
-                <span class="stamp">Unclaimed</span>
+              {b.sample ? (
+                <span class="stamp">{t(locale, "sampleListing")}</span>
+              ) : b.status === "draft" ? (
+                <span class="stamp">{t(locale, "listedUnclaimed")}</span>
               ) : (
-                categoryLabel(b.categories[0] ?? "")
+                categoryLabel(b.categories[0] ?? "", locale)
               )}
             </span>
           </div>

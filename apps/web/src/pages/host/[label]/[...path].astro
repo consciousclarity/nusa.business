@@ -2,17 +2,16 @@
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import CategoryBrowse from "../../../components/CategoryBrowse.astro";
-import { api, apiOrNull, browserApiOrigin } from "../../../lib/api";
-import { tenantHref } from "../../../lib/links";
+import { api, apiOrNull, apiTry, browserApiOrigin } from "../../../lib/api";
+import { tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
 import { resolveFacetBrowse, searchQueryForBrowse } from "../../../lib/facet-browse";
 import {
-  absoluteUrl,
   breadcrumbJsonLd,
   hostPath as seoHostPath,
   localBusinessJsonLd,
   websiteJsonLd,
 } from "../../../lib/seo";
-import { t, withLocale, type Locale } from "../../../i18n/ui";
+import { inWhere, islandName, t, withLocale, weekdayLabel, type Locale } from "../../../i18n/ui";
 import {
   categoryLabel,
   canonicalizeCategory,
@@ -20,8 +19,10 @@ import {
   facetQueryParams,
   facetValueLabel,
   geoNesting,
+  mapsHref,
   publicHostLine,
   telHref,
+  websiteHref,
   whatsappHref,
   type NestablePlace,
 } from "@nusa/shared";
@@ -33,30 +34,31 @@ const pathParts = String(Astro.params.path ?? "")
   .split("/")
   .filter(Boolean);
 const parts = label.split(".");
+const locale: Locale = Astro.locals.locale ?? "en";
 if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
 
 const isFacetBrowse = pathParts[1] === "c";
 if (isFacetBrowse) {
   if (pathParts.length !== 3 && pathParts.length !== 5) {
-    return new Response(null, { status: 404 });
+    return Astro.rewrite(withLocale("/404", locale));
   }
 } else if (pathParts.length < 1 || pathParts.length > 2) {
-  return new Response(null, { status: 404 });
+  return Astro.rewrite(withLocale("/404", locale));
 }
 
 const [hostPlaceSlug, islandSlug] = parts;
 const req = Astro.request;
-const locale: Locale = Astro.locals.locale ?? "en";
 const categoryParam = (Astro.url.searchParams.get("category") || "").trim();
 
 const islandDetail = await apiOrNull<{
   island: { slug: string; name: string };
   places: HubPlace[];
 }>(`/v1/islands/${islandSlug}`);
-if (!islandDetail) return new Response(null, { status: 404 });
+if (!islandDetail) return Astro.rewrite(withLocale("/404", locale));
+const islandLabel = islandName(locale, islandSlug!, islandDetail.island.name);
 
 const hostPlace = islandDetail.places.find((p) => p.slug === hostPlaceSlug);
-if (!hostPlace) return new Response(null, { status: 404 });
+if (!hostPlace) return Astro.rewrite(withLocale("/404", locale));
 
 const placesById = Object.fromEntries(
   islandDetail.places.map((p) => [p.id, p]),
@@ -99,6 +101,7 @@ type AreaFacetPage = {
   robots: string;
   titleCore: string;
   formAction: string;
+  unavailable?: boolean;
 };
 
 let areaFacet: AreaFacetPage | null = null;
@@ -111,9 +114,9 @@ if (isFacetBrowse) {
       p.parentPlaceId === hostPlace.id &&
       p.type === "tourist_area",
   );
-  if (!child) return new Response(null, { status: 404 });
+  if (!child) return Astro.rewrite(withLocale("/404", locale));
   const resolved = resolveFacetBrowse(pathParts.slice(2), Astro.url.searchParams);
-  if (!resolved.ok) return new Response(null, { status: 404 });
+  if (!resolved.ok) return Astro.rewrite(withLocale("/404", locale));
   if (resolved.promoted) {
     const q = facetQueryParams(resolved.promoted).toString();
     return Astro.redirect(
@@ -132,18 +135,25 @@ if (isFacetBrowse) {
     );
   }
   const searchQs = searchQueryForBrowse(islandSlug!, areaSlug, resolved.browse);
-  const search = await api<{
+  const search = await apiTry<{
     results: {
       business: BrowseListing;
       place: HubPlace;
     }[];
   }>(`/v1/search?${searchQs}`);
-  const listings = search.results.map((r) => r.business);
+  const searchFailed = search === null;
+  const listings = search?.results.map((r) => r.business) ?? [];
   const policy = facetIndexPolicy(resolved.browse, {
-    resultCount: listings.length,
+    resultCount: searchFailed ? 0 : listings.length,
   });
-  const canonicalPath = withLocale(
-    seoHostPath({
+  areaFacet = {
+    area: child,
+    browse: resolved.browse,
+    listings,
+    listingPlaces: Object.fromEntries(
+      (search?.results ?? []).map((r) => [r.business.placeId, r.place]),
+    ),
+    canonical: tenantAbsHref(req, {
       island: islandSlug!,
       place: hostPlaceSlug!,
       area: areaSlug,
@@ -156,21 +166,12 @@ if (isFacetBrowse) {
         policy.canonicalKind === "facet-path"
           ? resolved.browse.pathFacet?.value
           : undefined,
+      locale,
     }),
-    locale,
-  );
-  areaFacet = {
-    area: child,
-    browse: resolved.browse,
-    listings,
-    listingPlaces: Object.fromEntries(
-      search.results.map((r) => [r.business.placeId, r.place]),
-    ),
-    canonical: absoluteUrl(req, canonicalPath),
-    robots: policy.index ? "index,follow" : "noindex,follow",
+    robots: searchFailed || !policy.index ? "noindex,follow" : "index,follow",
     titleCore: resolved.browse.pathFacet
-      ? `${facetValueLabel(resolved.browse.pathFacet.key, resolved.browse.pathFacet.value)} ${categoryLabel(resolved.browse.category)}`
-      : categoryLabel(resolved.browse.category),
+      ? `${facetValueLabel(resolved.browse.pathFacet.key, resolved.browse.pathFacet.value, locale)} ${categoryLabel(resolved.browse.category, locale)}`
+      : categoryLabel(resolved.browse.category, locale),
     formAction: tenantHref(req, {
       island: islandSlug!,
       place: hostPlaceSlug!,
@@ -178,6 +179,7 @@ if (isFacetBrowse) {
       category: resolved.browse.category,
       locale,
     }),
+    unavailable: searchFailed,
   };
 }
 
@@ -192,7 +194,8 @@ type PlaceHubPayload = {
     summary: string;
     categories: string[];
     status?: string;
-    registeredByAgentId?: string;
+    sample?: boolean;
+    fieldRegistered?: boolean;
   }[];
 };
 
@@ -212,12 +215,12 @@ if (pathParts.length === 1) {
     hub = await apiOrNull<PlaceHubPayload>(
       `/v1/islands/${islandSlug}/places/${child.slug}`,
     );
-    if (!hub) return new Response(null, { status: 404 });
+    if (!hub) return Astro.rewrite(withLocale("/404", locale));
   }
 } else if (!isFacetBrowse) {
   const areaSlug = pathParts[0]!;
   const areaPlace = islandDetail.places.find((p) => p.slug === areaSlug);
-  if (!areaPlace) return new Response(null, { status: 404 });
+  if (!areaPlace) return Astro.rewrite(withLocale("/404", locale));
   const areaNest = geoNesting(areaPlace, placesById);
   if (areaNest.hostPlace !== hostPlaceSlug || !areaNest.area) {
     if (areaNest.area) {
@@ -234,7 +237,7 @@ if (pathParts.length === 1) {
         301,
       );
     }
-    return new Response(null, { status: 404 });
+    return Astro.rewrite(withLocale("/404", locale));
   }
   placeSlug = areaSlug;
   slug = pathParts[1]!;
@@ -253,8 +256,12 @@ type ListingPayload = {
     phone?: string;
     whatsapp?: string;
     website?: string;
+    lat?: number;
+    lng?: number;
     bookingMode: string;
     status: string;
+    sample?: boolean;
+    verifiedAt?: string;
     openingHours: { day: string; open: string; close: string; closed?: boolean }[];
   };
   reviews: {
@@ -278,15 +285,16 @@ const data = hub || areaFacet
   : await apiOrNull<ListingPayload>(
       `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}`,
     );
-if (!hub && !areaFacet && !data) return new Response(null, { status: 404 });
+if (!hub && !areaFacet && !data) return Astro.rewrite(withLocale("/404", locale));
 
 const placeMeta = hub || areaFacet
   ? null
-  : await api<{
+  : await apiOrNull<{
       island: { name: string; slug: string };
       place: HubPlace;
       parent?: HubPlace | null;
     }>(`/v1/islands/${islandSlug}/places/${placeSlug}`);
+if (data && !placeMeta) return Astro.rewrite(withLocale("/404", locale));
 
 const listingNest = placeMeta
   ? geoNesting(placeMeta.place, {
@@ -296,33 +304,60 @@ const listingNest = placeMeta
   : hostNest;
 
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
-const hostPath = data
-  ? publicHostLine({
-      island: islandSlug!,
-      place: listingNest.hostPlace,
-      area: listingNest.area,
-      slug,
-    })
-  : "";
-const listingPath = withLocale(
-  seoHostPath({
-    island: islandSlug!,
-    place: listingNest.hostPlace,
-    area: listingNest.area,
-    slug: data ? slug : undefined,
-  }),
+const listingUrl = tenantAbsHref(req, {
+  island: islandSlug!,
+  place: listingNest.hostPlace,
+  area: listingNest.area,
+  slug: data ? slug : undefined,
   locale,
-);
-const listingUrl = absoluteUrl(req, listingPath);
-const stamp =
-  data?.business.status === "draft"
-    ? "Unclaimed"
+});
+const stamp = data?.business.sample
+  ? t(locale, "sampleListing")
+  : data?.business.status === "claimed"
+    ? t(locale, "ownerVerified")
     : data?.business.status === "published"
-      ? null
-      : null;
+      ? t(locale, "listedUnclaimed")
+      : data?.business.status === "draft"
+        ? t(locale, "listedUnclaimed")
+        : null;
 
 const wa = data ? whatsappHref(data.business.whatsapp) : null;
 const phoneLink = data ? telHref(data.business.phone) : null;
+const directionsLink = data
+  ? mapsHref({
+      address: data.business.address,
+      lat: data.business.lat,
+      lng: data.business.lng,
+    })
+  : null;
+const siteLink = data ? websiteHref(data.business.website) : null;
+const bookingToday = new Date().toISOString().slice(0, 10);
+const listingCopy = {
+  reviewSubmitting: t(locale, "reviewSubmitting"),
+  reviewTooMany: t(locale, "reviewTooMany"),
+  reviewTooManyRetry: t(locale, "reviewTooManyRetry"),
+  networkRetry: t(locale, "networkRetry"),
+  bookingSending: t(locale, "bookingSending"),
+  bookingPendingOk: t(locale, "bookingPendingOk"),
+  tooManyKept: t(locale, "tooManyKept"),
+  tooManyRetryKept: t(locale, "tooManyRetryKept"),
+  networkKept: t(locale, "networkKept"),
+  reportSending: t(locale, "reportSending"),
+  reportReceived: t(locale, "reportReceived"),
+  reportNetwork: t(locale, "reportNetwork"),
+  bookingPastDate: t(locale, "bookingPastDate"),
+  bookingNeedEndDate: t(locale, "bookingNeedEndDate"),
+  bookingNeedTickets: t(locale, "bookingNeedTickets"),
+  bookingEndBeforeStart: t(locale, "bookingEndBeforeStart"),
+  bookingDuplicate: t(locale, "bookingDuplicate"),
+  bookingDisabled: t(locale, "bookingDisabled"),
+  bookingRejected: t(locale, "bookingRejected"),
+  reviewFailed: t(locale, "reviewFailed"),
+  reportFailed: t(locale, "reportFailed"),
+  requestFailed: t(locale, "requestFailed"),
+  mapHere: t(locale, "mapHere"),
+  kmAway: t(locale, "kmAway"),
+};
 
 type DiscoveryNeighbor = {
   business: {
@@ -396,7 +431,19 @@ const neighborHrefTemplate = tenantHref(req, {
 
 const nearbySeed = JSON.stringify({
   origin: discovery.origin,
-  nearby: discovery.nearby,
+  nearby: discovery.nearby.map((n) => ({
+    business: {
+      name: n.business.name,
+      slug: n.business.slug,
+      summary: n.business.summary,
+      lat: n.business.lat,
+      lng: n.business.lng,
+    },
+    place: { slug: n.place.slug, name: n.place.name },
+    island: { slug: n.island.slug },
+    geo: n.geo,
+    distanceKm: n.distanceKm,
+  })),
 });
 const nearbyWithHref = discovery.nearby.map((n) => ({
   ...n,
@@ -405,17 +452,12 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
 
 const hubCanonical =
   hub &&
-  absoluteUrl(
-    req,
-    withLocale(
-      seoHostPath({
-        island: hub.island.slug,
-        place: hostPlaceSlug!,
-        area: hub.place.slug,
-      }),
-      locale,
-    ),
-  );
+  tenantAbsHref(req, {
+    island: hub.island.slug,
+    place: hostPlaceSlug!,
+    area: hub.place.slug,
+    locale,
+  });
 const hubQuery = hub
   ? publicHostLine({
       island: hub.island.slug,
@@ -444,15 +486,15 @@ if (hub && categoryParam) {
 ---
 {areaFacet && (
   <Base
-    title={`${areaFacet.titleCore} in ${areaFacet.area.name} — nusa.business`}
-    description={`${areaFacet.listings.length} listings in ${areaFacet.area.name}.`}
+    title={`${inWhere(locale, areaFacet.titleCore, areaFacet.area.name)} — nusa.business`}
+    description={`${areaFacet.listings.length} ${t(locale, "listingsCount")} ${t(locale, "inWhere")} ${areaFacet.area.name}.`}
     crumb={[
       {
-        label: islandSlug!,
+        label: islandLabel,
         href: tenantHref(req, { island: islandSlug!, locale }),
       },
       {
-        label: hostPlaceSlug!,
+        label: hostPlace.name,
         href: tenantHref(req, {
           island: islandSlug!,
           place: hostPlaceSlug!,
@@ -460,7 +502,7 @@ if (hub && categoryParam) {
         }),
       },
       {
-        label: areaFacet.area.slug,
+        label: areaFacet.area.name,
         href: tenantHref(req, {
           island: islandSlug!,
           place: hostPlaceSlug!,
@@ -468,34 +510,30 @@ if (hub && categoryParam) {
           locale,
         }),
       },
-      { label: areaFacet.browse.category },
+      { label: areaFacet.titleCore },
     ]}
     locale={locale}
     canonical={areaFacet.canonical}
     robots={areaFacet.robots}
     jsonLd={[
       websiteJsonLd({
+        locale,
         url: areaFacet.canonical,
-        name: `${areaFacet.titleCore} in ${areaFacet.area.name}`,
+        name: inWhere(locale, areaFacet.titleCore, areaFacet.area.name),
       }),
       breadcrumbJsonLd([
-        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        { name: "nusa.business", url: nationAbsHref(req, locale) },
         {
-          name: islandDetail.island.name,
-          url: absoluteUrl(
-            req,
-            withLocale(seoHostPath({ island: islandSlug! }), locale),
-          ),
+          name: islandLabel,
+          url: tenantAbsHref(req, { island: islandSlug!, locale }),
         },
         {
           name: hostPlace.name,
-          url: absoluteUrl(
-            req,
-            withLocale(
-              seoHostPath({ island: islandSlug!, place: hostPlaceSlug! }),
-              locale,
-            ),
-          ),
+          url: tenantAbsHref(req, {
+            island: islandSlug!,
+            place: hostPlaceSlug!,
+            locale,
+          }),
         },
         { name: areaFacet.area.name, url: areaFacet.canonical },
       ]),
@@ -511,57 +549,51 @@ if (hub && categoryParam) {
       browse={areaFacet.browse}
       locale={locale}
       formAction={areaFacet.formAction}
+      unavailable={areaFacet.unavailable}
     />
   </Base>
 )}
 {hub && hubCanonical && (
   <Base
-    title={`${hub.place.name}, ${hub.island.name} — nusa.business`}
+    title={`${hub.place.name}, ${islandLabel} — nusa.business`}
     description={hub.place.summary}
     crumb={[
       {
-        label: hub.island.slug,
+        label: islandLabel,
         href: tenantHref(req, { island: hub.island.slug, locale }),
       },
       {
-        label: hostPlaceSlug!,
+        label: hostPlace.name,
         href: tenantHref(req, {
           island: hub.island.slug,
           place: hostPlaceSlug!,
           locale,
         }),
       },
-      { label: hub.place.slug },
+      { label: hub.place.name },
     ]}
     locale={locale}
     canonical={hubCanonical}
     jsonLd={[
       websiteJsonLd({
+        locale,
         url: hubCanonical,
-        name: `${hub.place.name}, ${hub.island.name}`,
+        name: `${hub.place.name}, ${islandLabel}`,
         description: hub.place.summary,
       }),
       breadcrumbJsonLd([
-        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        { name: "nusa.business", url: nationAbsHref(req, locale) },
         {
-          name: hub.island.name,
-          url: absoluteUrl(
-            req,
-            withLocale(seoHostPath({ island: hub.island.slug }), locale),
-          ),
+          name: islandLabel,
+          url: tenantAbsHref(req, { island: hub.island.slug, locale }),
         },
         {
           name: hostPlace.name,
-          url: absoluteUrl(
-            req,
-            withLocale(
-              seoHostPath({
-                island: hub.island.slug,
-                place: hostPlaceSlug!,
-              }),
-              locale,
-            ),
-          ),
+          url: tenantAbsHref(req, {
+            island: hub.island.slug,
+            place: hostPlaceSlug!,
+            locale,
+          }),
         },
         { name: hub.place.name, url: hubCanonical },
       ]),
@@ -584,11 +616,11 @@ if (hub && categoryParam) {
   title={`${data.business.name} — ${placeMeta.place.name}`}
   description={data.business.summary}
   crumb={[
-    { label: islandSlug!, href: tenantHref(req, { island: islandSlug!, locale }) },
+    { label: islandLabel, href: tenantHref(req, { island: islandSlug!, locale }) },
     ...(listingNest.area
       ? [
           {
-            label: listingNest.hostPlace,
+            label: placeMeta.parent?.name ?? listingNest.hostPlace,
             href: tenantHref(req, {
               island: islandSlug!,
               place: listingNest.hostPlace,
@@ -596,7 +628,7 @@ if (hub && categoryParam) {
             }),
           },
           {
-            label: listingNest.area,
+            label: placeMeta.place.name,
             href: tenantHref(req, {
               island: islandSlug!,
               place: listingNest.hostPlace,
@@ -607,7 +639,7 @@ if (hub && categoryParam) {
         ]
       : [
           {
-            label: listingNest.hostPlace,
+            label: placeMeta.place.name,
             href: tenantHref(req, {
               island: islandSlug!,
               place: listingNest.hostPlace,
@@ -615,7 +647,7 @@ if (hub && categoryParam) {
             }),
           },
         ]),
-    { label: data.business.slug },
+    { label: data.business.name },
   ]}
   locale={locale}
   canonical={listingUrl}
@@ -628,46 +660,37 @@ if (hub && categoryParam) {
       address: data.business.address,
       telephone: data.business.phone,
       categories: data.business.categories,
+      lat: data.business.lat,
+      lng: data.business.lng,
+      locale,
+      openingHours: data.business.openingHours,
     }),
     breadcrumbJsonLd([
-      { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+      { name: "nusa.business", url: nationAbsHref(req, locale) },
       {
-        name: placeMeta.island.name,
-        url: absoluteUrl(
-          req,
-          withLocale(seoHostPath({ island: islandSlug! }), locale),
-        ),
+        name: islandLabel,
+        url: tenantAbsHref(req, { island: islandSlug!, locale }),
       },
       {
         name: listingNest.area
           ? (placeMeta.parent?.name ?? listingNest.hostPlace)
           : placeMeta.place.name,
-        url: absoluteUrl(
-          req,
-          withLocale(
-            seoHostPath({
-              island: islandSlug!,
-              place: listingNest.hostPlace,
-            }),
-            locale,
-          ),
-        ),
+        url: tenantAbsHref(req, {
+          island: islandSlug!,
+          place: listingNest.hostPlace,
+          locale,
+        }),
       },
       ...(listingNest.area
         ? [
             {
               name: placeMeta.place.name,
-              url: absoluteUrl(
-                req,
-                withLocale(
-                  seoHostPath({
-                    island: islandSlug!,
-                    place: listingNest.hostPlace,
-                    area: listingNest.area,
-                  }),
-                  locale,
-                ),
-              ),
+              url: tenantAbsHref(req, {
+                island: islandSlug!,
+                place: listingNest.hostPlace,
+                area: listingNest.area,
+                locale,
+              }),
             },
           ]
         : []),
@@ -681,19 +704,17 @@ if (hub && categoryParam) {
     {stamp && <span class="stamp">{stamp}</span>}
 
     <dl class="kv">
-      <dt>Host</dt>
-      <dd>{hostPath}</dd>
       <dt>{t(locale, "category")}</dt>
-      <dd>{data.business.categories.map(categoryLabel).join(" · ") || "—"}</dd>
+      <dd>{data.business.categories.map((c) => categoryLabel(c, locale)).join(" · ") || "—"}</dd>
       {data.business.address && (
         <>
-          <dt>Address</dt>
+          <dt>{t(locale, "addressLabel")}</dt>
           <dd>{data.business.address}</dd>
         </>
       )}
       {data.business.phone && (
         <>
-          <dt>Phone</dt>
+          <dt>{t(locale, "phoneLabel")}</dt>
           <dd>
             {phoneLink ? (
               <a href={phoneLink}>{data.business.phone}</a>
@@ -717,32 +738,53 @@ if (hub && categoryParam) {
           </dd>
         </>
       )}
-      <dt>Booking</dt>
-      <dd>{data.business.bookingMode}</dd>
-      <dt>Status</dt>
-      <dd>{data.business.status}</dd>
+      {data.business.verifiedAt && (
+        <>
+          <dt>{t(locale, "lastVerified")}</dt>
+          <dd>
+            {new Date(data.business.verifiedAt).toLocaleDateString(
+              locale === "id" ? "id-ID" : "en-GB",
+              { dateStyle: "medium" },
+            )}
+          </dd>
+        </>
+      )}
     </dl>
 
     <p class="actions">
-      {wa && (
-        <a class="cta" href={wa} rel="noopener noreferrer">
-          {t(locale, "chatWhatsApp")}
+      {directionsLink && (
+        <a class="cta" href={directionsLink} rel="noopener noreferrer">
+          {t(locale, "directions")}
         </a>
       )}
       {phoneLink && (
-        <a class={`cta${wa ? " secondary" : ""}`} href={phoneLink}>
+        <a class={`cta${directionsLink ? " secondary" : ""}`} href={phoneLink}>
           {t(locale, "call")}
         </a>
       )}
+      {siteLink && (
+        <a
+          class="cta secondary"
+          href={siteLink}
+          rel="noopener noreferrer"
+        >
+          {t(locale, "website")}
+        </a>
+      )}
+      {wa && (
+        <a class="cta secondary" href={wa} rel="noopener noreferrer">
+          {t(locale, "chatWhatsApp")}
+        </a>
+      )}
+      {data.business.bookingMode !== "none" && (
+        <a class="cta secondary" href="#book">{t(locale, "book")}</a>
+      )}
       <a
-        class={`cta${wa || phoneLink ? " secondary" : ""}`}
+        class="cta secondary"
         href={`${portal}/claim?businessId=${data.business.id}`}
       >
         {t(locale, "claimThis")}
       </a>
-      {data.business.bookingMode !== "none" && (
-        <a class="cta secondary" href="#book">{t(locale, "book")} ({data.business.bookingMode})</a>
-      )}
     </p>
   </article>
 
@@ -762,7 +804,7 @@ if (hub && categoryParam) {
               <div class="index-row">
                 <span class="n">{String(i + 1).padStart(2, "0")}</span>
                 <a class="name" href={neighborHref(n)}>{n.business.name}</a>
-                <span class="rhs">{categoryLabel(n.business.categories[0] ?? "") || n.place.name}</span>
+                <span class="rhs">{categoryLabel(n.business.categories[0] ?? "", locale) || n.place.name}</span>
               </div>
               <p class="index-desc">{n.business.summary}</p>
             </li>
@@ -815,7 +857,7 @@ if (hub && categoryParam) {
               data-category={encodeURIComponent(cat)}
               aria-pressed={cat === discovery.activeCategory ? "true" : "false"}
             >
-              {categoryLabel(cat)}
+              {categoryLabel(cat, locale)}
             </button>
           ))}
         </div>
@@ -865,7 +907,7 @@ if (hub && categoryParam) {
             <tbody>
               {data.business.openingHours.map((h) => (
                 <tr>
-                  <th scope="row">{h.day}</th>
+                  <th scope="row">{weekdayLabel(locale, h.day)}</th>
                   <td>{h.closed ? t(locale, "closed") : `${h.open} – ${h.close}`}</td>
                 </tr>
               ))}
@@ -877,9 +919,9 @@ if (hub && categoryParam) {
 
     {data.vendor && (
       <section class="section">
-        <h2>Shop · {data.vendor.name}</h2>
+        <h2>{t(locale, "shop")} · {data.vendor.name}</h2>
         <p class="prose">{data.vendor.description}</p>
-        <p class="meta">Vendor store · 0% commission at launch</p>
+        <p class="meta">{t(locale, "shopNote")}</p>
         <ol class="index-list">
           {data.vendor.products.map((p, i) => (
             <li>
@@ -887,7 +929,7 @@ if (hub && categoryParam) {
                 <span class="n">{String(i + 1).padStart(2, "0")}</span>
                 <span class="name">{p.name}</span>
                 <span class="rhs">
-                  {p.price.toLocaleString("id-ID")} {p.currency} · stock {p.stock}
+                  {p.price.toLocaleString("id-ID")} {p.currency} · {p.stock} {t(locale, "available")}
                 </span>
               </div>
               <p class="index-desc">{p.description}</p>
@@ -899,18 +941,18 @@ if (hub && categoryParam) {
 
     <section class="section" id="reviews">
       <h2>{t(locale, "reviews")}</h2>
-      {data.reviews.length === 0 && <p class="meta">No reviews yet.</p>}
+      {data.reviews.length === 0 && <p class="meta">{t(locale, "noReviews")}</p>}
       {data.reviews.length > 0 && (
         <div class="table-wrap">
           <table class="data">
-            <caption>Review scores</caption>
+            <caption>{t(locale, "reviewScores")}</caption>
             <thead>
               <tr>
-                <th scope="col">Author</th>
-                <th scope="col">Service</th>
-                <th scope="col">Value</th>
-                <th scope="col">Location</th>
-                <th scope="col">Cleanliness</th>
+                <th scope="col">{t(locale, "author")}</th>
+                <th scope="col">{t(locale, "scoreService")}</th>
+                <th scope="col">{t(locale, "scoreValue")}</th>
+                <th scope="col">{t(locale, "scoreLocation")}</th>
+                <th scope="col">{t(locale, "scoreCleanliness")}</th>
               </tr>
             </thead>
             <tbody>
@@ -934,49 +976,67 @@ if (hub && categoryParam) {
       ))}
 
       <form class="stack" method="POST" id="review-form">
-        <h3>Add review</h3>
-        <label>Name <input name="authorName" required autocomplete="nickname" /></label>
-        <label>Comment <textarea name="comment" required rows="3"></textarea></label>
+        <h3>{t(locale, "addReview")}</h3>
+        <label>{t(locale, "reviewName")} <input name="authorName" required autocomplete="nickname" /></label>
+        <label>{t(locale, "reviewComment")} <textarea name="comment" required rows="3"></textarea></label>
         <fieldset class="scores">
-          <legend>Scores (1–5)</legend>
-          <label>Service <input type="number" name="service" min="1" max="5" value="5" required /></label>
-          <label>Value <input type="number" name="value" min="1" max="5" value="5" required /></label>
-          <label>Location <input type="number" name="location" min="1" max="5" value="5" required /></label>
+          <legend>{t(locale, "reviewScoresLegend")}</legend>
+          <label>{t(locale, "scoreService")} <input type="number" name="service" min="1" max="5" value="5" required /></label>
+          <label>{t(locale, "scoreValue")} <input type="number" name="value" min="1" max="5" value="5" required /></label>
+          <label>{t(locale, "scoreLocation")} <input type="number" name="location" min="1" max="5" value="5" required /></label>
           <label>
-            Cleanliness
+            {t(locale, "scoreCleanliness")}
             <input type="number" name="cleanliness" min="1" max="5" value="5" required />
           </label>
         </fieldset>
-        <button type="submit">Submit review</button>
+        <button type="submit">{t(locale, "reviewSubmit")}</button>
         <p class="meta" id="review-msg" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="section" id="report">
+      <h2>{t(locale, "suggestCorrection")}</h2>
+      <form class="stack" id="report-form">
+        <label>
+          {t(locale, "reportNote")}
+          <textarea name="note" required minlength="12" rows="3"></textarea>
+        </label>
+        <label>
+          {t(locale, "reportKind")}
+          <select name="kind">
+            <option value="correction">{t(locale, "reportCorrection")}</option>
+            <option value="abuse">{t(locale, "reportAbuseKind")}</option>
+          </select>
+        </label>
+        <button type="submit">{t(locale, "reportSend")}</button>
+        <p class="meta" id="report-msg" role="status" aria-live="polite"></p>
       </form>
     </section>
 
     {data.business.bookingMode !== "none" && (
       <section class="section" id="book">
-        <h2>Request a booking · {data.business.bookingMode}</h2>
+        <h2>{t(locale, "bookingTitle")}</h2>
         <p class="meta" id="booking-notice">
-          Sends a pending request to the business. This is not a confirmed
-          reservation and does not lock a price or inventory.
+          {t(locale, "bookingNotice")}
         </p>
         <form
           class="stack"
           id="booking-form"
           aria-describedby="booking-notice"
         >
-          <label>Name <input name="customerName" required autocomplete="name" /></label>
-          <label>Email <input type="email" name="customerEmail" required autocomplete="email" /></label>
-          <label>Date <input type="date" name="startDate" required /></label>
+          <label>{t(locale, "customerName")} <input name="customerName" required autocomplete="name" /></label>
+          <label>{t(locale, "customerEmail")} <input type="email" name="customerEmail" required autocomplete="email" /></label>
+          <label>{t(locale, "bookingDate")} <input type="date" name="startDate" required min={bookingToday} /></label>
           {data.business.bookingMode === "service" && (
-            <label>Time slot <input name="timeSlot" placeholder="10:00" /></label>
+            <label>{t(locale, "timeSlot")} <input name="timeSlot" placeholder="10:00" /></label>
           )}
           {data.business.bookingMode === "rental" && (
-            <label>End date <input type="date" name="endDate" /></label>
+            <label>{t(locale, "endDate")} <input type="date" name="endDate" required min={bookingToday} /></label>
           )}
           {data.business.bookingMode === "event" && (
-            <label>Tickets <input type="number" name="tickets" min="1" value="1" /></label>
+            <label>{t(locale, "tickets")} <input type="number" name="tickets" min="1" value="1" required /></label>
           )}
-          <button type="submit">Submit request</button>
+          <button type="submit">{t(locale, "bookingSubmit")}</button>
           <p class="meta" id="booking-msg" role="status" aria-live="polite"></p>
         </form>
       </section>
@@ -984,7 +1044,41 @@ if (hub && categoryParam) {
   </div>
 </Base>
 
-<script define:vars={{ apiBase: browserApiOrigin(), businessId: data?.business.id ?? "" }}>
+<script define:vars={{ apiBase: browserApiOrigin(), businessId: data?.business.id ?? "", listingCopy }}>
+  const L = typeof listingCopy === "undefined" ? {} : listingCopy;
+  function txt(key, fallback) {
+    return L[key] || fallback;
+  }
+  function withN(key, fallback, n) {
+    return txt(key, fallback).replace("{n}", String(n ?? ""));
+  }
+  const errorCodes = {
+    BOOKING_PAST_DATE: ["bookingPastDate", "Date must be today or later."],
+    BOOKING_NEED_END_DATE: ["bookingNeedEndDate", "Rentals need an end date."],
+    BOOKING_NEED_TICKETS: ["bookingNeedTickets", "Events need a ticket count."],
+    BOOKING_END_BEFORE_START: [
+      "bookingEndBeforeStart",
+      "End date must be on or after the start date.",
+    ],
+    BOOKING_DUPLICATE: [
+      "bookingDuplicate",
+      "A pending request already exists for these dates.",
+    ],
+    BOOKING_NOT_ENABLED: ["bookingDisabled", "Booking is not available for this listing."],
+  };
+  function visitorError(kind, status, data) {
+    const mapped = data && data.code ? errorCodes[data.code] : null;
+    if (mapped) return txt(mapped[0], mapped[1]);
+    if (kind === "booking") {
+      if (status === 409) {
+        return txt("bookingDuplicate", "A pending request already exists for these dates.");
+      }
+      return txt("bookingRejected", "Request could not be sent. Check the dates and try again.");
+    }
+    if (kind === "review") return txt("reviewFailed", "Review could not be sent. Try again.");
+    if (kind === "report") return txt("reportFailed", "Report could not be sent. Try again.");
+    return txt("requestFailed", "Could not send. Try again.");
+  }
   function setStatus(el, text, isError) {
     if (!el) return;
     el.textContent = text;
@@ -1010,7 +1104,7 @@ if (hub && categoryParam) {
     const fd = new FormData(reviewForm);
     reviewForm.dataset.busy = "1";
     lockForm(reviewForm, true);
-    setStatus(reviewMsg, "Submitting review…", false);
+    setStatus(reviewMsg, txt("reviewSubmitting", "Submitting review…"), false);
     try {
       const res = await fetch(`${apiBase}/v1/businesses/${businessId}/reviews`, {
         method: "POST",
@@ -1028,18 +1122,20 @@ if (hub && categoryParam) {
         location.reload();
         return;
       }
-      let detail = `Review failed (${res.status}).`;
+      let data = {};
       try {
-        const data = await res.json();
-        if (data?.error) detail = data.error;
+        data = await res.json();
       } catch {}
+      let detail = visitorError("review", res.status, data);
       if (res.status === 429) {
         const ra = res.headers.get("Retry-After");
-        detail = ra ? `Too many reviews — retry in ${ra}s.` : "Too many reviews — try later.";
+        detail = ra
+          ? withN("reviewTooManyRetry", "Too many reviews — retry in {n}s.", ra)
+          : txt("reviewTooMany", "Too many reviews — try later.");
       }
       setStatus(reviewMsg, detail, true);
     } catch {
-      setStatus(reviewMsg, "Network error — check your connection and try again.", true);
+      setStatus(reviewMsg, txt("networkRetry", "Network error — check your connection and try again."), true);
     } finally {
       reviewForm.dataset.busy = "0";
       lockForm(reviewForm, false);
@@ -1057,7 +1153,7 @@ if (hub && categoryParam) {
     const fd = new FormData(bookingForm);
     bookingForm.dataset.busy = "1";
     lockForm(bookingForm, true);
-    setStatus(bookingMsg, "Sending request…", false);
+    setStatus(bookingMsg, txt("bookingSending", "Sending request…"), false);
     const payload = {
       customerName: fd.get("customerName"),
       customerEmail: fd.get("customerEmail"),
@@ -1081,40 +1177,72 @@ if (hub && categoryParam) {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
-        const data = await res.json();
-        const notice =
-          data.notice ||
-          "Request recorded as pending. This is not a confirmed reservation.";
         setStatus(
           bookingMsg,
-          `Request ${data.booking.id} submitted (${data.booking.status}). ${notice}`,
+          txt("bookingPendingOk", "Request recorded as pending. This is not a confirmed reservation."),
           false,
         );
         bookingForm.reset();
         bookingIdempotencyKey = crypto.randomUUID();
       } else {
-        let detail = `Request failed (${res.status}).`;
+        let data = {};
         try {
-          const data = await res.json();
-          if (data?.error) detail = data.error;
+          data = await res.json();
         } catch {}
+        let detail = visitorError("booking", res.status, data);
         if (res.status === 429) {
           const ra = res.headers.get("Retry-After");
           detail = ra
-            ? `Too many requests — retry in ${ra}s. Your form was kept.`
-            : "Too many requests — try later. Your form was kept.";
+            ? withN("tooManyRetryKept", "Too many requests — retry in {n}s. Your form was kept.", ra)
+            : txt("tooManyKept", "Too many requests — try later. Your form was kept.");
         }
         setStatus(bookingMsg, detail, true);
       }
     } catch {
       setStatus(
         bookingMsg,
-        "Network error — your details were kept. Try again.",
+        txt("networkKept", "Network error — your details were kept. Try again."),
         true,
       );
     } finally {
       bookingForm.dataset.busy = "0";
       lockForm(bookingForm, false);
+    }
+  });
+
+  const reportForm = document.getElementById("report-form");
+  const reportMsg = document.getElementById("report-msg");
+  reportForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (reportForm.dataset.busy === "1") return;
+    const fd = new FormData(reportForm);
+    reportForm.dataset.busy = "1";
+    lockForm(reportForm, true);
+    setStatus(reportMsg, txt("reportSending", "Sending report…"), false);
+    try {
+      const res = await fetch(`${apiBase}/v1/businesses/${businessId}/reports`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          kind: fd.get("kind") || "correction",
+          note: fd.get("note"),
+        }),
+      });
+      if (res.ok) {
+        setStatus(reportMsg, txt("reportReceived", "Report received. Operators will review it."), false);
+        reportForm.reset();
+      } else {
+        let data = {};
+        try {
+          data = await res.json();
+        } catch {}
+        setStatus(reportMsg, visitorError("report", res.status, data), true);
+      }
+    } catch {
+      setStatus(reportMsg, txt("reportNetwork", "Network error — your note was kept. Try again."), true);
+    } finally {
+      reportForm.dataset.busy = "0";
+      lockForm(reportForm, false);
     }
   });
   // Written by apps/web/scripts/copy-vendor.mjs into public/vendor/.
@@ -1198,7 +1326,7 @@ if (hub && categoryParam) {
       <div class="index-row">
         <span class="n">${String(i + 1).padStart(2, "0")}</span>
         <a class="name" href="${escapeHtml(hrefFor(n))}">${escapeHtml(n.business.name)}</a>
-        <span class="rhs">${n.distanceKm.toFixed(2)} km</span>
+        <span class="rhs">${n.distanceKm.toFixed(2)} ${txt("kmAway", "km")}</span>
       </div>
       <p class="index-desc">${escapeHtml(n.business.summary)}</p>`;
         ol.appendChild(li);
@@ -1219,7 +1347,7 @@ if (hub && categoryParam) {
             fillColor: "#1a1c22",
             fillOpacity: 1,
             weight: 1,
-          }).bindPopup("Here"),
+          }).bindPopup(txt("mapHere", "Here")),
         );
         bounds.push([latest.origin.lat, latest.origin.lng]);
       }
@@ -1235,7 +1363,7 @@ if (hub && categoryParam) {
             fillOpacity: 0.85,
             weight: 1,
           }).bindPopup(
-            `<strong>${String(i + 1).padStart(2, "0")}. ${escapeHtml(n.business.name)}</strong><br>${n.distanceKm.toFixed(2)} km`,
+            `<strong>${String(i + 1).padStart(2, "0")}. ${escapeHtml(n.business.name)}</strong><br>${n.distanceKm.toFixed(2)} ${txt("kmAway", "km")}`,
           ),
         );
         bounds.push([n.business.lat, n.business.lng]);

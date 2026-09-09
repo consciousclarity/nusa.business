@@ -1,80 +1,93 @@
 ---
 import Base from "../layouts/Base.astro";
-import { api } from "../lib/api";
-import { publicUrl } from "@nusa/shared";
+import { apiTry } from "../lib/api";
+import { tenantHref } from "../lib/links";
+import { TAXONOMY, categoryLabel } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
 import { absoluteUrl, websiteJsonLd } from "../lib/seo";
-import { t, withLocale, type Locale } from "../i18n/ui";
+import { islandName, islandTagline, t, withLocale, type Locale } from "../i18n/ui";
 
 const locale: Locale = Astro.locals.locale ?? "en";
-const { context } = resolveRequestContext(Astro.request, Astro.url);
+const req = Astro.request;
+const { context } = resolveRequestContext(req, Astro.url);
 
 // Island/place hosts are rewritten to /host/... by middleware — nation only here.
 if (context.kind !== "nation") {
   return Astro.redirect(withLocale("/", locale));
 }
 
-const data = await api<{
+const data = await apiTry<{
   islands: { slug: string; name: string; tagline: string; status: string }[];
 }>("/v1/islands");
-
-const queryHost = (
-  Astro.request.headers.get("x-forwarded-host") ||
-  Astro.request.headers.get("host") ||
-  "nusa.business"
-)
-  .split(":")[0]!
-  .toLowerCase();
-const useRealHosts =
-  queryHost === "nusa.business" || queryHost.endsWith(".nusa.business");
-const active = data.islands.filter((i) => i.status === "active").length;
-const pending = data.islands.length - active;
-
-function islandHref(slug: string) {
-  if (useRealHosts) {
-    const absolute = publicUrl({ island: slug });
-    if (locale === "en") return absolute;
-    const u = new URL(absolute);
-    u.pathname = withLocale(u.pathname || "/", "id");
-    return u.toString();
-  }
-  return withLocale(`/host/${slug}`, locale);
-}
-
-const nationUrl = absoluteUrl(Astro.request, withLocale("/", locale));
+const islands = data?.islands ?? [];
+const directoryUp = data !== null;
+const active = islands.filter((i) => i.status === "active");
+const baliHref = tenantHref(req, { island: "bali", locale });
+const nationUrl = absoluteUrl(req, withLocale("/", locale));
 const nationDescription = t(locale, "nationLede");
+const searchAction = withLocale("/search", locale);
 ---
 <Base
   title={t(locale, "nationTitle")}
   description={nationDescription}
   canonical={nationUrl}
   locale={locale}
-  jsonLd={websiteJsonLd({ url: nationUrl, description: nationDescription })}
+  jsonLd={websiteJsonLd({
+    url: nationUrl,
+    description: nationDescription,
+    locale,
+  })}
 >
   <section class="lede">
     <h1>{t(locale, "nationH1")}</h1>
     <p class="prose">{t(locale, "nationLede")}</p>
   </section>
 
-  <aside class="resolver" aria-label={t(locale, "hostResolver")}>
-    <dl>
-      <dt>{t(locale, "query")}</dt>
-      <dd>{queryHost}</dd>
-      <dt>{t(locale, "resolved")}</dt>
-      <dd>kind=nation</dd>
-      <dt>{t(locale, "records")}</dt>
-      <dd>{active} active islands · {pending} pending</dd>
-    </dl>
-  </aside>
+  <form class="section filter-bar" method="get" action={searchAction}>
+    <label>
+      {t(locale, "findBusiness")}
+      <input
+        type="search"
+        name="q"
+        placeholder={t(locale, "searchPlaceholder")}
+        autocomplete="off"
+        maxlength="120"
+      />
+    </label>
+    <label>
+      {t(locale, "island")}
+      <select name="island">
+        <option value="">{t(locale, "allIslands")}</option>
+        {active.map((island) => (
+          <option value={island.slug}>{islandName(locale, island.slug, island.name)}</option>
+        ))}
+      </select>
+    </label>
+    <label>
+      {t(locale, "category")}
+      <select name="category">
+        <option value="">{t(locale, "allCategories")}</option>
+        {TAXONOMY.map((group) => (
+          <option value={group.slug}>{categoryLabel(group.slug, locale)}</option>
+        ))}
+      </select>
+    </label>
+    <button type="submit">{t(locale, "search")}</button>
+  </form>
 
   <section class="section">
     <h2>{t(locale, "islands")}</h2>
+    {directoryUp ? (
     <ol class="index-list">
-      {data.islands.map((island, i) => (
+      {islands.map((island, i) => (
         <li>
           <div class="index-row">
             <span class="n">{String(i + 1).padStart(2, "0")}</span>
-            <a class="name" href={islandHref(island.slug)}>{island.name}</a>
+            {island.status === "active" ? (
+              <a class="name" href={tenantHref(req, { island: island.slug, locale })}>{islandName(locale, island.slug, island.name)}</a>
+            ) : (
+              <span class="name">{islandName(locale, island.slug, island.name)}</span>
+            )}
             <span class="rhs">
               {island.status === "active" ? (
                 <span>{island.slug}.nusa.business</span>
@@ -83,13 +96,28 @@ const nationDescription = t(locale, "nationLede");
               )}
             </span>
           </div>
-          <p class="index-desc">{island.tagline}</p>
+          <p class="index-desc">
+            {island.status === "active"
+              ? islandTagline(locale, island.slug, island.tagline)
+              : t(locale, "comingSoonNext")}
+            {island.status !== "active" && (
+              <>
+                {" "}
+                <a href={baliHref}>{t(locale, "browseBali")}</a>
+              </>
+            )}
+          </p>
         </li>
       ))}
     </ol>
+    ) : (
+      <p class="prose">{t(locale, "directoryUnavailable")}</p>
+    )}
     <p class="actions">
-      <a class="cta" href={withLocale("/claim", locale)}>{t(locale, "claimListing")}</a>
-      <a class="cta secondary" href={islandHref("bali")}>{t(locale, "openBali")}</a>
+      <a class="cta" href={baliHref}>{t(locale, "openBali")}</a>
+      <a class="cta secondary" href={withLocale("/claim", locale)}>
+        {t(locale, "addListing")}
+      </a>
     </p>
   </section>
 </Base>

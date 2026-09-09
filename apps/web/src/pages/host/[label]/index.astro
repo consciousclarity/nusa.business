@@ -1,16 +1,15 @@
 ---
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
-import { api } from "../../../lib/api";
-import { geoHref, tenantHref } from "../../../lib/links";
+import { apiOrNull } from "../../../lib/api";
+import { geoHref, tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
 import {
-  absoluteUrl,
   breadcrumbJsonLd,
   hostPath,
   websiteJsonLd,
 } from "../../../lib/seo";
-import { t, withLocale, type Locale } from "../../../i18n/ui";
-import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory } from "@nusa/shared";
+import { islandName, islandTagline, t, withLocale, placeTypeLabel, type Locale } from "../../../i18n/ui";
+import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory, TAXONOMY, categoryLabel } from "@nusa/shared";
 
 const label = Astro.params.label!;
 const parts = label.split(".");
@@ -31,6 +30,7 @@ type IslandPayload = {
     summary: string;
     categories: string[];
     status?: string;
+    sample?: boolean;
   }[];
 };
 
@@ -45,7 +45,8 @@ type PlacePayload = {
     summary: string;
     categories: string[];
     status?: string;
-    registeredByAgentId?: string;
+    sample?: boolean;
+    fieldRegistered?: boolean;
   }[];
 };
 
@@ -55,15 +56,26 @@ let placeData: PlacePayload | null = null;
 
 if (parts.length === 1) {
   mode = "island";
-  islandData = await api<IslandPayload>(`/v1/islands/${parts[0]}`);
+  islandData = await apiOrNull<IslandPayload>(`/v1/islands/${parts[0]}`);
 } else if (parts.length === 2) {
   mode = "place";
-  placeData = await api<PlacePayload>(
+  placeData = await apiOrNull<PlacePayload>(
     `/v1/islands/${parts[1]}/places/${parts[0]}`,
   );
 } else {
   return Astro.redirect(withLocale("/", locale));
 }
+
+if ((mode === "island" && !islandData) || (mode === "place" && !placeData)) {
+  return Astro.rewrite(withLocale("/404", locale));
+}
+
+const islandHubLabel = islandData
+  ? islandName(locale, islandData.island.slug, islandData.island.name)
+  : "";
+const placeIslandLabel = placeData
+  ? islandName(locale, placeData.island.slug, placeData.island.name)
+  : "";
 
 if (placeData) {
   const byId: Record<string, HubPlace> = {
@@ -130,60 +142,77 @@ const queryHost =
 
 const islandCanonical =
   islandData &&
-  absoluteUrl(
-    req,
-    withLocale(hostPath({ island: islandData.island.slug }), locale),
-  );
+  tenantAbsHref(req, { island: islandData.island.slug, locale });
 const placeCanonical =
   placeData &&
-  absoluteUrl(
-    req,
-    withLocale(
-      hostPath({
-        island: placeData.island.slug,
-        place: placeData.place.slug,
-      }),
-      locale,
-    ),
-  );
+  tenantAbsHref(req, {
+    island: placeData.island.slug,
+    place: placeData.place.slug,
+    locale,
+  });
 ---
 
 {mode === "island" && islandData && (
   <Base
-    title={`${islandData.island.name} — nusa.business`}
-    description={islandData.island.tagline}
-    crumb={[{ label: islandData.island.slug }]}
+    title={`${islandHubLabel} — nusa.business`}
+    description={islandTagline(locale, islandData.island.slug, islandData.island.tagline)}
+    crumb={[{ label: islandHubLabel }]}
     locale={locale}
     canonical={islandCanonical!}
     jsonLd={[
       websiteJsonLd({
+        locale,
         url: islandCanonical!,
-        name: `${islandData.island.name} — nusa.business`,
-        description: islandData.island.tagline,
+        name: `${islandHubLabel} — nusa.business`,
+        description: islandTagline(locale, islandData.island.slug, islandData.island.tagline),
       }),
       breadcrumbJsonLd([
-        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
-        { name: islandData.island.name, url: islandCanonical! },
+        { name: "nusa.business", url: nationAbsHref(req, locale) },
+        { name: islandHubLabel, url: islandCanonical! },
       ]),
     ]}
   >
     <section class="lede">
-      <h1>{islandData.island.name}</h1>
-      <p class="prose">{islandData.island.tagline}</p>
+      <h1>{islandHubLabel}</h1>
+      <p class="prose">{islandTagline(locale, islandData.island.slug, islandData.island.tagline)}</p>
     </section>
 
-    <aside class="resolver" aria-label={t(locale, "hostResolver")}>
-      <dl>
-        <dt>{t(locale, "query")}</dt>
-        <dd>{queryHost}</dd>
-        <dt>{t(locale, "resolved")}</dt>
-        <dd>island={islandData.island.slug}</dd>
-        <dt>{t(locale, "records")}</dt>
-        <dd>
-          {islandData.places.length} places · {islandData.businesses.length} listings
-        </dd>
-      </dl>
-    </aside>
+    {islandData.island.status === "coming_soon" && (
+      <p class="banner">
+        {t(locale, "comingSoonNext")}{" "}
+        <a href={tenantHref(req, { island: "bali", locale })}>
+          {t(locale, "browseBali")}
+        </a>
+      </p>
+    )}
+
+    <form
+      class="section filter-bar"
+      method="get"
+      action={withLocale("/search", locale)}
+    >
+      <input type="hidden" name="island" value={islandData.island.slug} />
+      <label>
+        {t(locale, "findBusiness")}
+        <input
+          type="search"
+          name="q"
+          placeholder={t(locale, "searchPlaceholder")}
+          autocomplete="off"
+          maxlength="120"
+        />
+      </label>
+      <label>
+        {t(locale, "category")}
+        <select name="category">
+          <option value="">{t(locale, "allCategories")}</option>
+          {TAXONOMY.map((group) => (
+            <option value={group.slug}>{categoryLabel(group.slug, locale)}</option>
+          ))}
+        </select>
+      </label>
+      <button type="submit">{t(locale, "search")}</button>
+    </form>
 
     <section class="section">
       <h2>{t(locale, "places")}</h2>
@@ -208,7 +237,7 @@ const placeCanonical =
                   {place.name}
                 </a>
                 <span class="rhs">
-                  {place.type.replaceAll("_", " ")}
+                  {placeTypeLabel(locale, place.type)}
                   {parent ? ` · ${parent.name}` : ""}
                 </span>
               </div>
@@ -244,7 +273,13 @@ const placeCanonical =
                 >
                   {b.name}
                 </a>
-                <span class="rhs">{place?.name ?? ""}</span>
+                <span class="rhs">
+                  {b.sample ? (
+                    <span class="stamp">{t(locale, "sampleListing")}</span>
+                  ) : (
+                    place?.name ?? ""
+                  )}
+                </span>
               </div>
               <p class="index-desc">{b.summary}</p>
             </li>
@@ -257,31 +292,32 @@ const placeCanonical =
 
 {mode === "place" && placeData && (
   <Base
-    title={`${placeData.place.name}, ${placeData.island.name} — nusa.business`}
+    title={`${placeData.place.name}, ${placeIslandLabel} — nusa.business`}
     description={placeData.place.summary}
     crumb={[
       {
-        label: placeData.island.slug,
+        label: placeIslandLabel,
         href: tenantHref(req, { island: placeData.island.slug, locale }),
       },
-      { label: placeData.place.slug },
+      { label: placeData.place.name },
     ]}
     locale={locale}
     canonical={placeCanonical!}
     jsonLd={[
       websiteJsonLd({
+        locale,
         url: placeCanonical!,
-        name: `${placeData.place.name}, ${placeData.island.name}`,
+        name: `${placeData.place.name}, ${placeIslandLabel}`,
         description: placeData.place.summary,
       }),
       breadcrumbJsonLd([
-        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        { name: "nusa.business", url: nationAbsHref(req, locale) },
         {
-          name: placeData.island.name,
-          url: absoluteUrl(
-            req,
-            withLocale(hostPath({ island: placeData.island.slug }), locale),
-          ),
+          name: placeIslandLabel,
+          url: tenantAbsHref(req, {
+            island: placeData.island.slug,
+            locale,
+          }),
         },
         { name: placeData.place.name, url: placeCanonical! },
       ]),

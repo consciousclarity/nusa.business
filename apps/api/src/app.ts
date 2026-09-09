@@ -6,6 +6,7 @@ import {
   ClaimConflictError,
   addBooking,
   addClaim,
+  addListingReport,
   addReview,
   authenticate,
   consumeRecoveryToken,
@@ -13,6 +14,7 @@ import {
   createInvite,
   createRecoveryToken,
   decideClaim,
+  findDuplicatePendingBooking,
   findValidInvite,
   getBusiness,
   getBusinessById,
@@ -27,9 +29,11 @@ import {
   listBusinesses,
   listClaims,
   listIslands,
+  listListingReports,
   listPlaces,
   listReviews,
   redeemInvite,
+  registerOwner,
   resolveBusinessContext,
   upsertBusiness,
   upsertVendor,
@@ -55,6 +59,8 @@ import {
 import {
   isPubliclyListed,
   toPublicBusiness,
+  toPublicBusinessCard,
+  toPublicNeighbor,
   toPublicReview,
   toPublicVendor,
 } from "./public.js";
@@ -72,9 +78,12 @@ import {
 } from "./rate-limit.js";
 
 import {
+  assertBookingRequest,
   parseBookingBody,
   parseCategories,
   parseListingPatchBody,
+  parseRegisterBody,
+  parseReportBody,
   parseReviewBody,
 } from "./validate.js";
 
@@ -141,6 +150,9 @@ app.get("/v1/meta/categories", (c) =>
 );
 
 app.get("/v1/host", (c) => {
+  if (process.env.NODE_ENV === "production") {
+    return c.json({ error: "Not found" }, 404);
+  }
   const host = c.req.header("x-forwarded-host") || c.req.header("host") || "";
   return c.json({ host, context: parseHost(host) });
 });
@@ -188,7 +200,7 @@ app.get("/v1/islands/:island", (c) => {
   if (!island) return c.json({ error: "Island not found" }, 404);
   const places = listPlaces(island.slug);
   const businesses = listBusinesses({ islandSlug: island.slug }).map(
-    toPublicBusiness,
+    toPublicBusinessCard,
   );
   return c.json({ island, places, businesses });
 });
@@ -207,7 +219,7 @@ app.get("/v1/islands/:island/places/:place", (c) => {
     placeSlug: place.slug,
     category: c.req.query("category") || undefined,
     q: c.req.query("q") || undefined,
-  }).map(toPublicBusiness);
+  }).map(toPublicBusinessCard);
   return c.json({ island, place, parent, children, businesses });
 });
 
@@ -249,13 +261,8 @@ app.get("/v1/islands/:island/places/:place/businesses/:slug/discovery", (c) => {
   const discovery = getBusinessDiscovery(business.id, { radiusKm, category });
   if (!discovery) return c.json({ error: "Business not found" }, 404);
 
-  const mapNeighbor = (n: (typeof discovery.nearby)[number]) => ({
-    business: toPublicBusiness(n.business),
-    place: n.place,
-    island: n.island,
-    geo: n.geo,
-    distanceKm: Math.round(n.distanceKm * 100) / 100,
-  });
+  const mapNeighbor = (n: (typeof discovery.nearby)[number]) =>
+    toPublicNeighbor(n);
 
   return c.json({
     origin: discovery.origin,
@@ -293,7 +300,7 @@ app.get("/v1/search", (c) => {
     results: businesses.map((b) => {
       const ctx = resolveBusinessContext(b.id);
       return {
-        business: toPublicBusiness(b),
+        business: toPublicBusinessCard(b),
         place: ctx?.place,
         island: ctx?.island,
         geo: ctx?.geo,
@@ -331,30 +338,53 @@ app.post(
   },
 );
 
-/** Invitation-based registration — launch path (no open self-signup). */
+/**
+ * Owner self-signup (email + name + password) or invite redeem.
+ * Clients cannot choose a role. Claim approval is still required before
+ * editing an existing listing.
+ */
 app.post(
   "/v1/auth/register",
   rateLimit({ id: "register-ip", limit: LOGIN_MAX, windowMs: LOGIN_WINDOW_MS }),
   async (c) => {
-    let body: { token?: string; name?: string; password?: string };
+    let raw: unknown;
     try {
-      body = await c.req.json();
+      raw = await c.req.json();
     } catch {
       return c.json({ error: "Malformed JSON" }, 400);
     }
-    if (!body.token || !body.name || !body.password) {
-      return c.json({ error: "token, name, and password are required" }, 400);
+    const parsed = parseRegisterBody(raw);
+    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+
+    if (parsed.value.kind === "invite") {
+      const result = await redeemInvite({
+        rawToken: parsed.value.token,
+        name: parsed.value.name,
+        password: parsed.value.password,
+      });
+      if (!result.ok) return c.json({ error: result.error }, 400);
+      const { password: _, ...safe } = result.user;
+      const returnTo = result.invite.businessId
+        ? `/claim?businessId=${encodeURIComponent(result.invite.businessId)}`
+        : parsed.value.returnTo || "/";
+      return c.json(
+        {
+          user: safe,
+          token: issueToken(result.user),
+          returnTo: safePortalReturnTo(returnTo),
+        },
+        201,
+      );
     }
-    const result = await redeemInvite({
-      rawToken: body.token,
-      name: body.name,
-      password: body.password,
+
+    const result = await registerOwner({
+      email: parsed.value.email,
+      name: parsed.value.name,
+      password: parsed.value.password,
     });
     if (!result.ok) return c.json({ error: result.error }, 400);
     const { password: _, ...safe } = result.user;
-    const returnTo = result.invite.businessId
-      ? `/claim?businessId=${encodeURIComponent(result.invite.businessId)}`
-      : "/";
+    const returnTo = parsed.value.returnTo || "/listings";
     return c.json(
       {
         user: safe,
@@ -766,7 +796,7 @@ app.post(
     // never touched the booking resource, and the owner can enable booking
     // mid-window — charging it would leave real customers blocked afterwards.
     if (business.bookingMode === "none") {
-      return c.json({ error: "Booking not enabled" }, 400);
+      return c.json({ error: "Booking not enabled", code: "BOOKING_NOT_ENABLED" }, 400);
     }
 
     let raw: unknown;
@@ -776,7 +806,23 @@ app.post(
       return c.json({ error: "Malformed JSON" }, 400);
     }
     const parsed = parseBookingBody(raw);
-    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+    if (!parsed.ok) {
+      return c.json(
+        parsed.code
+          ? { error: parsed.error, code: parsed.code }
+          : { error: parsed.error },
+        400,
+      );
+    }
+    const scheduled = assertBookingRequest(business.bookingMode, parsed.value);
+    if (!scheduled.ok) {
+      return c.json(
+        scheduled.code
+          ? { error: scheduled.error, code: scheduled.code }
+          : { error: scheduled.error },
+        400,
+      );
+    }
 
     const idemKey = (c.req.header("idempotency-key") || "").trim();
     if (idemKey.length > 128) {
@@ -791,9 +837,26 @@ app.post(
         }
         const existing = listBookings(business.id).find((b) => b.id === prior.bookingId);
         if (existing) {
-          return c.json({ booking: existing, idempotentReplay: true }, 200);
+          return c.json({ ok: true, idempotentReplay: true }, 200);
         }
       }
+    }
+
+    const duplicate = findDuplicatePendingBooking({
+      businessId: business.id,
+      customerEmail: scheduled.value.customerEmail,
+      startDate: scheduled.value.startDate,
+      endDate: scheduled.value.endDate,
+      timeSlot: scheduled.value.timeSlot,
+    });
+    if (duplicate) {
+      return c.json(
+        {
+          error: "A pending request already exists for these dates",
+          code: "BOOKING_DUPLICATE",
+        },
+        409,
+      );
     }
 
     const limited = consumeWrite("bookings", resolveClientIp(c), business.id);
@@ -818,16 +881,46 @@ app.post(
     if (idemKey) {
       rememberBookingIdempotency(`${business.id}:${idemKey}`, booking.id, parsed.value);
     }
+    return c.json({ ok: true }, 201);
+  },
+);
+
+app.post(
+  "/v1/businesses/:id/reports",
+  async (c) => {
+    const business = getBusinessById(c.req.param("id"));
+    if (!business || !isPubliclyListed(business)) {
+      return c.json({ error: "Not found" }, 404);
+    }
+    let raw: unknown;
+    try {
+      raw = await c.req.json();
+    } catch {
+      return c.json({ error: "Malformed JSON" }, 400);
+    }
+    const parsed = parseReportBody(raw);
+    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+    const limited = consumeWrite("reports", resolveClientIp(c), business.id);
+    if (!limited.allowed) return tooManyRequests(c, limited.retryAfter);
+    const report = addListingReport({
+      businessId: business.id,
+      kind: parsed.value.kind,
+      note: parsed.value.note,
+    });
     return c.json(
       {
-        booking,
-        notice:
-          "Request recorded as pending. This is not a confirmed reservation or price quote.",
+        report: { id: report.id, kind: report.kind, createdAt: report.createdAt },
+        message: "Report received. Operators will review it.",
       },
       201,
     );
   },
 );
+
+app.get("/v1/reports", requireRole("admin"), (c) => {
+  const businessId = c.req.query("businessId") || undefined;
+  return c.json({ reports: listListingReports(businessId) });
+});
 
 app.get("/v1/bookings", requireAuth, (c) => {
   const user = c.get("user");
@@ -907,7 +1000,7 @@ app.get("/v1/field/recent", (c) => {
     .slice(0, 12);
   return c.json({
     businesses: businesses.map((b) => ({
-      business: toPublicBusiness(b),
+      business: toPublicBusinessCard(b),
       context: resolveBusinessContext(b.id),
     })),
   });

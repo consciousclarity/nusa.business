@@ -242,6 +242,22 @@ ol {
   text-decoration: underline;
 }
 
+.site-header nav a.nav-search {
+  color: var(--ink);
+}
+
+.site-header nav a.nav-search:visited {
+  color: var(--ink);
+}
+
+.site-header nav a.nav-owner {
+  color: var(--ink-faint);
+}
+
+.site-header nav a.nav-owner:visited {
+  color: var(--ink-faint);
+}
+
 /* —— Path —— */
 .crumbs {
   font-family: var(--mono);
@@ -353,7 +369,8 @@ ol {
   color: var(--ink-soft);
 }
 
-.filter-bar select {
+.filter-bar select,
+.filter-bar input[type="search"] {
   min-width: min(100%, 16rem);
   font-family: var(--mono);
   font-size: 1rem;
@@ -362,6 +379,10 @@ ol {
   border: 1px solid var(--ink);
   border-radius: 0;
   padding: 0.55rem 0.65rem;
+  min-height: 2.75rem;
+}
+
+.filter-bar button {
   min-height: 2.75rem;
 }
 

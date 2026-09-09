@@ -51,6 +51,22 @@ writeFileSync(
         createdAt: t,
         updatedAt: t,
       },
+      {
+        id: "biz-b",
+        placeId: "pl-gianyar",
+        slug: "warung-b",
+        name: "Warung B",
+        status: "published",
+        categories: ["Food & Drink"],
+        summary: "s",
+        description: "d",
+        gallery: [],
+        openingHours: [],
+        faq: [],
+        bookingMode: "none",
+        createdAt: t,
+        updatedAt: t,
+      },
     ],
     users: [
       {
@@ -67,6 +83,7 @@ writeFileSync(
     vendors: [],
     invites: [],
     recoveryTokens: [],
+    reports: [],
   }),
 );
 
@@ -160,6 +177,59 @@ describe("C05 invite register and claims", () => {
       },
     );
     assert.equal(again.status, 409);
+  });
+
+  it("lets an owner self-register and keeps claim pending until approve", async () => {
+    const reg = await json("POST", "/v1/auth/register", {
+      body: {
+        email: "self@example.test",
+        name: "Self Owner",
+        password: "owner-password-12",
+        returnTo: "/claim?businessId=biz-b",
+        role: "admin",
+      },
+    });
+    assert.equal(reg.status, 400);
+
+    const created = await json("POST", "/v1/auth/register", {
+      body: {
+        email: "self@example.test",
+        name: "Self Owner",
+        password: "owner-password-12",
+        returnTo: "/claim?businessId=biz-b",
+      },
+    });
+    assert.equal(created.status, 201);
+    assert.equal(created.data.user.role, "owner");
+    assert.equal(created.data.returnTo, "/claim?businessId=biz-b");
+
+    const pendingClaim = await json("POST", "/v1/claims", {
+      headers: { Authorization: `Bearer ${created.data.token}` },
+      body: { businessId: "biz-b", note: "I run this warung daily" },
+    });
+    assert.equal(pendingClaim.status, 201);
+    assert.equal(pendingClaim.data.claim.status, "pending");
+
+    const patchWhilePending = await json("PATCH", "/v1/portal/listings/biz-b", {
+      headers: { Authorization: `Bearer ${created.data.token}` },
+      body: { summary: "should not apply" },
+    });
+    assert.equal(patchWhilePending.status, 403);
+
+    const admin = await json("POST", "/v1/auth/login", {
+      body: { email: "admin@example.test", password: "admin-pass-long" },
+    });
+    const decide = await json("POST", `/v1/claims/${pendingClaim.data.claim.id}/decide`, {
+      headers: { Authorization: `Bearer ${admin.data.token}` },
+      body: { status: "approved", reason: "WhatsApp match" },
+    });
+    assert.equal(decide.status, 200);
+
+    const patchAfter = await json("PATCH", "/v1/portal/listings/biz-b", {
+      headers: { Authorization: `Bearer ${created.data.token}` },
+      body: { summary: "now the owner" },
+    });
+    assert.equal(patchAfter.status, 200);
   });
 
   it("issues and consumes recovery tokens", async () => {

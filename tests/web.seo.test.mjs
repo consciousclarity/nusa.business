@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
 import {
   absoluteUrl,
   breadcrumbJsonLd,
   escapeXml,
   hostPath,
   localBusinessJsonLd,
+  localeSitemapPaths,
   siteOrigin,
   sitemapXml,
   websiteJsonLd,
@@ -66,6 +68,8 @@ describe("public SEO helpers (C11)", () => {
     });
     assert.equal(biz["@type"], "LocalBusiness");
     assert.equal(biz.name, "Test Warung");
+    assert.equal(biz.inLanguage, "en");
+    assert.deepEqual(biz.additionalType, ["Food & Drink"]);
     const crumbs = breadcrumbJsonLd([
       { name: "nusa.business", url: "http://localhost:4321/" },
       {
@@ -79,6 +83,54 @@ describe("public SEO helpers (C11)", () => {
       websiteJsonLd({ url: "http://localhost:4321/" })["@type"],
       "WebSite",
     );
+    assert.equal(
+      websiteJsonLd({ url: "http://localhost:4321/id", locale: "id" }).inLanguage,
+      "id",
+    );
+  });
+
+  it("localBusinessJsonLd additionalType follows locale", () => {
+    const node = localBusinessJsonLd({
+      name: "Warung Example",
+      description: "Babi guling",
+      url: "https://gianyar.bali.nusa.business/foo",
+      categories: ["food-drink", "warungs-local-food"],
+      locale: "id",
+    });
+    assert.equal(node.inLanguage, "id");
+    assert.deepEqual(node.additionalType, [
+      "Makanan & minuman",
+      "Warung & makanan lokal",
+    ]);
+  });
+
+  it("localBusinessJsonLd emits openingHoursSpecification", () => {
+    const node = localBusinessJsonLd({
+      name: "Clinic",
+      description: "24h",
+      url: "https://example.test/clinic",
+      openingHours: [
+        { day: "Mon", open: "00:00", close: "24:00" },
+        { day: "Sun", open: "09:00", close: "17:00", closed: true },
+      ],
+    });
+    assert.deepEqual(node.openingHoursSpecification, [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Monday",
+        opens: "00:00",
+        closes: "23:59",
+      },
+    ]);
+  });
+
+  it("localeSitemapPaths adds /id counterparts once", () => {
+    assert.deepEqual(localeSitemapPaths("/"), ["/", "/id"]);
+    assert.deepEqual(localeSitemapPaths("/host/bali"), [
+      "/host/bali",
+      "/id/host/bali",
+    ]);
+    assert.deepEqual(localeSitemapPaths("/id/host/bali"), ["/id/host/bali"]);
   });
 
   it("escapes sitemap XML and lists locs", () => {
@@ -92,5 +144,17 @@ describe("public SEO helpers (C11)", () => {
       /<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9">/,
     );
     assert.match(xml, /<loc>http:\/\/localhost:4321\/host\/bali<\/loc>/);
+  });
+});
+
+describe("public robots.txt", () => {
+  it("disallows search and points at the sitemap", () => {
+    const src = readFileSync(
+      new URL("../apps/web/src/pages/robots.txt.ts", import.meta.url),
+      "utf8",
+    );
+    assert.match(src, /Disallow: \/search/);
+    assert.match(src, /Disallow: \/id\/search/);
+    assert.match(src, /Sitemap: \$\{origin\}\/sitemap.xml/);
   });
 });

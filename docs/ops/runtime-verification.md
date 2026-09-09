@@ -83,3 +83,12 @@ bash scripts/local-runtime-smoke.sh
 ```
 
 Expects API `:8787`, web `:4321`, and optionally portal `:5173`.
+
+Read-only **live** HTML (does not deploy):
+
+```bash
+bash scripts/live-public-check.sh
+```
+
+Homepage visitor-chrome assertions are expected to fail until the
+launch-readiness follow-up is on the VPS.

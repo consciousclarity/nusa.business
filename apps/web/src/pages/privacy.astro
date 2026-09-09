@@ -1,0 +1,33 @@
+---
+import Base from "../layouts/Base.astro";
+import { absoluteUrl } from "../lib/seo";
+import { t, withLocale, type Locale } from "../i18n/ui";
+
+const locale: Locale = Astro.locals.locale ?? "en";
+const url = absoluteUrl(Astro.request, withLocale("/privacy", locale));
+---
+<Base
+  title={t(locale, "privacyTitle")}
+  description={t(locale, "privacyDesc")}
+  canonical={url}
+  locale={locale}
+>
+  <section class="lede">
+    <h1>{t(locale, "privacy")}</h1>
+    <p class="prose">{t(locale, "privacyLede")}</p>
+  </section>
+  <section class="section">
+    <h2>{t(locale, "privacyWhatH2")}</h2>
+    <p class="prose">{t(locale, "privacyWhat")}</p>
+    <p class="prose">{t(locale, "privacyAuth")}</p>
+    <p class="prose">{t(locale, "privacySample")}</p>
+  </section>
+  <section class="section">
+    <h2>{t(locale, "privacyContactH2")}</h2>
+    <p class="prose">
+      {t(locale, "privacyContact")}
+      {" "}
+      <a href={withLocale("/support", locale)}>{t(locale, "support")}</a>
+    </p>
+  </section>
+</Base>

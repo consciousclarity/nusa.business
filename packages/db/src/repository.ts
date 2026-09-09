@@ -27,6 +27,7 @@ import type {
   Claim,
   DataStore,
   Invite,
+  ListingReport,
   RecoveryToken,
   Review,
   User,
@@ -423,6 +424,7 @@ export function decideClaim(
     if (biz) {
       biz.status = "claimed";
       biz.ownerUserId = claim.claimantUserId;
+      biz.verifiedAt = now;
       biz.updatedAt = now;
     }
     for (const other of store.claims) {
@@ -461,6 +463,26 @@ export function listBookings(businessId?: string) {
   return businessId ? all.filter((b) => b.businessId === businessId) : all;
 }
 
+/** Same customer + listing + dates while still pending — used to block double-submit. */
+export function findDuplicatePendingBooking(opts: {
+  businessId: string;
+  customerEmail: string;
+  startDate: string;
+  endDate?: string;
+  timeSlot?: string;
+}): Booking | undefined {
+  const email = opts.customerEmail.trim().toLowerCase();
+  return getStore().bookings.find(
+    (b) =>
+      b.businessId === opts.businessId &&
+      b.status === "pending" &&
+      b.customerEmail.toLowerCase() === email &&
+      b.startDate === opts.startDate &&
+      (b.endDate || "") === (opts.endDate || "") &&
+      (b.timeSlot || "") === (opts.timeSlot || ""),
+  );
+}
+
 export function addBooking(
   booking: Omit<Booking, "id" | "createdAt" | "status"> & {
     status?: Booking["status"];
@@ -476,6 +498,27 @@ export function addBooking(
   store.bookings.push(row);
   save(store);
   return row;
+}
+
+export function addListingReport(
+  report: Omit<ListingReport, "id" | "createdAt">,
+): ListingReport {
+  const store = getStore();
+  const row: ListingReport = {
+    ...report,
+    note: report.note.trim().slice(0, 2000),
+    id: `rpt-${crypto.randomUUID().slice(0, 8)}`,
+    createdAt: new Date().toISOString(),
+  };
+  if (!Array.isArray(store.reports)) store.reports = [];
+  store.reports.push(row);
+  save(store);
+  return row;
+}
+
+export function listListingReports(businessId?: string) {
+  const all = getStore().reports ?? [];
+  return businessId ? all.filter((r) => r.businessId === businessId) : all;
 }
 
 export function getVendorByBusinessId(businessId: string) {
@@ -792,6 +835,43 @@ export async function redeemInvite(input: {
   invite.usedAt = new Date().toISOString();
   save(store);
   return { ok: true, user, invite };
+}
+
+/**
+ * Public owner signup. Role is always `owner` — clients cannot self-assign
+ * admin or field_agent. Claim approval is still required before editing an
+ * existing listing.
+ */
+export async function registerOwner(input: {
+  email: string;
+  name: string;
+  password: string;
+}): Promise<{ ok: true; user: User } | { ok: false; error: string }> {
+  const email = input.email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "email must be a valid email" };
+  }
+  if (getUserByEmail(email)) {
+    return { ok: false, error: "An account with this email already exists" };
+  }
+  if (input.password.length < 12) {
+    return { ok: false, error: "Password must be at least 12 characters" };
+  }
+  const name = input.name.trim();
+  if (name.length < 1 || name.length > 120) {
+    return { ok: false, error: "Name is required" };
+  }
+  const store = getStore();
+  const user: User = {
+    id: `usr-${crypto.randomUUID().slice(0, 8)}`,
+    email,
+    name,
+    role: "owner",
+    password: await hashPassword(input.password),
+  };
+  store.users.push(user);
+  save(store);
+  return { ok: true, user };
 }
 
 export function createRecoveryToken(userId: string, ttlHours = 2): {

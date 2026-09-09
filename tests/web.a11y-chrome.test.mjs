@@ -18,6 +18,7 @@ const listing = readFileSync(
 describe("public a11y chrome (C10)", () => {
   it("exposes a skip link to main content", () => {
     assert.match(base, /class="skip-link"/);
+    assert.match(base, /t\(locale, "skipToContent"\)/);
     assert.match(base, /href="#main-content"/);
     assert.match(base, /id="main-content"/);
     assert.match(base, /tabindex="-1"/);
@@ -42,7 +43,7 @@ describe("public a11y chrome (C10)", () => {
 
   it("groups review scores in a fieldset and wires booking status", () => {
     assert.match(listing, /<fieldset class="scores">/);
-    assert.match(listing, /<legend>Scores/);
+    assert.match(listing, /<legend>\{t\(locale, "reviewScoresLegend"\)\}<\/legend>/);
     assert.match(listing, /aria-describedby="booking-notice"/);
     assert.match(listing, /aria-labelledby="hours-caption"/);
     assert.match(listing, /setAttribute\("aria-invalid"/);

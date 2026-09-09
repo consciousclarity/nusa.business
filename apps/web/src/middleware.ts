@@ -24,6 +24,24 @@ function withPerfHeaders(response: Response): Response {
   if (!headers.has("X-Content-Type-Options")) {
     headers.set("X-Content-Type-Options", "nosniff");
   }
+  if (!headers.has("Referrer-Policy")) {
+    headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  }
+  if (!headers.has("Content-Security-Policy-Report-Only")) {
+    headers.set(
+      "Content-Security-Policy-Report-Only",
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "connect-src 'self' https: http://localhost:8787 http://127.0.0.1:8787",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ].join("; "),
+    );
+  }
   const type = headers.get("content-type") || "";
   if (type.includes("text/html") && !headers.has("Cache-Control")) {
     headers.set(

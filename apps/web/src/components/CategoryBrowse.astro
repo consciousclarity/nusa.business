@@ -1,10 +1,12 @@
 ---
 import { geoHref, tenantHref } from "../lib/links";
-import { t, type Locale } from "../i18n/ui";
+import { inWhere, islandName, t, type Locale } from "../i18n/ui";
 import {
   categoryLabel,
   facetValueLabel,
   facetsForCategory,
+  localizeFacetDef,
+  relatedAsLabel,
   relatedForCategory,
   type FacetBrowse,
   type FacetDef,
@@ -30,6 +32,7 @@ type Props = {
   browse: FacetBrowse;
   locale: Locale;
   formAction: string;
+  unavailable?: boolean;
 };
 
 const {
@@ -42,11 +45,14 @@ const {
   browse,
   locale,
   formAction,
+  unavailable = false,
 } = Astro.props as Props;
 
 const req = Astro.request;
 const relatedShown = relatedForCategory(browse.category);
-const allFacets = facetsForCategory(browse.category);
+const allFacets = facetsForCategory(browse.category).map((f) =>
+  localizeFacetDef(f, locale),
+);
 const groupFacets = allFacets.filter((f) => f.source === "stored");
 const globalShown = allFacets.filter(
   (f) =>
@@ -70,10 +76,10 @@ for (const f of primary) {
 }
 const more = globalShown.filter((f) => !seen.has(f.key));
 
-const categoryTitle = categoryLabel(browse.category);
-const where = area?.name || hostPlace?.name || island.name;
+const categoryTitle = categoryLabel(browse.category, locale);
+const where = area?.name || hostPlace?.name || islandName(locale, island.slug, island.name);
 const facetHeading = browse.pathFacet
-  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value)} ${categoryTitle}`
+  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value, locale)} ${categoryTitle}`
   : categoryTitle;
 
 function selectedValue(key: string): string {
@@ -105,13 +111,21 @@ const hubHref = tenantHref(req, {
 ---
 
 <section class="lede">
-  <h1>{facetHeading} in {where}</h1>
-  <p class="prose">
-    {listings.length}
-    {listings.length === 1 ? " listing" : " listings"}
-    {" · "}
-    <a href={hubHref}>{where}</a>
-  </p>
+  <h1>{inWhere(locale, facetHeading, where)}</h1>
+  {unavailable ? (
+    <p class="prose">
+      {t(locale, "directoryUnavailable")}{" "}
+      <a href={tenantHref(req, { island: "bali", locale })}>
+        {t(locale, "browseBali")}
+      </a>
+    </p>
+  ) : (
+    <p class="prose">
+      {listings.length} {t(locale, "listingsCount")}
+      {" · "}
+      <a href={hubHref}>{where}</a>
+    </p>
+  )}
 </section>
 
 <form class="section filter-bar browse-filters" method="get" action={formAction}>
@@ -159,12 +173,12 @@ const hubHref = tenantHref(req, {
 {relatedShown.length > 0 && (
   <p class="meta">
     {t(locale, "relatedServices")}{" "}
-    {relatedShown.map((rel) => rel.as).join(" · ")}
+    {relatedShown.map((rel) => relatedAsLabel(rel.as, locale)).join(" · ")}
   </p>
 )}
 
 <section class="section">
-  {listings.length === 0 ? (
+  {unavailable ? null : listings.length === 0 ? (
     <p class="prose">
       {t(locale, "noCategoryMatches")}{" "}
       <a href={formAction}>{t(locale, "showAll")}</a>
@@ -176,7 +190,7 @@ const hubHref = tenantHref(req, {
           <div class="index-row">
             <span class="n">{String(i + 1).padStart(2, "0")}</span>
             <a class="name" href={listingHref(b)}>{b.name}</a>
-            <span class="rhs">{categoryLabel(b.categories[0] ?? "")}</span>
+            <span class="rhs">{categoryLabel(b.categories[0] ?? "", locale)}</span>
           </div>
           <p class="index-desc">{b.summary}</p>
         </li>

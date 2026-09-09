@@ -4,8 +4,11 @@ import { describe, it } from "node:test";
 process.env.NUSA_AUTH_SECRET = "test-secret-at-least-16-chars-long";
 
 const {
+  assertBookingRequest,
   parseBookingBody,
   parseListingPatchBody,
+  parseRegisterBody,
+  parseReportBody,
   parseReviewBody,
 } = await import("../apps/api/dist/validate.js");
 
@@ -139,4 +142,100 @@ it("rejects owner status patches while allowing ordinary edits", () => {
     assert.equal(parseListingPatchBody({ name: "Allowed", status }).ok, false);
   }
   assert.equal(parseListingPatchBody({ name: "Allowed", slug: "new-slug" }).ok, true);
+});
+
+describe("assertBookingRequest", () => {
+  const good = {
+    customerName: "Sam",
+    customerEmail: "sam@example.test",
+    startDate: "2027-05-01",
+  };
+
+  it("rejects past dates and booking-disabled listings", () => {
+    const past = assertBookingRequest("service", good, { today: "2027-05-02" });
+    assert.equal(past.ok, false);
+    if (!past.ok) assert.equal(past.code, "BOOKING_PAST_DATE");
+    const disabled = assertBookingRequest("none", good, { today: "2027-05-01" });
+    assert.equal(disabled.ok, false);
+    if (!disabled.ok) assert.equal(disabled.code, "BOOKING_NOT_ENABLED");
+  });
+
+  it("requires rental endDate and event tickets", () => {
+    assert.equal(
+      assertBookingRequest("rental", good, { today: "2027-05-01" }).ok,
+      false,
+    );
+    assert.equal(
+      assertBookingRequest(
+        "rental",
+        { ...good, endDate: "2027-05-03" },
+        { today: "2027-05-01" },
+      ).ok,
+      true,
+    );
+    assert.equal(
+      assertBookingRequest("event", good, { today: "2027-05-01" }).ok,
+      false,
+    );
+    assert.equal(
+      assertBookingRequest("event", { ...good, tickets: 2 }, { today: "2027-05-01" }).ok,
+      true,
+    );
+  });
+});
+
+describe("parseRegisterBody", () => {
+  it("accepts owner self-signup and rejects client-chosen roles", () => {
+    const ok = parseRegisterBody({
+      email: "new@example.test",
+      name: "Maya",
+      password: "owner-password-12",
+      returnTo: "/claim?businessId=biz-a",
+    });
+    assert.equal(ok.ok, true);
+    if (ok.ok) {
+      assert.equal(ok.value.kind, "owner");
+      if (ok.value.kind === "owner") {
+        assert.equal(ok.value.email, "new@example.test");
+      }
+    }
+    assert.equal(
+      parseRegisterBody({
+        email: "new@example.test",
+        name: "Maya",
+        password: "owner-password-12",
+        role: "admin",
+      }).ok,
+      false,
+    );
+    assert.equal(
+      parseRegisterBody({
+        email: "new@example.test",
+        name: "Maya",
+        password: "short",
+      }).ok,
+      false,
+    );
+  });
+
+  it("accepts invite redeem without an email field", () => {
+    const ok = parseRegisterBody({
+      token: "a".repeat(32),
+      name: "Maya",
+      password: "owner-password-12",
+    });
+    assert.equal(ok.ok, true);
+    if (ok.ok) assert.equal(ok.value.kind, "invite");
+  });
+});
+
+describe("parseReportBody", () => {
+  it("accepts correction notes and rejects short or unknown kinds", () => {
+    assert.equal(
+      parseReportBody({ kind: "correction", note: "Hours are wrong on Sunday." }).ok,
+      true,
+    );
+    assert.equal(parseReportBody({ kind: "spam", note: "Hours are wrong on Sunday." }).ok, false);
+    assert.equal(parseReportBody({ kind: "abuse", note: "too short" }).ok, false);
+  });
 });

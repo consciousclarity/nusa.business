@@ -1,0 +1,27 @@
+---
+import Base from "../layouts/Base.astro";
+import { nationHref } from "../lib/links";
+import { detectLocale, t, withLocale, type Locale } from "../i18n/ui";
+
+// Error rendering re-runs without the original locals.locale (same class of
+// bug as rewriting to bare "/404"). Read /id from the request URL instead.
+const locale: Locale = detectLocale(Astro.url.pathname).locale;
+Astro.response.status = 500;
+---
+<Base
+  title={t(locale, "serverErrorTitle")}
+  description={t(locale, "serverErrorLede")}
+  locale={locale}
+  robots="noindex,follow"
+>
+  <section class="lede">
+    <h1>{t(locale, "serverErrorH1")}</h1>
+    <p class="prose">{t(locale, "serverErrorLede")}</p>
+    <p class="actions">
+      <a class="cta" href={withLocale("/search", locale)}>{t(locale, "search")}</a>
+      <a class="cta secondary" href={nationHref(Astro.request, locale)}>
+        {t(locale, "backHome")}
+      </a>
+    </p>
+  </section>
+</Base>

@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   CATEGORIES,
+  CATEGORY_LABELS_ID,
+  RELATED_AS_ID,
   TAXONOMY,
   canonicalizeCategory,
   canonicalizeCategoryList,
   categoryLabel,
   expandCategoryFilter,
   listingMatchesCategory,
+  relatedAsLabel,
   relatedForCategory,
   taxonomyCatalog,
 } from "@nusa/shared";
@@ -55,6 +58,9 @@ describe("Indonesia category taxonomy", () => {
     assert.equal(canonicalizeCategory("Maternity & Women's Health"), "maternity-womens-health");
     assert.equal(canonicalizeCategory("Not A Real Category"), undefined);
     assert.equal(categoryLabel("cafes-coffee-shops"), "Cafés & Coffee Shops");
+    assert.equal(categoryLabel("cafes-coffee-shops", "id"), "Kafe & kedai kopi");
+    assert.equal(categoryLabel("banks-atms", "id"), "Bank & ATM");
+    assert.equal(categoryLabel("food-drink", "id"), "Makanan & minuman");
     const list = canonicalizeCategoryList(["Food & Drink", "food-drink", "Restaurants"]);
     assert.equal(list.ok, true);
     assert.deepEqual(list.value, ["food-drink", "restaurants"]);
@@ -78,5 +84,32 @@ describe("Indonesia category taxonomy", () => {
     assert.equal(CATEGORIES.includes("Food & Drink"), true);
     assert.equal(CATEGORIES.includes("Wedding Planners"), true);
     assert.equal(CATEGORIES.includes("Accommodation"), false);
+  });
+
+  it("has an Indonesian label for every taxonomy slug", () => {
+    const unused = new Set(Object.keys(CATEGORY_LABELS_ID));
+    for (const group of TAXONOMY) {
+      assert.ok(CATEGORY_LABELS_ID[group.slug], `id label missing for ${group.slug}`);
+      assert.equal(categoryLabel(group.slug, "id"), CATEGORY_LABELS_ID[group.slug]);
+      unused.delete(group.slug);
+      for (const child of group.children) {
+        assert.ok(CATEGORY_LABELS_ID[child.slug], `id label missing for ${child.slug}`);
+        assert.equal(categoryLabel(child.slug, "id"), CATEGORY_LABELS_ID[child.slug]);
+        unused.delete(child.slug);
+      }
+    }
+    assert.deepEqual([...unused], [], "CATEGORY_LABELS_ID has unused slugs");
+    for (const group of TAXONOMY) {
+      for (const rel of group.related ?? []) {
+        assert.ok(RELATED_AS_ID[rel.as], `id related-as missing for ${rel.as}`);
+      }
+    }
+    assert.notEqual(categoryLabel("banks-atms", "id"), categoryLabel("banks-atms"));
+    assert.notEqual(
+      categoryLabel("warungs-local-food", "id"),
+      categoryLabel("warungs-local-food"),
+    );
+    assert.equal(relatedAsLabel("Catering", "id"), "Katering");
+    assert.equal(relatedAsLabel("Catering", "en"), "Catering");
   });
 });

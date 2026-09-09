@@ -63,6 +63,7 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 - [DNS & routing](./ops/dns-and-routing.md)
 - [Docker Compose](./ops/docker.md)
 - [Environments](./ops/environments.md)
+- [Launch readiness checklist](./ops/launch-readiness.md)
 - [Security](./ops/security.md)
 - [Backfill listing coordinates](./ops/backfill-listing-coords.md)
 

@@ -7,6 +7,12 @@
  * florists, and cakes without duplicating those records.
  */
 
+import { CATEGORY_LABELS_ID, RELATED_AS_ID } from "./taxonomy-id.js";
+
+export { CATEGORY_LABELS_ID, RELATED_AS_ID } from "./taxonomy-id.js";
+
+export type CategoryLocale = "en" | "id";
+
 export type TaxonomyLeaf = {
   slug: string;
   label: string;
@@ -379,14 +385,24 @@ export function isKnownCategory(input: string): boolean {
   return canonicalizeCategory(input) !== undefined;
 }
 
-export function categoryLabel(input: string): string {
+export function categoryLabel(input: string, locale: CategoryLocale = "en"): string {
   const slug = canonicalizeCategory(input);
   if (!slug) return input;
-  return bySlug.get(slug)?.label ?? input;
+  const english = bySlug.get(slug)?.label ?? input;
+  if (locale === "id") return CATEGORY_LABELS_ID[slug] ?? english;
+  return english;
 }
 
-export function categoryLabels(inputs: readonly string[]): string[] {
-  return inputs.map(categoryLabel);
+export function categoryLabels(
+  inputs: readonly string[],
+  locale: CategoryLocale = "en",
+): string[] {
+  return inputs.map((input) => categoryLabel(input, locale));
+}
+
+export function relatedAsLabel(as: string, locale: CategoryLocale = "en"): string {
+  if (locale === "id") return RELATED_AS_ID[as] ?? as;
+  return as;
 }
 
 export function categoryRecord(input: string): CategoryRecord | undefined {
@@ -439,7 +455,10 @@ export function listingMatchesCategory(
 }
 
 /** Unique group + leaf options derived from listing tags, groups first. */
-export function categoryFilterOptions(listingCategories: readonly string[]): {
+export function categoryFilterOptions(
+  listingCategories: readonly string[],
+  locale: CategoryLocale = "en",
+): {
   slug: string;
   label: string;
   kind: "group" | "leaf";
@@ -455,7 +474,7 @@ export function categoryFilterOptions(listingCategories: readonly string[]): {
   return [...slugs]
     .map((slug) => {
       const rec = bySlug.get(slug)!;
-      return { slug, label: rec.label, kind: rec.kind };
+      return { slug, label: categoryLabel(slug, locale), kind: rec.kind };
     })
     .sort((a, b) => {
       if (a.kind !== b.kind) return a.kind === "group" ? -1 : 1;

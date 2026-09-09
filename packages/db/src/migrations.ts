@@ -239,6 +239,15 @@ const MIGRATIONS: Migration[] = [
       return changed;
     },
   },
+  {
+    id: "2026-09-listing-reports",
+    apply: (store) => {
+      const s = store as DataStore & { reports?: DataStore["reports"] };
+      if (Array.isArray(s.reports)) return false;
+      s.reports = [];
+      return true;
+    },
+  },
 ];
 
 /**

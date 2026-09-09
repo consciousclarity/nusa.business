@@ -62,12 +62,15 @@ after(async () => {
 
 it("rejects every changed booking field without disclosing or duplicating the first booking", async () => {
   const path = `/v1/businesses/${bookingBusiness.id}/bookings`;
-  const body = { customerName: "First Customer", customerEmail: "first@example.test", customerPhone: "1234", startDate: "2026-02-28", endDate: "2026-03-01", timeSlot: "10:00", guests: 2, tickets: 3, notes: "Private note" };
+  const body = { customerName: "First Customer", customerEmail: "first@example.test", customerPhone: "1234", startDate: "2027-02-28", endDate: "2027-03-01", timeSlot: "10:00", guests: 2, tickets: 3, notes: "Private note" };
   const headers = { "idempotency-key": "predictable-key" };
   const first = await request(path, body, undefined, headers);
   assert.equal(first.status, 201);
-  const created = (await first.json()).booking;
-  const changes = { customerName: "Second Customer", customerEmail: "second@example.test", customerPhone: "5678", startDate: "2026-02-27", endDate: "2026-03-02", timeSlot: "11:00", guests: 4, tickets: 5, notes: "Different note" };
+  const created = await first.json();
+  assert.equal(created.ok, true);
+  assert.equal(Object.hasOwn(created, "booking"), false);
+  assert.equal(Object.hasOwn(created, "notice"), false);
+  const changes = { customerName: "Second Customer", customerEmail: "second@example.test", customerPhone: "5678", startDate: "2027-02-27", endDate: "2027-03-02", timeSlot: "11:00", guests: 4, tickets: 5, notes: "Different note" };
   for (const [key, value] of Object.entries(changes)) {
     const res = await request(path, { ...body, [key]: value }, undefined, headers);
     assert.equal(res.status, 409, key);
@@ -78,7 +81,7 @@ it("rejects every changed booking field without disclosing or duplicating the fi
   const reordered = Object.fromEntries(Object.entries(body).reverse());
   const replay = await request(path, { ...reordered, customerName: " First Customer ", totalAmount: 123 }, undefined, headers);
   assert.equal(replay.status, 200);
-  assert.deepEqual(await replay.json(), { booking: created, idempotentReplay: true });
+  assert.deepEqual(await replay.json(), { ok: true, idempotentReplay: true });
   assert.equal(db.listBookings(bookingBusiness.id).length, 1);
   assert.equal((await request(path, body, undefined, { "idempotency-key": "x".repeat(129) })).status, 400);
   const other = makeBusiness("security-other-booking");
@@ -133,4 +136,23 @@ it("impossible booking dates never reach persistence", async () => {
   const res = await request(`/v1/businesses/${bookingBusiness.id}/bookings`, { customerName: "Invalid Date", customerEmail: "date@example.test", startDate: "2026-02-30" });
   assert.equal(res.status, 400);
   assert.equal(db.listBookings(bookingBusiness.id).length, count);
+});
+
+it("rejects past booking dates and duplicate pending requests", async () => {
+  const biz = makeBusiness("security-booking-dup");
+  const past = await request(`/v1/businesses/${biz.id}/bookings`, {
+    customerName: "Sam",
+    customerEmail: "dup@example.test",
+    startDate: "2020-01-01",
+  });
+  assert.equal(past.status, 400);
+  const body = {
+    customerName: "Sam",
+    customerEmail: "dup@example.test",
+    startDate: "2027-06-01",
+  };
+  const first = await request(`/v1/businesses/${biz.id}/bookings`, body);
+  assert.equal(first.status, 201);
+  const dup = await request(`/v1/businesses/${biz.id}/bookings`, body);
+  assert.equal(dup.status, 409);
 });

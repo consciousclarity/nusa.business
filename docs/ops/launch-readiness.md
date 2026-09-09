@@ -38,7 +38,7 @@ and the operator list below.
 | F17 | Sitemap listed English `/host` paths only; `/id` pages existed with hreflang but were not submitted. | P1 | `sitemap.xml.ts`, `localeSitemapPaths` | Emit `/id` counterparts; `og:locale` + `hreflang="x-default"` | `tests/web.seo.test.mjs`, `tests/web.visitor-chrome.test.mjs` |
 | F18 | `/id` listing forms showed English API `error` strings and the English booking `notice`. Missing tenant routes returned an empty 404 body. | P1 | listing widgets, `404.astro`, booking `code` | Localized `visitorError` + codes; HTML 404 with search | `tests/web.visitor-chrome.test.mjs`, `tests/api.validate.test.mjs` |
 | F19 | Listing JSON-LD omitted opening hours even when the page showed them. | P1 | `localBusinessJsonLd` | `openingHoursSpecification` from listing hours | `tests/web.seo.test.mjs` |
-| F20 | Unknown island/place hubs threw API errors (500). Public booking POST returned the full booking row (id, email, status). | P0/P1 | island `index.astro`, `POST /v1/businesses/:id/bookings` | `apiOrNull` + HTML 404; `{ ok: true }` without `booking` | `tests/web.visitor-chrome.test.mjs`, `tests/api.public-privacy.test.mjs`, `tests/api.write-security.test.mjs` |
+| F20 | Unknown island/place hubs threw API errors (500). Public booking POST returned the full booking row (id, email, status). | P0/P1 | island `index.astro`, `POST /v1/businesses/:id/bookings` | `apiOrNull` + HTML 404; `{ ok: true }` without `booking` | `tests/web.visitor-chrome.test.mjs`, `tests/api.write-security.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 

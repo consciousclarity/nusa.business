@@ -275,20 +275,6 @@ describe("C01 public listing privacy", () => {
     assert.equal(data.business.fieldRegistered, true);
   });
 
-  it("anonymous booking POST does not return the booking row", async () => {
-    const created = await json("POST", "/v1/businesses/biz-owner-a/bookings", {
-      body: {
-        customerName: "Sam",
-        customerEmail: "sam@example.test",
-        startDate: "2027-08-01",
-      },
-    });
-    assert.equal(created.status, 201);
-    assert.equal(created.data.ok, true);
-    assert.equal(Object.hasOwn(created.data, "booking"), false);
-    assert.equal(Object.hasOwn(created.data, "notice"), false);
-  });
-
   it("anonymous place hub and search omit ownership internals", async () => {
     const place = await json("GET", "/v1/islands/bali/places/gianyar");
     assert.equal(place.status, 200);

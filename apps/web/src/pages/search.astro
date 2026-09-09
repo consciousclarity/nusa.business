@@ -38,7 +38,7 @@ const queried = Boolean(params.toString());
 const search = queried
   ? await apiTry<{ results: Hit[] }>(`/v1/search?${params.toString()}`)
   : { results: [] as Hit[] };
-const searchFailed = queried && search === null;
+const searchFailed = islands === null || (queried && search === null);
 const hits = search?.results.slice(0, 50) ?? [];
 const islandName = active.find((row) => row.slug === island)?.name ?? island;
 const searchPath = withLocale("/search", locale) + (params.toString() ? `?${params}` : "");

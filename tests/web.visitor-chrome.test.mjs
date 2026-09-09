@@ -182,6 +182,7 @@ describe("visitor chrome (no debug resolver)", () => {
   it("search and homepage stay up when the directory API fails", () => {
     assert.match(search, /apiTry</);
     assert.match(search, /searchFailed/);
+    assert.match(search, /islands === null/);
     assert.match(search, /directoryUnavailable/);
     assert.doesNotMatch(search, /await api</);
   });

@@ -42,7 +42,7 @@ describe("public a11y chrome (C10)", () => {
 
   it("groups review scores in a fieldset and wires booking status", () => {
     assert.match(listing, /<fieldset class="scores">/);
-    assert.match(listing, /<legend>Scores/);
+    assert.match(listing, /<legend>\{t\(locale, "reviewScoresLegend"\)\}<\/legend>/);
     assert.match(listing, /aria-describedby="booking-notice"/);
     assert.match(listing, /aria-labelledby="hours-caption"/);
     assert.match(listing, /setAttribute\("aria-invalid"/);

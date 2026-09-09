@@ -40,6 +40,18 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(home, /class="resolver"/);
   });
 
+  it("listing chrome uses i18n keys for reviews, booking, shop, and address", () => {
+    assert.match(listing, /t\(locale, "addressLabel"\)/);
+    assert.match(listing, /t\(locale, "addReview"\)/);
+    assert.match(listing, /t\(locale, "bookingTitle"\)/);
+    assert.match(listing, /t\(locale, "shopNote"\)/);
+    assert.match(listing, /listingCopy/);
+    assert.doesNotMatch(listing, /<h3>Add review<\/h3>/);
+    assert.doesNotMatch(listing, /<h2>Request a booking<\/h2>/);
+    assert.doesNotMatch(listing, /Vendor store · 0% commission/);
+    assert.doesNotMatch(listing, /data\.booking\.id/);
+  });
+
   it("listing actions put contact first and claim second", () => {
     assert.match(listing, /t\(locale, "directions"\)/);
     assert.match(listing, /t\(locale, "claimThis"\)/);

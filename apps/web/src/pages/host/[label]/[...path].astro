@@ -334,6 +334,22 @@ const directionsLink = data
   : null;
 const siteLink = data ? websiteHref(data.business.website) : null;
 const bookingToday = new Date().toISOString().slice(0, 10);
+const listingCopy = {
+  reviewSubmitting: t(locale, "reviewSubmitting"),
+  reviewTooMany: t(locale, "reviewTooMany"),
+  reviewTooManyRetry: t(locale, "reviewTooManyRetry"),
+  networkRetry: t(locale, "networkRetry"),
+  bookingSending: t(locale, "bookingSending"),
+  bookingPendingOk: t(locale, "bookingPendingOk"),
+  tooManyKept: t(locale, "tooManyKept"),
+  tooManyRetryKept: t(locale, "tooManyRetryKept"),
+  networkKept: t(locale, "networkKept"),
+  reportSending: t(locale, "reportSending"),
+  reportReceived: t(locale, "reportReceived"),
+  reportNetwork: t(locale, "reportNetwork"),
+  mapHere: t(locale, "mapHere"),
+  kmAway: t(locale, "kmAway"),
+};
 
 type DiscoveryNeighbor = {
   business: {
@@ -710,13 +726,13 @@ if (hub && categoryParam) {
       <dd>{data.business.categories.map(categoryLabel).join(" · ") || "—"}</dd>
       {data.business.address && (
         <>
-          <dt>Address</dt>
+          <dt>{t(locale, "addressLabel")}</dt>
           <dd>{data.business.address}</dd>
         </>
       )}
       {data.business.phone && (
         <>
-          <dt>Phone</dt>
+          <dt>{t(locale, "phoneLabel")}</dt>
           <dd>
             {phoneLink ? (
               <a href={phoneLink}>{data.business.phone}</a>
@@ -921,9 +937,9 @@ if (hub && categoryParam) {
 
     {data.vendor && (
       <section class="section">
-        <h2>Shop · {data.vendor.name}</h2>
+        <h2>{t(locale, "shop")} · {data.vendor.name}</h2>
         <p class="prose">{data.vendor.description}</p>
-        <p class="meta">Vendor store · 0% commission at launch</p>
+        <p class="meta">{t(locale, "shopNote")}</p>
         <ol class="index-list">
           {data.vendor.products.map((p, i) => (
             <li>
@@ -931,7 +947,7 @@ if (hub && categoryParam) {
                 <span class="n">{String(i + 1).padStart(2, "0")}</span>
                 <span class="name">{p.name}</span>
                 <span class="rhs">
-                  {p.price.toLocaleString("id-ID")} {p.currency} · stock {p.stock}
+                  {p.price.toLocaleString("id-ID")} {p.currency} · {p.stock} {t(locale, "available")}
                 </span>
               </div>
               <p class="index-desc">{p.description}</p>
@@ -943,18 +959,18 @@ if (hub && categoryParam) {
 
     <section class="section" id="reviews">
       <h2>{t(locale, "reviews")}</h2>
-      {data.reviews.length === 0 && <p class="meta">No reviews yet.</p>}
+      {data.reviews.length === 0 && <p class="meta">{t(locale, "noReviews")}</p>}
       {data.reviews.length > 0 && (
         <div class="table-wrap">
           <table class="data">
-            <caption>Review scores</caption>
+            <caption>{t(locale, "reviewScores")}</caption>
             <thead>
               <tr>
-                <th scope="col">Author</th>
-                <th scope="col">Service</th>
-                <th scope="col">Value</th>
-                <th scope="col">Location</th>
-                <th scope="col">Cleanliness</th>
+                <th scope="col">{t(locale, "author")}</th>
+                <th scope="col">{t(locale, "scoreService")}</th>
+                <th scope="col">{t(locale, "scoreValue")}</th>
+                <th scope="col">{t(locale, "scoreLocation")}</th>
+                <th scope="col">{t(locale, "scoreCleanliness")}</th>
               </tr>
             </thead>
             <tbody>
@@ -978,20 +994,20 @@ if (hub && categoryParam) {
       ))}
 
       <form class="stack" method="POST" id="review-form">
-        <h3>Add review</h3>
-        <label>Name <input name="authorName" required autocomplete="nickname" /></label>
-        <label>Comment <textarea name="comment" required rows="3"></textarea></label>
+        <h3>{t(locale, "addReview")}</h3>
+        <label>{t(locale, "reviewName")} <input name="authorName" required autocomplete="nickname" /></label>
+        <label>{t(locale, "reviewComment")} <textarea name="comment" required rows="3"></textarea></label>
         <fieldset class="scores">
-          <legend>Scores (1–5)</legend>
-          <label>Service <input type="number" name="service" min="1" max="5" value="5" required /></label>
-          <label>Value <input type="number" name="value" min="1" max="5" value="5" required /></label>
-          <label>Location <input type="number" name="location" min="1" max="5" value="5" required /></label>
+          <legend>{t(locale, "reviewScoresLegend")}</legend>
+          <label>{t(locale, "scoreService")} <input type="number" name="service" min="1" max="5" value="5" required /></label>
+          <label>{t(locale, "scoreValue")} <input type="number" name="value" min="1" max="5" value="5" required /></label>
+          <label>{t(locale, "scoreLocation")} <input type="number" name="location" min="1" max="5" value="5" required /></label>
           <label>
-            Cleanliness
+            {t(locale, "scoreCleanliness")}
             <input type="number" name="cleanliness" min="1" max="5" value="5" required />
           </label>
         </fieldset>
-        <button type="submit">Submit review</button>
+        <button type="submit">{t(locale, "reviewSubmit")}</button>
         <p class="meta" id="review-msg" role="status" aria-live="polite"></p>
       </form>
     </section>
@@ -1017,29 +1033,28 @@ if (hub && categoryParam) {
 
     {data.business.bookingMode !== "none" && (
       <section class="section" id="book">
-        <h2>Request a booking</h2>
+        <h2>{t(locale, "bookingTitle")}</h2>
         <p class="meta" id="booking-notice">
-          Sends a pending request to the business. This is not a confirmed
-          reservation and does not lock a price or inventory.
+          {t(locale, "bookingNotice")}
         </p>
         <form
           class="stack"
           id="booking-form"
           aria-describedby="booking-notice"
         >
-          <label>Name <input name="customerName" required autocomplete="name" /></label>
-          <label>Email <input type="email" name="customerEmail" required autocomplete="email" /></label>
-          <label>Date <input type="date" name="startDate" required min={bookingToday} /></label>
+          <label>{t(locale, "customerName")} <input name="customerName" required autocomplete="name" /></label>
+          <label>{t(locale, "customerEmail")} <input type="email" name="customerEmail" required autocomplete="email" /></label>
+          <label>{t(locale, "bookingDate")} <input type="date" name="startDate" required min={bookingToday} /></label>
           {data.business.bookingMode === "service" && (
-            <label>Time slot <input name="timeSlot" placeholder="10:00" /></label>
+            <label>{t(locale, "timeSlot")} <input name="timeSlot" placeholder="10:00" /></label>
           )}
           {data.business.bookingMode === "rental" && (
-            <label>End date <input type="date" name="endDate" required min={bookingToday} /></label>
+            <label>{t(locale, "endDate")} <input type="date" name="endDate" required min={bookingToday} /></label>
           )}
           {data.business.bookingMode === "event" && (
-            <label>Tickets <input type="number" name="tickets" min="1" value="1" required /></label>
+            <label>{t(locale, "tickets")} <input type="number" name="tickets" min="1" value="1" required /></label>
           )}
-          <button type="submit">Submit request</button>
+          <button type="submit">{t(locale, "bookingSubmit")}</button>
           <p class="meta" id="booking-msg" role="status" aria-live="polite"></p>
         </form>
       </section>
@@ -1047,7 +1062,14 @@ if (hub && categoryParam) {
   </div>
 </Base>
 
-<script define:vars={{ apiBase: browserApiOrigin(), businessId: data?.business.id ?? "" }}>
+<script define:vars={{ apiBase: browserApiOrigin(), businessId: data?.business.id ?? "", listingCopy }}>
+  const L = typeof listingCopy === "undefined" ? {} : listingCopy;
+  function txt(key, fallback) {
+    return L[key] || fallback;
+  }
+  function withN(key, fallback, n) {
+    return txt(key, fallback).replace("{n}", String(n ?? ""));
+  }
   function setStatus(el, text, isError) {
     if (!el) return;
     el.textContent = text;
@@ -1073,7 +1095,7 @@ if (hub && categoryParam) {
     const fd = new FormData(reviewForm);
     reviewForm.dataset.busy = "1";
     lockForm(reviewForm, true);
-    setStatus(reviewMsg, "Submitting review…", false);
+    setStatus(reviewMsg, txt("reviewSubmitting", "Submitting review…"), false);
     try {
       const res = await fetch(`${apiBase}/v1/businesses/${businessId}/reviews`, {
         method: "POST",
@@ -1098,11 +1120,13 @@ if (hub && categoryParam) {
       } catch {}
       if (res.status === 429) {
         const ra = res.headers.get("Retry-After");
-        detail = ra ? `Too many reviews — retry in ${ra}s.` : "Too many reviews — try later.";
+        detail = ra
+          ? withN("reviewTooManyRetry", "Too many reviews — retry in {n}s.", ra)
+          : txt("reviewTooMany", "Too many reviews — try later.");
       }
       setStatus(reviewMsg, detail, true);
     } catch {
-      setStatus(reviewMsg, "Network error — check your connection and try again.", true);
+      setStatus(reviewMsg, txt("networkRetry", "Network error — check your connection and try again."), true);
     } finally {
       reviewForm.dataset.busy = "0";
       lockForm(reviewForm, false);
@@ -1120,7 +1144,7 @@ if (hub && categoryParam) {
     const fd = new FormData(bookingForm);
     bookingForm.dataset.busy = "1";
     lockForm(bookingForm, true);
-    setStatus(bookingMsg, "Sending request…", false);
+    setStatus(bookingMsg, txt("bookingSending", "Sending request…"), false);
     const payload = {
       customerName: fd.get("customerName"),
       customerEmail: fd.get("customerEmail"),
@@ -1145,12 +1169,9 @@ if (hub && categoryParam) {
       });
       if (res.ok) {
         const data = await res.json();
-        const notice =
-          data.notice ||
-          "Request recorded as pending. This is not a confirmed reservation.";
         setStatus(
           bookingMsg,
-          `Request ${data.booking.id} submitted (${data.booking.status}). ${notice}`,
+          data.notice || txt("bookingPendingOk", "Request recorded as pending. This is not a confirmed reservation."),
           false,
         );
         bookingForm.reset();
@@ -1164,15 +1185,15 @@ if (hub && categoryParam) {
         if (res.status === 429) {
           const ra = res.headers.get("Retry-After");
           detail = ra
-            ? `Too many requests — retry in ${ra}s. Your form was kept.`
-            : "Too many requests — try later. Your form was kept.";
+            ? withN("tooManyRetryKept", "Too many requests — retry in {n}s. Your form was kept.", ra)
+            : txt("tooManyKept", "Too many requests — try later. Your form was kept.");
         }
         setStatus(bookingMsg, detail, true);
       }
     } catch {
       setStatus(
         bookingMsg,
-        "Network error — your details were kept. Try again.",
+        txt("networkKept", "Network error — your details were kept. Try again."),
         true,
       );
     } finally {
@@ -1189,7 +1210,7 @@ if (hub && categoryParam) {
     const fd = new FormData(reportForm);
     reportForm.dataset.busy = "1";
     lockForm(reportForm, true);
-    setStatus(reportMsg, "Sending report…", false);
+    setStatus(reportMsg, txt("reportSending", "Sending report…"), false);
     try {
       const res = await fetch(`${apiBase}/v1/businesses/${businessId}/reports`, {
         method: "POST",
@@ -1200,7 +1221,7 @@ if (hub && categoryParam) {
         }),
       });
       if (res.ok) {
-        setStatus(reportMsg, "Report received. Operators will review it.", false);
+        setStatus(reportMsg, txt("reportReceived", "Report received. Operators will review it."), false);
         reportForm.reset();
       } else {
         let detail = `Report failed (${res.status}).`;
@@ -1211,7 +1232,7 @@ if (hub && categoryParam) {
         setStatus(reportMsg, detail, true);
       }
     } catch {
-      setStatus(reportMsg, "Network error — your note was kept. Try again.", true);
+      setStatus(reportMsg, txt("reportNetwork", "Network error — your note was kept. Try again."), true);
     } finally {
       reportForm.dataset.busy = "0";
       lockForm(reportForm, false);
@@ -1298,7 +1319,7 @@ if (hub && categoryParam) {
       <div class="index-row">
         <span class="n">${String(i + 1).padStart(2, "0")}</span>
         <a class="name" href="${escapeHtml(hrefFor(n))}">${escapeHtml(n.business.name)}</a>
-        <span class="rhs">${n.distanceKm.toFixed(2)} km</span>
+        <span class="rhs">${n.distanceKm.toFixed(2)} ${txt("kmAway", "km")}</span>
       </div>
       <p class="index-desc">${escapeHtml(n.business.summary)}</p>`;
         ol.appendChild(li);
@@ -1319,7 +1340,7 @@ if (hub && categoryParam) {
             fillColor: "#1a1c22",
             fillOpacity: 1,
             weight: 1,
-          }).bindPopup("Here"),
+          }).bindPopup(txt("mapHere", "Here")),
         );
         bounds.push([latest.origin.lat, latest.origin.lng]);
       }
@@ -1335,7 +1356,7 @@ if (hub && categoryParam) {
             fillOpacity: 0.85,
             weight: 1,
           }).bindPopup(
-            `<strong>${String(i + 1).padStart(2, "0")}. ${escapeHtml(n.business.name)}</strong><br>${n.distanceKm.toFixed(2)} km`,
+            `<strong>${String(i + 1).padStart(2, "0")}. ${escapeHtml(n.business.name)}</strong><br>${n.distanceKm.toFixed(2)} ${txt("kmAway", "km")}`,
           ),
         );
         bounds.push([n.business.lat, n.business.lng]);

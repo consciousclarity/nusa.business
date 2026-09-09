@@ -30,6 +30,7 @@ and the operator list below.
 | F09 | No CSP header. | P1 | `apps/web/src/middleware.ts` | Report-Only CSP on public HTML | middleware source + perf header tests |
 | F10 | `GET /v1/host` was a public debug dump. | P1 | `apps/api/src/app.ts` | 404 in `NODE_ENV=production` | source + non-prod still works |
 | F11 | Header led with Claim/Portal; nearby HTML JSON dumped full listing objects including `bookingMode`. Place-hub “just registered” looked for leaked agent ids and never showed. | P1 | `Base.astro`, `apps/api/src/public.ts`, `PlaceDirectory.astro` | Search-first header; directory cards; slim `data-initial`; `fieldRegistered` flag | `tests/web.visitor-chrome.test.mjs`, `tests/api.public-privacy.test.mjs` |
+| F12 | Listing review/booking/shop chrome was English-only; booking success dumped request id and `status`. | P1 | listing `[...path].astro`, `i18n/ui.ts` | Locale copy for listing widgets; success message is visitor notice only | `tests/web.visitor-chrome.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -70,6 +71,8 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Homepage search + shareable `/search?q=` | pass | Category filter in the same query URL |
 | Listing Directions / Call / Website / WhatsApp | pass | Seed website on one listing; maps from lat/lng |
 | Nearby HTML/JSON omits `bookingMode` | pass (this branch) | Listing detail still exposes `bookingMode` for the request form |
+| Listing review/booking/shop chrome i18n | pass (this branch) | `/id` listing widgets; listing body still author language |
+| Booking success omits request id/status | pass (this branch) | Visitor notice only; not submitted to production |
 | Field “just registered” without agent ids | pass (this branch) | `fieldRegistered` on public cards |
 | Sample listings labelled | pass (local seed) | Production must not publish this catalog |
 | Privacy / terms / support pages | pass | Legal text is launch-minimum, not counsel-reviewed |

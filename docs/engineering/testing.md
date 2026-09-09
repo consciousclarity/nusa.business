@@ -19,6 +19,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Area | File | Why it matters |
 |---|---|---|
 | Host parsing | `tests/shared.host.test.mjs` | `parseHost()` turns a Host header into the geo context every surface renders from. If it drifts, tenancy silently breaks. Pins the "at most `place.island`" rule and rejects lookalike domains. |
+| Geo nesting | `tests/shared.geo-nesting.test.mjs`, `tests/db.geo-nesting.test.mjs` | Tourist areas nest under kabupaten/kota hosts (`gianyar.bali/ubud/{slug}`). Pins `geoNesting` + seed `parentPlaceId`. |
 | Slugs | `tests/shared.host.test.mjs` | Slugs are URLs, and URLs are permanent once indexed. |
 | Auth tokens | `tests/api.auth.test.mjs` | Pins the properties that replaced the forgeable `dev.${id}` scheme: tamper rejection, expiry, and that the old format no longer verifies. |
 | Password hashing | `tests/db.password.test.mjs` | Salting, verification, malformed-hash safety, and the legacy-plaintext path that lets an old store still authenticate. |

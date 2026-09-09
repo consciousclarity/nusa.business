@@ -5,7 +5,7 @@ import { runInNewContext } from "node:vm";
 import { it } from "node:test";
 
 it("booking form sends enabled values, reuses keys on unchanged retries and rotates after edits", async () => {
-  const source = readFileSync(new URL("../apps/web/src/pages/host/[label]/[slug].astro", import.meta.url), "utf8");
+  const source = readFileSync(new URL("../apps/web/src/pages/host/[label]/[...path].astro", import.meta.url), "utf8");
   const script = source.match(/<script define:vars=[^>]*>([\s\S]*?)<\/script>/)[1];
   const fields = [
     { name: "customerName", value: "Sam", disabled: false },

@@ -41,3 +41,11 @@ export async function api<T>(path: string): Promise<T> {
   if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
   return res.json() as Promise<T>;
 }
+
+/** Same as api(), but 404 becomes null instead of throwing. */
+export async function apiOrNull<T>(path: string): Promise<T | null> {
+  const res = await fetch(`${ssrApiOrigin()}${path}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
+  return res.json() as Promise<T>;
+}

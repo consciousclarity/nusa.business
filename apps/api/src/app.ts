@@ -187,13 +187,18 @@ app.get("/v1/islands/:island/places/:place", (c) => {
   const place = getPlace(c.req.param("island"), c.req.param("place"));
   if (!place) return c.json({ error: "Place not found" }, 404);
   const island = getIslandBySlug(c.req.param("island"))!;
+  const islandPlaces = listPlaces(island.slug);
+  const parent = place.parentPlaceId
+    ? islandPlaces.find((p) => p.id === place.parentPlaceId)
+    : undefined;
+  const children = islandPlaces.filter((p) => p.parentPlaceId === place.id);
   const businesses = listBusinesses({
     islandSlug: island.slug,
     placeSlug: place.slug,
     category: c.req.query("category") || undefined,
     q: c.req.query("q") || undefined,
   }).map(toPublicBusiness);
-  return c.json({ island, place, businesses });
+  return c.json({ island, place, parent, children, businesses });
 });
 
 app.get("/v1/islands/:island/places/:place/businesses/:slug", (c) => {
@@ -238,6 +243,7 @@ app.get("/v1/islands/:island/places/:place/businesses/:slug/discovery", (c) => {
     business: toPublicBusiness(n.business),
     place: n.place,
     island: n.island,
+    geo: n.geo,
     distanceKm: Math.round(n.distanceKm * 100) / 100,
   });
 

@@ -117,6 +117,7 @@ export function parseDevHostPath(pathname: string): {
 export function publicUrl(opts: {
   island?: string;
   place?: string;
+  area?: string;
   slug?: string;
   root?: string;
 }): string {
@@ -127,8 +128,9 @@ export function publicUrl(opts: {
   } else if (opts.island) {
     base.hostname = `${opts.island}.${base.hostname.replace(/^www\./, "")}`;
   }
-  base.pathname = opts.slug ? `/${opts.slug}` : "/";
-  return base.toString().replace(/\/$/, opts.slug ? "" : "/");
+  const segs = [opts.area, opts.slug].filter(Boolean);
+  base.pathname = segs.length ? `/${segs.join("/")}` : "/";
+  return base.toString().replace(/\/$/, segs.length ? "" : "/");
 }
 
 /**
@@ -187,6 +189,13 @@ export {
   businessIdFromReturnTo,
   safePortalReturnTo,
 } from "./portal-return.js";
+
+export {
+  geoNesting,
+  publicHostLine,
+  type GeoNesting,
+  type NestablePlace,
+} from "./geo-urls.js";
 
 export {
   absoluteUrl,

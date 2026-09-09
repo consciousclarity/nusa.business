@@ -6,9 +6,10 @@ import {
   sitemapXml,
   siteOrigin,
 } from "../lib/seo";
+import { geoNesting, type NestablePlace } from "@nusa/shared";
 
 type Island = { slug: string; status: string };
-type Place = { id: string; slug: string };
+type Place = NestablePlace;
 type Business = { slug: string; placeId: string };
 
 /**
@@ -31,26 +32,34 @@ export const GET: APIRoute = async ({ request }) => {
         businesses: Business[];
       }>(`/v1/islands/${island.slug}`);
 
-      const placeById = new Map(detail.places.map((p) => [p.id, p.slug]));
+      const byId = Object.fromEntries(detail.places.map((p) => [p.id, p]));
+      const placeById = new Map(detail.places.map((p) => [p.id, p]));
 
       for (const place of detail.places) {
-        urls.add(
-          absoluteUrl(
-            request,
-            hostPath({ island: island.slug, place: place.slug }),
-          ),
-        );
-      }
-
-      for (const biz of detail.businesses) {
-        const placeSlug = placeById.get(biz.placeId);
-        if (!placeSlug) continue;
+        const nest = geoNesting(place, byId);
         urls.add(
           absoluteUrl(
             request,
             hostPath({
               island: island.slug,
-              place: placeSlug,
+              place: nest.hostPlace,
+              area: nest.area,
+            }),
+          ),
+        );
+      }
+
+      for (const biz of detail.businesses) {
+        const place = placeById.get(biz.placeId);
+        if (!place) continue;
+        const nest = geoNesting(place, byId);
+        urls.add(
+          absoluteUrl(
+            request,
+            hostPath({
+              island: island.slug,
+              place: nest.hostPlace,
+              area: nest.area,
               slug: biz.slug,
             }),
           ),

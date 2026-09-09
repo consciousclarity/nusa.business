@@ -1,25 +1,129 @@
 ---
 import Base from "../../../layouts/Base.astro";
-import { api, browserApiOrigin } from "../../../lib/api";
+import PlaceDirectory from "../../../components/PlaceDirectory.astro";
+import { api, apiOrNull, browserApiOrigin } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
 import {
   absoluteUrl,
   breadcrumbJsonLd,
   hostPath as seoHostPath,
   localBusinessJsonLd,
+  websiteJsonLd,
 } from "../../../lib/seo";
 import { t, withLocale, type Locale } from "../../../i18n/ui";
-import { telHref, whatsappHref } from "@nusa/shared";
+import {
+  geoNesting,
+  publicHostLine,
+  telHref,
+  whatsappHref,
+  type NestablePlace,
+} from "@nusa/shared";
+
+type HubPlace = NestablePlace & { name: string; summary: string };
 
 const label = Astro.params.label!;
-const slug = Astro.params.slug!;
+const pathParts = String(Astro.params.path ?? "")
+  .split("/")
+  .filter(Boolean);
 const parts = label.split(".");
 if (parts.length !== 2) return Astro.redirect(`/host/${label}`);
+if (pathParts.length < 1 || pathParts.length > 2) {
+  return new Response(null, { status: 404 });
+}
 
-const [placeSlug, islandSlug] = parts;
+const [hostPlaceSlug, islandSlug] = parts;
 const req = Astro.request;
 const locale: Locale = Astro.locals.locale ?? "en";
-const data = await api<{
+const categoryParam = (Astro.url.searchParams.get("category") || "").trim();
+
+const islandDetail = await apiOrNull<{
+  island: { slug: string; name: string };
+  places: HubPlace[];
+}>(`/v1/islands/${islandSlug}`);
+if (!islandDetail) return new Response(null, { status: 404 });
+
+const hostPlace = islandDetail.places.find((p) => p.slug === hostPlaceSlug);
+if (!hostPlace) return new Response(null, { status: 404 });
+
+const placesById = Object.fromEntries(
+  islandDetail.places.map((p) => [p.id, p]),
+);
+const hostNest = geoNesting(hostPlace, placesById);
+if (hostNest.area) {
+  const rest = pathParts.join("/");
+  return Astro.redirect(
+    withLocale(
+      seoHostPath({
+        island: islandSlug!,
+        place: hostNest.hostPlace,
+        area: hostNest.area,
+        slug: rest || undefined,
+      }),
+      locale,
+    ),
+    301,
+  );
+}
+
+type PlaceHubPayload = {
+  island: { slug: string; name: string };
+  place: HubPlace;
+  parent?: HubPlace | null;
+  children?: HubPlace[];
+  businesses: {
+    slug: string;
+    name: string;
+    summary: string;
+    categories: string[];
+    status?: string;
+    registeredByAgentId?: string;
+  }[];
+};
+
+let hub: PlaceHubPayload | null = null;
+let placeSlug = hostPlaceSlug!;
+let slug = pathParts[0]!;
+
+if (pathParts.length === 1) {
+  const child = islandDetail.places.find(
+    (p) =>
+      p.slug === pathParts[0] &&
+      p.parentPlaceId === hostPlace.id &&
+      p.type === "tourist_area",
+  );
+  if (child) {
+    hub = await apiOrNull<PlaceHubPayload>(
+      `/v1/islands/${islandSlug}/places/${child.slug}`,
+    );
+    if (!hub) return new Response(null, { status: 404 });
+  }
+} else {
+  const areaSlug = pathParts[0]!;
+  const areaPlace = islandDetail.places.find((p) => p.slug === areaSlug);
+  if (!areaPlace) return new Response(null, { status: 404 });
+  const areaNest = geoNesting(areaPlace, placesById);
+  if (areaNest.hostPlace !== hostPlaceSlug || !areaNest.area) {
+    if (areaNest.area) {
+      return Astro.redirect(
+        withLocale(
+          seoHostPath({
+            island: islandSlug!,
+            place: areaNest.hostPlace,
+            area: areaNest.area,
+            slug: pathParts[1],
+          }),
+          locale,
+        ),
+        301,
+      );
+    }
+    return new Response(null, { status: 404 });
+  }
+  placeSlug = areaSlug;
+  slug = pathParts[1]!;
+}
+
+type ListingPayload = {
   business: {
     id: string;
     name: string;
@@ -49,33 +153,58 @@ const data = await api<{
     description: string;
     products: { name: string; price: number; currency: string; stock: number; description: string }[];
   };
-}>(`/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}`);
+};
 
-const placeMeta = await api<{
-  island: { name: string; slug: string };
-  place: { name: string; slug: string };
-}>(`/v1/islands/${islandSlug}/places/${placeSlug}`);
+const data = hub
+  ? null
+  : await apiOrNull<ListingPayload>(
+      `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}`,
+    );
+if (!hub && !data) return new Response(null, { status: 404 });
+
+const placeMeta = hub
+  ? null
+  : await api<{
+      island: { name: string; slug: string };
+      place: HubPlace;
+      parent?: HubPlace | null;
+    }>(`/v1/islands/${islandSlug}/places/${placeSlug}`);
+
+const listingNest = placeMeta
+  ? geoNesting(placeMeta.place, {
+      [placeMeta.place.id]: placeMeta.place,
+      ...(placeMeta.parent ? { [placeMeta.parent.id]: placeMeta.parent } : {}),
+    })
+  : hostNest;
 
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
-const hostPath = `${placeSlug}.${islandSlug}.nusa.business/${slug}`;
+const hostPath = data
+  ? publicHostLine({
+      island: islandSlug!,
+      place: listingNest.hostPlace,
+      area: listingNest.area,
+      slug,
+    })
+  : "";
 const listingPath = withLocale(
   seoHostPath({
     island: islandSlug!,
-    place: placeSlug!,
-    slug,
+    place: listingNest.hostPlace,
+    area: listingNest.area,
+    slug: data ? slug : undefined,
   }),
   locale,
 );
 const listingUrl = absoluteUrl(req, listingPath);
 const stamp =
-  data.business.status === "draft"
+  data?.business.status === "draft"
     ? "Unclaimed"
-    : data.business.status === "published"
+    : data?.business.status === "published"
       ? null
       : null;
 
-const wa = whatsappHref(data.business.whatsapp);
-const phoneLink = telHref(data.business.phone);
+const wa = data ? whatsappHref(data.business.whatsapp) : null;
+const phoneLink = data ? telHref(data.business.phone) : null;
 
 type DiscoveryNeighbor = {
   business: {
@@ -89,6 +218,7 @@ type DiscoveryNeighbor = {
   };
   place: { slug: string; name: string };
   island: { slug: string };
+  geo?: { hostPlace: string; area?: string };
   distanceKm: number;
 };
 
@@ -112,41 +242,40 @@ const emptyDiscovery: DiscoveryPayload = {
   radiusKm: 0,
 };
 
-// Discovery is an enhancement on top of the record. `api()` throws on a
-// non-2xx or a network error, so without this an outage limited to this one
-// endpoint would take down an otherwise perfectly renderable listing.
-const discovery = await api<DiscoveryPayload>(
-  `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`,
-).catch(() => emptyDiscovery);
+const discovery = data
+  ? await api<DiscoveryPayload>(
+      `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`,
+    ).catch(() => emptyDiscovery)
+  : emptyDiscovery;
 
 function neighborHref(n: DiscoveryNeighbor) {
   return tenantHref(req, {
     island: n.island.slug,
-    place: n.place.slug,
+    place: n.geo?.hostPlace ?? n.place.slug,
+    area: n.geo?.area,
     slug: n.business.slug,
     locale,
   });
 }
 
-const discoveryApi = `${browserApiOrigin()}/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`;
+const discoveryApi = data
+  ? `${browserApiOrigin()}/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`
+  : "";
 
-// Links for results the browser refetches have to match the ones rendered
-// here: the right host on production tenants, and the /id prefix on
-// Indonesian pages. Rather than reimplement tenantHref in the script, ask it
-// for one templated URL and substitute. The tokens are lowercase and are
-// valid hostname labels, so URL normalisation leaves them intact.
-const HREF_TOKEN = { island: "x-island-x", place: "x-place-x", slug: "x-slug-x" };
+const HREF_TOKEN = {
+  island: "x-island-x",
+  place: "x-place-x",
+  area: "x-area-x",
+  slug: "x-slug-x",
+};
 const neighborHrefTemplate = tenantHref(req, {
   island: HREF_TOKEN.island,
   place: HREF_TOKEN.place,
+  area: HREF_TOKEN.area,
   slug: HREF_TOKEN.slug,
   locale,
 });
 
-// --- Fix 3: seed the map from what the server already rendered ---
-// Marker set for the categories the page opens on. Without it the map would
-// open empty on the fallback view and only agree with the list after a chip
-// click.
 const nearbySeed = JSON.stringify({
   origin: discovery.origin,
   nearby: discovery.nearby,
@@ -155,16 +284,129 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
   ...n,
   href: neighborHref(n),
 }));
+
+const hubCanonical =
+  hub &&
+  absoluteUrl(
+    req,
+    withLocale(
+      seoHostPath({
+        island: hub.island.slug,
+        place: hostPlaceSlug!,
+        area: hub.place.slug,
+      }),
+      locale,
+    ),
+  );
+const hubQuery = hub
+  ? publicHostLine({
+      island: hub.island.slug,
+      place: hostPlaceSlug!,
+      area: hub.place.slug,
+    })
+  : "";
 ---
+{hub && hubCanonical && (
+  <Base
+    title={`${hub.place.name}, ${hub.island.name} — nusa.business`}
+    description={hub.place.summary}
+    crumb={[
+      {
+        label: hub.island.slug,
+        href: tenantHref(req, { island: hub.island.slug, locale }),
+      },
+      {
+        label: hostPlaceSlug!,
+        href: tenantHref(req, {
+          island: hub.island.slug,
+          place: hostPlaceSlug!,
+          locale,
+        }),
+      },
+      { label: hub.place.slug },
+    ]}
+    locale={locale}
+    canonical={hubCanonical}
+    jsonLd={[
+      websiteJsonLd({
+        url: hubCanonical,
+        name: `${hub.place.name}, ${hub.island.name}`,
+        description: hub.place.summary,
+      }),
+      breadcrumbJsonLd([
+        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        {
+          name: hub.island.name,
+          url: absoluteUrl(
+            req,
+            withLocale(seoHostPath({ island: hub.island.slug }), locale),
+          ),
+        },
+        {
+          name: hostPlace.name,
+          url: absoluteUrl(
+            req,
+            withLocale(
+              seoHostPath({
+                island: hub.island.slug,
+                place: hostPlaceSlug!,
+              }),
+              locale,
+            ),
+          ),
+        },
+        { name: hub.place.name, url: hubCanonical },
+      ]),
+    ]}
+  >
+    <PlaceDirectory
+      island={hub.island}
+      place={hub.place}
+      parent={hub.parent}
+      children={hub.children ?? []}
+      businesses={hub.businesses}
+      queryHost={hubQuery}
+      locale={locale}
+      categoryParam={categoryParam}
+    />
+  </Base>
+)}
+{data && placeMeta && (
 <Base
   title={`${data.business.name} — ${placeMeta.place.name}`}
   description={data.business.summary}
   crumb={[
     { label: islandSlug!, href: tenantHref(req, { island: islandSlug!, locale }) },
-    {
-      label: placeSlug!,
-      href: tenantHref(req, { island: islandSlug!, place: placeSlug!, locale }),
-    },
+    ...(listingNest.area
+      ? [
+          {
+            label: listingNest.hostPlace,
+            href: tenantHref(req, {
+              island: islandSlug!,
+              place: listingNest.hostPlace,
+              locale,
+            }),
+          },
+          {
+            label: listingNest.area,
+            href: tenantHref(req, {
+              island: islandSlug!,
+              place: listingNest.hostPlace,
+              area: listingNest.area,
+              locale,
+            }),
+          },
+        ]
+      : [
+          {
+            label: listingNest.hostPlace,
+            href: tenantHref(req, {
+              island: islandSlug!,
+              place: listingNest.hostPlace,
+              locale,
+            }),
+          },
+        ]),
     { label: data.business.slug },
   ]}
   locale={locale}
@@ -189,15 +431,38 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
         ),
       },
       {
-        name: placeMeta.place.name,
+        name: listingNest.area
+          ? (placeMeta.parent?.name ?? listingNest.hostPlace)
+          : placeMeta.place.name,
         url: absoluteUrl(
           req,
           withLocale(
-            seoHostPath({ island: islandSlug!, place: placeSlug! }),
+            seoHostPath({
+              island: islandSlug!,
+              place: listingNest.hostPlace,
+            }),
             locale,
           ),
         ),
       },
+      ...(listingNest.area
+        ? [
+            {
+              name: placeMeta.place.name,
+              url: absoluteUrl(
+                req,
+                withLocale(
+                  seoHostPath({
+                    island: islandSlug!,
+                    place: listingNest.hostPlace,
+                    area: listingNest.area,
+                  }),
+                  locale,
+                ),
+              ),
+            },
+          ]
+        : []),
       { name: data.business.name, url: listingUrl },
     ]),
   ]}
@@ -511,7 +776,7 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
   </div>
 </Base>
 
-<script define:vars={{ apiBase: browserApiOrigin(), businessId: data.business.id }}>
+<script define:vars={{ apiBase: browserApiOrigin(), businessId: data?.business.id ?? "" }}>
   function setStatus(el, text, isError) {
     if (!el) return;
     el.textContent = text;
@@ -693,12 +958,20 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
     // One pass: chained replaces would re-scan text they had just inserted,
     // so a slug that happens to read "x-slug-x" could rewrite the hostname.
     function hrefFor(n) {
+      const geo = n.geo || {};
+      const area = geo.area || "";
+      let href = hrefTemplate;
+      if (area) {
+        href = href.replaceAll("x-area-x", area);
+      } else {
+        href = href.replace("/x-area-x", "");
+      }
       const values = {
-        "x-place-x": n.place.slug,
+        "x-place-x": geo.hostPlace || n.place.slug,
         "x-island-x": n.island.slug,
         "x-slug-x": n.business.slug,
       };
-      return hrefTemplate.replace(
+      return href.replace(
         /x-(?:place|island|slug)-x/g,
         (token) => values[token],
       );
@@ -929,3 +1202,4 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
     }
   }
 </style>
+)}

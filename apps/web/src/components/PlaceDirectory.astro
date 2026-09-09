@@ -1,0 +1,223 @@
+---
+import { geoHref } from "../lib/links";
+import { t, type Locale } from "../i18n/ui";
+import { CATEGORIES } from "@nusa/shared";
+
+export type PlaceHubPlace = {
+  id: string;
+  slug: string;
+  name: string;
+  summary: string;
+  type: "kabupaten" | "kota" | "tourist_area";
+  parentPlaceId?: string;
+};
+
+export type PlaceHubBusiness = {
+  slug: string;
+  name: string;
+  summary: string;
+  categories: string[];
+  status?: string;
+  registeredByAgentId?: string;
+};
+
+type Props = {
+  island: { slug: string; name: string };
+  place: PlaceHubPlace;
+  parent?: PlaceHubPlace | null;
+  children?: PlaceHubPlace[];
+  businesses: PlaceHubBusiness[];
+  queryHost: string;
+  locale: Locale;
+  categoryParam: string;
+};
+
+const {
+  island,
+  place,
+  parent = null,
+  children = [],
+  businesses,
+  queryHost,
+  locale,
+  categoryParam,
+} = Astro.props as Props;
+
+const req = Astro.request;
+const graph: PlaceHubPlace[] = [
+  place,
+  ...(parent ? [parent] : []),
+  ...children,
+];
+
+const recent = businesses.filter((b) => b.registeredByAgentId).slice(0, 5);
+
+const placeCategories = [
+  ...new Set(businesses.flatMap((b) => b.categories).filter(Boolean)),
+].sort((a, b) => a.localeCompare(b));
+
+const activeCategory =
+  categoryParam &&
+  (placeCategories.includes(categoryParam) ||
+    (CATEGORIES as readonly string[]).includes(categoryParam))
+    ? categoryParam
+    : "";
+
+const placeBusinesses = activeCategory
+  ? businesses.filter((b) => b.categories.includes(activeCategory))
+  : businesses;
+---
+
+<section class="lede">
+  <h1>{place.name}</h1>
+  <p class="prose">{place.summary}</p>
+  {parent && (
+    <p class="meta">
+      {t(locale, "partOf")}{" "}
+      <a href={geoHref(req, { island: island.slug, place: parent, places: graph, locale })}>
+        {parent.name}
+      </a>
+    </p>
+  )}
+</section>
+
+<aside class="resolver" aria-label={t(locale, "hostResolver")}>
+  <dl>
+    <dt>{t(locale, "query")}</dt>
+    <dd>{queryHost}</dd>
+    <dt>{t(locale, "resolved")}</dt>
+    <dd>
+      island={island.slug} · place={place.slug} · type={place.type}
+      {parent ? ` · parent=${parent.slug}` : ""}
+    </dd>
+    <dt>{t(locale, "records")}</dt>
+    <dd>
+      {placeBusinesses.length}
+      {activeCategory ? ` in ${activeCategory}` : ` published`}
+      {activeCategory && businesses.length !== placeBusinesses.length
+        ? ` · ${businesses.length} total`
+        : ""}
+    </dd>
+  </dl>
+</aside>
+
+{recent.length > 0 && (
+  <div class="banner">
+    {t(locale, "justRegistered")}{" "}
+    {recent.map((b, i) => (
+      <>
+        {i > 0 && " · "}
+        <a
+          href={geoHref(req, {
+            island: island.slug,
+            place,
+            places: graph,
+            slug: b.slug,
+            locale,
+          })}
+        >
+          {b.name}
+        </a>
+      </>
+    ))}
+  </div>
+)}
+
+{children.length > 0 && (
+  <section class="section">
+    <h2>{t(locale, "areasIn")} {place.name}</h2>
+    <ol class="index-list">
+      {children.map((child, i) => (
+        <li>
+          <div class="index-row">
+            <span class="n">{String(i + 1).padStart(2, "0")}</span>
+            <a
+              class="name"
+              href={geoHref(req, {
+                island: island.slug,
+                place: child,
+                places: graph,
+                locale,
+              })}
+            >
+              {child.name}
+            </a>
+            <span class="rhs">{child.type.replaceAll("_", " ")}</span>
+          </div>
+          <p class="index-desc">{child.summary}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+)}
+
+{placeCategories.length > 1 && (
+  <form class="section filter-bar" method="get">
+    <label>
+      {t(locale, "category")}
+      <select name="category" onchange="this.form.submit()">
+        <option value="">{t(locale, "allCategories")}</option>
+        {placeCategories.map((cat) => (
+          <option value={cat} selected={cat === activeCategory}>
+            {cat}
+          </option>
+        ))}
+      </select>
+    </label>
+    <noscript>
+      <button type="submit">{t(locale, "apply")}</button>
+    </noscript>
+  </form>
+)}
+
+<section class="section">
+  <h2>
+    {t(locale, "businessesIn")} {place.name}
+    {activeCategory ? ` · ${activeCategory}` : ""}
+  </h2>
+  {placeBusinesses.length === 0 ? (
+    <p class="prose">
+      {t(locale, "noCategoryMatches")}{" "}
+      <a
+        href={geoHref(req, {
+          island: island.slug,
+          place,
+          places: graph,
+          locale,
+        })}
+      >
+        {t(locale, "showAll")}
+      </a>
+    </p>
+  ) : (
+    <ol class="index-list">
+      {placeBusinesses.map((b, i) => (
+        <li>
+          <div class="index-row">
+            <span class="n">{String(i + 1).padStart(2, "0")}</span>
+            <a
+              class="name"
+              href={geoHref(req, {
+                island: island.slug,
+                place,
+                places: graph,
+                slug: b.slug,
+                locale,
+              })}
+            >
+              {b.name}
+            </a>
+            <span class="rhs">
+              {b.status === "draft" ? (
+                <span class="stamp">Unclaimed</span>
+              ) : (
+                b.categories[0] ?? ""
+              )}
+            </span>
+          </div>
+          <p class="index-desc">{b.summary}</p>
+        </li>
+      ))}
+    </ol>
+  )}
+</section>

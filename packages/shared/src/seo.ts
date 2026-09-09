@@ -43,10 +43,12 @@ export function absoluteUrl(request: Request, path: string): string {
 export function hostPath(opts: {
   island: string;
   place?: string;
+  area?: string;
   slug?: string;
 }): string {
   const label = opts.place ? `${opts.place}.${opts.island}` : opts.island;
-  return opts.slug ? `/host/${label}/${opts.slug}` : `/host/${label}`;
+  const segs = [opts.area, opts.slug].filter(Boolean);
+  return segs.length ? `/host/${label}/${segs.join("/")}` : `/host/${label}`;
 }
 
 export type JsonLd = Record<string, unknown> | Record<string, unknown>[];

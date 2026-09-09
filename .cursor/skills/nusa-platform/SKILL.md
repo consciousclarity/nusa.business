@@ -14,8 +14,11 @@ Nusa.Business is an Indonesia-wide **local business directory** with nested host
 
 - `nusa.business` — nation
 - `{island}.nusa.business` — island hub (e.g. `bali`)
-- `{place}.{island}.nusa.business` — place hub (e.g. `gianyar.bali`)
-- `/{slug}` — business listing
+- `{kabupaten|kota}.{island}.nusa.business` — administrative place hub (e.g. `gianyar.bali`)
+- `/{area}/{slug}` — listing in a nested tourist area (e.g. `/ubud/warung-babi-guling-ibu-oka`)
+- `/{slug}` — listing attached directly to the kabupaten/kota
+
+Tourist areas are data + path, not extra DNS labels. See ADR-004.
 
 Prototype: bali.business (WordPress). Rebuild is greenfield OSS — **do not** add WordPress, PHP plugin stacks, or proprietary themes.
 
@@ -36,7 +39,7 @@ Prototype: bali.business (WordPress). Rebuild is greenfield OSS — **do not** a
 2. Place taxonomy is **hybrid** (kabupaten/kota + tourist areas).
 3. Business slugs are unique **per place**, not globally.
 4. Launch monetization: free listings, **0%** marketplace commission unless product changes.
-5. Dev path tenants: `/host/{island}` and `/host/{place}.{island}/{slug}` (never `/_host/` — Astro private folders).
+5. Dev path tenants: `/host/{island}`, `/host/{admin}.{island}/{area?}/{slug?}` (never `/_host/` — Astro private folders).
 6. Update `docs/features-parity.md` when closing capability gaps.
 
 ## When unsure

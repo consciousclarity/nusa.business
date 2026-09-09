@@ -69,6 +69,8 @@ npm run dev:portal   # http://localhost:5173
 | Nation | http://localhost:4321/ |
 | Island | http://localhost:4321/host/bali |
 | Place | http://localhost:4321/host/gianyar.bali |
+| Nested area | http://localhost:4321/host/gianyar.bali/ubud |
+| Nested listing | http://localhost:4321/host/gianyar.bali/ubud/warung-babi-guling-ibu-oka |
 | Listing | http://localhost:4321/host/gianyar.bali/babi-guling-pande-egi |
 | Vendor shop tab | http://localhost:4321/host/gianyar.bali/celuk-silver-workshop |
 | Portal | http://localhost:5173/login |

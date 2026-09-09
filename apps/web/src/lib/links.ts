@@ -1,4 +1,11 @@
-import { nationHomeHref, publicUrl, type Locale, withLocale } from "@nusa/shared";
+import {
+  geoNesting,
+  nationHomeHref,
+  publicUrl,
+  type Locale,
+  type NestablePlace,
+  withLocale,
+} from "@nusa/shared";
 
 function requestHost(request: Request): string {
   return (
@@ -21,7 +28,13 @@ export function nationHref(request: Request, locale: Locale = "en"): string {
 /** Prefer real nested hosts on nusa.business; keep /host paths for local/dev. */
 export function tenantHref(
   request: Request,
-  opts: { island: string; place?: string; slug?: string; locale?: Locale },
+  opts: {
+    island: string;
+    place?: string;
+    area?: string;
+    slug?: string;
+    locale?: Locale;
+  },
 ): string {
   const locale = opts.locale ?? "en";
   const host = requestHost(request).split(":")[0]?.toLowerCase() ?? "";
@@ -31,13 +44,17 @@ export function tenantHref(
 
   if (!useReal) {
     const label = opts.place ? `${opts.place}.${opts.island}` : opts.island;
-    const path = opts.slug ? `/host/${label}/${opts.slug}` : `/host/${label}`;
+    const segs = [opts.area, opts.slug].filter(Boolean);
+    const path = segs.length
+      ? `/host/${label}/${segs.join("/")}`
+      : `/host/${label}`;
     return withLocale(path, locale);
   }
 
   const absolute = publicUrl({
     island: opts.island,
     place: opts.place,
+    area: opts.area,
     slug: opts.slug,
     root: "https://nusa.business",
   });
@@ -45,4 +62,26 @@ export function tenantHref(
   const u = new URL(absolute);
   u.pathname = withLocale(u.pathname || "/", "id");
   return u.toString();
+}
+
+/** Listing / hub href from a place row plus the island's place graph. */
+export function geoHref(
+  request: Request,
+  opts: {
+    island: string;
+    place: NestablePlace;
+    places: NestablePlace[];
+    slug?: string;
+    locale?: Locale;
+  },
+): string {
+  const byId = Object.fromEntries(opts.places.map((p) => [p.id, p]));
+  const nest = geoNesting(opts.place, byId);
+  return tenantHref(request, {
+    island: opts.island,
+    place: nest.hostPlace,
+    area: nest.area,
+    slug: opts.slug,
+    locale: opts.locale,
+  });
 }

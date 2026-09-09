@@ -191,6 +191,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(serverError, /robots="noindex,follow"/);
     assert.match(serverError, /withLocale\("\/search", locale\)/);
     assert.match(serverError, /Astro\.response\.status = 500/);
+    assert.match(serverError, /detectLocale\(Astro\.url\.pathname\)/);
     assert.doesNotMatch(serverError, /from "\.\.\/lib\/api"/);
   });
 });

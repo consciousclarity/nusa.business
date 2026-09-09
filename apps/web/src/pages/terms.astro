@@ -8,27 +8,17 @@ const url = absoluteUrl(Astro.request, withLocale("/terms", locale));
 ---
 <Base
   title={t(locale, "termsTitle")}
-  description="Terms for using nusa.business listings, claims, reviews, and booking requests."
+  description={t(locale, "termsDesc")}
   canonical={url}
   locale={locale}
 >
   <section class="lede">
     <h1>{t(locale, "terms")}</h1>
-    <p class="prose">
-      Listings are free. There is no marketplace commission at launch. Claiming a
-      business does not transfer editing rights until an operator approves the
-      claim.
-    </p>
+    <p class="prose">{t(locale, "termsLede")}</p>
   </section>
   <section class="section">
-    <h2>Reviews and booking requests</h2>
-    <p class="prose">
-      Reviews must be your own experience. Booking forms send a pending request
-      — they are not a confirmed reservation, inventory hold, or price quote.
-    </p>
-    <p class="prose">
-      Sample listings in local/dev data are labelled. Do not treat them as live
-      vendor pages.
-    </p>
+    <h2>{t(locale, "termsReviewsH2")}</h2>
+    <p class="prose">{t(locale, "termsReviews")}</p>
+    <p class="prose">{t(locale, "termsSample")}</p>
   </section>
 </Base>

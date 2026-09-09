@@ -31,6 +31,7 @@ and the operator list below.
 | F10 | `GET /v1/host` was a public debug dump. | P1 | `apps/api/src/app.ts` | 404 in `NODE_ENV=production` | source + non-prod still works |
 | F11 | Header led with Claim/Portal; nearby HTML JSON dumped full listing objects including `bookingMode`. Place-hub “just registered” looked for leaked agent ids and never showed. | P1 | `Base.astro`, `apps/api/src/public.ts`, `PlaceDirectory.astro` | Search-first header; directory cards; slim `data-initial`; `fieldRegistered` flag | `tests/web.visitor-chrome.test.mjs`, `tests/api.public-privacy.test.mjs` |
 | F12 | Listing review/booking/shop chrome was English-only; booking success dumped request id and `status`. | P1 | listing `[...path].astro`, `i18n/ui.ts` | Locale copy for listing widgets; success message is visitor notice only | `tests/web.visitor-chrome.test.mjs` |
+| F13 | `/support` still said owner registration was invite-only after self-signup shipped. Privacy/terms/support bodies were English-only. Opening-hour days stayed `Mon` on `/id`. | P0/P1 | `support.astro`, legal pages, listing hours | Support describes free owner accounts; legal pages use `t()`; weekday labels | `tests/web.visitor-chrome.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -75,7 +76,8 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Booking success omits request id/status | pass (this branch) | Visitor notice only; not submitted to production |
 | Field “just registered” without agent ids | pass (this branch) | `fieldRegistered` on public cards |
 | Sample listings labelled | pass (local seed) | Production must not publish this catalog |
-| Privacy / terms / support pages | pass | Legal text is launch-minimum, not counsel-reviewed |
+| Privacy / terms / support pages | pass | Legal text is launch-minimum, not counsel-reviewed; `/support` is owner self-register, not invite-only |
+| Support does not say invite-only | pass (this branch) | Owners self-register; agents/admins remain invite-only |
 | CSP Report-Only | pass (code) | No report URI yet; unverified in browsers |
 | CORS restricted to `*.nusa.business` | pass (C06) | |
 | Sitemap / robots | pass (C11 + search noindex) | Search Console unverified |

@@ -8,41 +8,26 @@ const url = absoluteUrl(Astro.request, withLocale("/privacy", locale));
 ---
 <Base
   title={t(locale, "privacyTitle")}
-  description="How nusa.business collects and retains listing and account data."
+  description={t(locale, "privacyDesc")}
   canonical={url}
   locale={locale}
 >
   <section class="lede">
     <h1>{t(locale, "privacy")}</h1>
-    <p class="prose">
-      nusa.business is a local business directory. We collect the least account
-      and listing data needed to publish a page and let owners manage it.
-    </p>
+    <p class="prose">{t(locale, "privacyLede")}</p>
   </section>
   <section class="section">
-    <h2>What we store</h2>
-    <p class="prose">
-      Public listings may include a business name, description, address,
-      phone, WhatsApp number, website, hours, and reviews that visitors submit.
-      Owner accounts store a name, email, password hash, and role. Booking
-      requests store the customer name, email, optional phone, and requested
-      dates. Correction reports store a note and listing id — no email on the
-      public form.
-    </p>
-    <p class="prose">
-      Passwords are hashed (scrypt). Session tokens are bearer tokens, not
-      cookies, in this launch. Recovery tokens expire. We do not put passwords
-      or recovery tokens in application logs.
-    </p>
-    <p class="prose">
-      Local and staging catalogs may include labelled sample listings. Production
-      must not keep published demo passwords.
-    </p>
+    <h2>{t(locale, "privacyWhatH2")}</h2>
+    <p class="prose">{t(locale, "privacyWhat")}</p>
+    <p class="prose">{t(locale, "privacyAuth")}</p>
+    <p class="prose">{t(locale, "privacySample")}</p>
   </section>
   <section class="section">
-    <h2>Contact</h2>
+    <h2>{t(locale, "privacyContactH2")}</h2>
     <p class="prose">
-      Questions: use the <a href={withLocale("/support", locale)}>support</a> page.
+      {t(locale, "privacyContact")}
+      {" "}
+      <a href={withLocale("/support", locale)}>{t(locale, "support")}</a>
     </p>
   </section>
 </Base>

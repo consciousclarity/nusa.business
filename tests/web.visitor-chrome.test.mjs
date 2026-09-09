@@ -30,6 +30,10 @@ const search = readFileSync(
   new URL("../apps/web/src/pages/search.astro", import.meta.url),
   "utf8",
 );
+const support = readFileSync(
+  new URL("../apps/web/src/pages/support.astro", import.meta.url),
+  "utf8",
+);
 
 describe("visitor chrome (no debug resolver)", () => {
   it("homepage is search-first and omits host-resolver jargon", () => {
@@ -50,6 +54,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(listing, /<h2>Request a booking<\/h2>/);
     assert.doesNotMatch(listing, /Vendor store · 0% commission/);
     assert.doesNotMatch(listing, /data\.booking\.id/);
+    assert.match(listing, /weekdayLabel\(locale, h\.day\)/);
   });
 
   it("listing actions put contact first and claim second", () => {
@@ -87,6 +92,12 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(header, /nav-owner/);
     assert.doesNotMatch(header, /portalUrl/);
     assert.match(base, /href=\{portalUrl\}/);
+  });
+
+  it("support describes free owner signup, not invite-only", () => {
+    assert.match(support, /t\(locale, "supportOwner"\)/);
+    assert.doesNotMatch(support, /invite-only/);
+    assert.match(support, /\/register/);
   });
 
   it("footer points at privacy, terms, and support instead of /host paths", () => {

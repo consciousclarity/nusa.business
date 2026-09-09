@@ -15,7 +15,7 @@ export function InvitesPage({ user }: { user: User }) {
     return (
       <div className="card">
         <h1>Invites</h1>
-        <p className="error">Admin only — owner onboarding is invitation-based.</p>
+        <p className="error">Admin only.</p>
       </div>
     );
   }
@@ -51,8 +51,10 @@ export function InvitesPage({ user }: { user: User }) {
     <div>
       <h1>Owner invites</h1>
       <p className="muted">
-        Launch onboarding is invite-only. Deliver the register link out-of-band
-        (email or WhatsApp). Do not paste tokens into public tickets.
+        Optional owner invite with a pre-filled email, or to attach a listing.
+        Owners can also self-register. Field agents and admins still need an
+        invite. Deliver the register link out-of-band (email or WhatsApp). Do
+        not paste tokens into public tickets.
       </p>
       <div className="card">
         <form className="stack" onSubmit={submit}>

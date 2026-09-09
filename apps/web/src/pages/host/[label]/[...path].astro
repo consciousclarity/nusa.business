@@ -12,7 +12,7 @@ import {
   localBusinessJsonLd,
   websiteJsonLd,
 } from "../../../lib/seo";
-import { t, withLocale, type Locale } from "../../../i18n/ui";
+import { t, withLocale, weekdayLabel, type Locale } from "../../../i18n/ui";
 import {
   categoryLabel,
   canonicalizeCategory,
@@ -925,7 +925,7 @@ if (hub && categoryParam) {
             <tbody>
               {data.business.openingHours.map((h) => (
                 <tr>
-                  <th scope="row">{h.day}</th>
+                  <th scope="row">{weekdayLabel(locale, h.day)}</th>
                   <td>{h.closed ? t(locale, "closed") : `${h.open} – ${h.close}`}</td>
                 </tr>
               ))}

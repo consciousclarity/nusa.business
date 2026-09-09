@@ -147,6 +147,41 @@ const ui = {
     reportReceived: "Report received. Operators will review it.",
     reportNetwork: "Network error — your note was kept. Try again.",
     mapHere: "Here",
+    dayMon: "Mon",
+    dayTue: "Tue",
+    dayWed: "Wed",
+    dayThu: "Thu",
+    dayFri: "Fri",
+    daySat: "Sat",
+    daySun: "Sun",
+    privacyDesc: "How nusa.business collects listing and account data.",
+    privacyLede:
+      "nusa.business is a local business directory. We collect the least account and listing data needed to publish a page and let owners manage it.",
+    privacyWhatH2: "What we store",
+    privacyWhat:
+      "Public listings may include a business name, description, address, phone, WhatsApp number, website, hours, and reviews that visitors submit. Owner accounts store a name, email, password hash, and role. Booking requests store the customer name, email, optional phone, and requested dates. Correction reports store a note and listing id — no email on the public form.",
+    privacyAuth:
+      "Passwords are hashed. Owner-portal sessions use a signed token in this launch, not a website cookie. Recovery tokens expire. We do not put passwords or recovery tokens in application logs.",
+    privacySample:
+      "Local and staging catalogs may include labelled sample listings. Production must not keep published demo passwords.",
+    privacyContactH2: "Contact",
+    privacyContact: "Questions: use the support page.",
+    termsDesc:
+      "Terms for using nusa.business listings, claims, reviews, and booking requests.",
+    termsLede:
+      "Listings are free. There is no marketplace commission at launch. Claiming a business does not transfer editing rights until an operator approves the claim.",
+    termsReviewsH2: "Reviews and booking requests",
+    termsReviews:
+      "Reviews must be your own experience. Booking forms send a pending request — they are not a confirmed reservation, inventory hold, or price quote.",
+    termsSample:
+      "Sample listings in local/dev data are labelled. Do not treat them as live vendor pages.",
+    supportDesc:
+      "How to contact nusa.business about listings, claims, and corrections.",
+    supportLede:
+      "Visitors can suggest a correction on a listing page. Owners sign in to the portal to claim or edit their own businesses after approval.",
+    supportOwnerH2: "Owner accounts",
+    supportOwner:
+      "Owners create a free account, then claim an existing listing or add a missing one. Editing starts only after we approve ownership. Field-agent and admin accounts still use an invite.",
   },
   id: {
     navClaim: "Klaim",
@@ -287,6 +322,41 @@ const ui = {
     reportNetwork: "Kesalahan jaringan — catatan Anda disimpan. Coba lagi.",
     mapHere: "Di sini",
     networkKept: "Kesalahan jaringan — data Anda disimpan. Coba lagi.",
+    dayMon: "Sen",
+    dayTue: "Sel",
+    dayWed: "Rab",
+    dayThu: "Kam",
+    dayFri: "Jum",
+    daySat: "Sab",
+    daySun: "Min",
+    privacyDesc: "Bagaimana nusa.business mengumpulkan data listing dan akun.",
+    privacyLede:
+      "nusa.business adalah direktori bisnis lokal. Kami mengumpulkan data akun dan listing minimum yang diperlukan untuk memublikasikan halaman dan agar pemilik dapat mengelolanya.",
+    privacyWhatH2: "Apa yang kami simpan",
+    privacyWhat:
+      "Listing publik dapat mencakup nama bisnis, deskripsi, alamat, telepon, nomor WhatsApp, situs, jam, dan ulasan yang dikirim pengunjung. Akun pemilik menyimpan nama, email, hash kata sandi, dan peran. Permintaan pemesanan menyimpan nama pelanggan, email, telepon opsional, dan tanggal yang diminta. Laporan koreksi menyimpan catatan dan id listing — tanpa email pada formulir publik.",
+    privacyAuth:
+      "Kata sandi di-hash. Sesi portal pemilik memakai token bertanda tangan pada peluncuran ini, bukan cookie situs. Token pemulihan kedaluwarsa. Kami tidak menaruh kata sandi atau token pemulihan di log aplikasi.",
+    privacySample:
+      "Katalog lokal dan staging dapat berisi listing contoh berlabel. Produksi tidak boleh menyimpan kata sandi demo yang dipublikasikan.",
+    privacyContactH2: "Kontak",
+    privacyContact: "Pertanyaan: gunakan halaman dukungan.",
+    termsDesc:
+      "Ketentuan memakai listing, klaim, ulasan, dan permintaan pemesanan nusa.business.",
+    termsLede:
+      "Listing gratis. Tidak ada komisi marketplace saat peluncuran. Mengklaim bisnis tidak memberi hak sunting sebelum operator menyetujui klaim.",
+    termsReviewsH2: "Ulasan dan permintaan pemesanan",
+    termsReviews:
+      "Ulasan harus dari pengalaman Anda sendiri. Formulir pemesanan mengirim permintaan tertunda — bukan reservasi terkonfirmasi, penahanan stok, atau penawaran harga.",
+    termsSample:
+      "Listing contoh pada data lokal/dev berlabel. Jangan anggap sebagai halaman vendor live.",
+    supportDesc:
+      "Cara menghubungi nusa.business tentang listing, klaim, dan koreksi.",
+    supportLede:
+      "Pengunjung dapat mengusulkan koreksi di halaman listing. Pemilik masuk ke portal untuk klaim atau menyunting bisnis sendiri setelah disetujui.",
+    supportOwnerH2: "Akun pemilik",
+    supportOwner:
+      "Pemilik membuat akun gratis, lalu klaim listing yang sudah ada atau tambah yang belum ada. Hak sunting baru aktif setelah kami menyetujui kepemilikan. Akun agen lapangan dan admin tetap memakai undangan.",
   },
 } as const;
 
@@ -294,6 +364,20 @@ export type UiKey = keyof typeof ui.en;
 
 export function t(locale: Locale, key: UiKey): string {
   return ui[locale][key] ?? ui.en[key];
+}
+
+export function weekdayLabel(locale: Locale, day: string): string {
+  const map: Record<string, UiKey> = {
+    Mon: "dayMon",
+    Tue: "dayTue",
+    Wed: "dayWed",
+    Thu: "dayThu",
+    Fri: "dayFri",
+    Sat: "daySat",
+    Sun: "daySun",
+  };
+  const key = map[day];
+  return key ? t(locale, key) : day;
 }
 
 export function placeTypeLabel(locale: Locale, type: string): string {

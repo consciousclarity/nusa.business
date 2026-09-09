@@ -9,26 +9,24 @@ const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 ---
 <Base
   title={t(locale, "supportTitle")}
-  description="How to contact nusa.business about listings, claims, and corrections."
+  description={t(locale, "supportDesc")}
   canonical={url}
   locale={locale}
 >
   <section class="lede">
     <h1>{t(locale, "support")}</h1>
-    <p class="prose">
-      Visitors can suggest a correction on a listing page. Owners sign in to
-      the portal to claim or edit their own businesses after approval.
-    </p>
+    <p class="prose">{t(locale, "supportLede")}</p>
   </section>
   <section class="section">
-    <h2>Owner onboarding</h2>
-    <p class="prose">
-      Registration is invite-only in this launch. Request an invite from an
-      operator, then <a href={`${portal}/register`}>redeem it</a>. Sign-in and
-      password recovery live on the same portal.
-    </p>
+    <h2>{t(locale, "supportOwnerH2")}</h2>
+    <p class="prose">{t(locale, "supportOwner")}</p>
     <p class="actions">
-      <a class="cta" href={`${portal}/login`}>{t(locale, "claimLogin")}</a>
+      <a class="cta" href={`${portal}/register?returnTo=${encodeURIComponent("/listings")}`}>
+        {t(locale, "addListingOpen")}
+      </a>
+      <a class="cta secondary" href={`${portal}/login`}>
+        {t(locale, "claimLogin")}
+      </a>
       <a class="cta secondary" href={withLocale("/claim", locale)}>
         {t(locale, "claimListing")}
       </a>

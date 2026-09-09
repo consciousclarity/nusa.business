@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
 import {
   absoluteUrl,
   breadcrumbJsonLd,
@@ -143,5 +144,17 @@ describe("public SEO helpers (C11)", () => {
       /<urlset xmlns="http:\/\/www.sitemaps.org\/schemas\/sitemap\/0.9">/,
     );
     assert.match(xml, /<loc>http:\/\/localhost:4321\/host\/bali<\/loc>/);
+  });
+});
+
+describe("public robots.txt", () => {
+  it("disallows search and points at the sitemap", () => {
+    const src = readFileSync(
+      new URL("../apps/web/src/pages/robots.txt.ts", import.meta.url),
+      "utf8",
+    );
+    assert.match(src, /Disallow: \/search/);
+    assert.match(src, /Disallow: \/id\/search/);
+    assert.match(src, /Sitemap: \$\{origin\}\/sitemap.xml/);
   });
 });

@@ -39,5 +39,8 @@ describe("live public check script", () => {
     assert.match(script, /sitemap\.xml/);
     assert.match(script, /\/host\/bali/);
     assert.match(script, /bali\.nusa\.business\/id/);
+    assert.match(script, /robots\.txt/);
+    assert.match(script, /Disallow: \/search/);
+    assert.match(script, /Disallow: \/id\/search/);
   });
 });

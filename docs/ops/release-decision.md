@@ -37,9 +37,9 @@ bash scripts/live-public-check.sh
 
 That script currently **fails** homepage visitor chrome on `/` and `/id`
 (`class="resolver"`, `kind=nation`, missing `name="q"` / `nav-search`) and live
-listing `/id` English chrome (`Food & Drink`, `Address`, `Status published`,
-`Mon`) until the follow-up is deployed. EN listing API origin may already pass.
-Cursor agents must not deploy.
+listing `/id` English chrome (`Food & Drink`, `Address`, `Host` dts, `Mon`),
+sitemap `/host/bali`, and `robots.txt` search Disallow until the follow-up is
+deployed. EN listing API origin may already pass. Cursor agents must not deploy.
 
 ## Operator gates (live VPS)
 

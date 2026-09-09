@@ -15,8 +15,8 @@ Three columns. Do not treat a **code** pass as a live pass.
 
 | Kind | Item | Evidence / who |
 |---|---|---|
-| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F27) | `npm test` + findings table below. Not on the VPS until deploy. |
-| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`, `Address`, `Host`/`Status`/`Booking` dts, and English weekdays. Sitemap still lists `/host/bali`. | `bash scripts/live-public-check.sh` until this PR deploys. Listing API origin already ok. |
+| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F28) | `npm test` + findings table below. Not on the VPS until deploy. |
+| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`, `Address`, `Host`/`Status`/`Booking` dts, and English weekdays. Sitemap still lists `/host/bali`. `robots.txt` still allows `/search`. | `bash scripts/live-public-check.sh` until this PR deploys. Listing API origin already ok. |
 | **Operator only** | VPS SHA, PM2 vs Compose, `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL`, `NUSA_AUTH_SECRET`, demo-store inventory, store backup + isolated restore, Search Console sitemap submit | [release-decision.md](./release-decision.md) gates 1–6. Cursor must not run these. |
 | **Not this launch** | Priced booking inventory, cookie sessions/CSRF, error tracking, RUM, WCAG AA screen-reader, Dependabot/`npm audit` CI | Security / parity backlog. Do not block GO on these unless product says so. |
 
@@ -53,11 +53,13 @@ Local HTTP on synthetic seed (`/host/…`, booking 400/409) is not a live HTTPS 
 | F25 | `/id` island names used English seed copy (`Java`, `Sumatra`) while category labels were already localized. | P1 | `islandName`, homepage/search/hubs/listing crumbs | Indonesian island names (`Jawa`, `Sumatera`); seed/API name stays English | `tests/web.visitor-chrome.test.mjs`, `scripts/live-public-check.sh` |
 | F26 | Listing/hub canonical + JSON-LD breadcrumbs used `hostPath` + `absoluteUrl`, so nested hosts emitted `/id/host/bali`. | P1 | `tenantAbsHref`, listing/hub/facet pages | Public canonical/JSON-LD use `tenantHref` (real hosts in production, `/host` locally) | `tests/web.visitor-chrome.test.mjs` |
 | F27 | Apex sitemap locs were `https://nusa.business/host/…` (162 `/host/` rows live). Nested hosts and `/id` hubs were not the canonical locs. | P1 | `sitemap.xml.ts` | Geo locs use `tenantAbsHref` (nested hosts + `/id`); nation pages keep apex `/id` | `tests/web.facet-browse.test.mjs`, `scripts/live-public-check.sh` |
+| F28 | Live `robots.txt` allowed `/search` (no Disallow). Search pages are `noindex` but still crawlable until this PR deploys. | P1 | `robots.txt.ts` | Disallow `/search` and `/id/search`; live check asserts apex Sitemap line | `scripts/live-public-check.sh` |
 
 ### Assumptions (not treated as proven bugs)
 
 - Live `nusa.business/` and `/id` (2026-09-09 GET) still have `kind=nation` resolver chrome and `/host/…` footer — this PR’s visitor chrome is **not deployed**. Live `/id` also lacks the search field (`name="q"`).
-- Live `/id` listing (2026-09-09 GET `…/id/babi-guling-pande-egi`) still shows English `Food & Drink`, `Address`, `Status published`, and `Mon` weekdays because this PR is not deployed.
+- Live `/id` listing (2026-09-09 GET `…/id/babi-guling-pande-egi`) still shows English `Food & Drink`, `Address`, `Host`/`Booking`/`Status` dts, and `Mon` weekdays because this PR is not deployed.
+- Live sitemap (2026-09-09) still lists `https://nusa.business/host/…` and has no `/id` locs. Live `robots.txt` has no `Disallow: /search`.
 - Live listing HTML already embeds `https://api.nusa.business` (not `http://api:8787`). Hermes should still confirm env after deploy.
 - Live `.data/store.json` may still contain seed emails — **unverified**. Dry-run in [demo-bootstrap.md](./demo-bootstrap.md).
 - Process supervisor is PM2 vs Compose — Hermes 2026-09-07 saw PM2.
@@ -75,7 +77,9 @@ That script does not SSH or mutate the VPS. It currently **fails** until this PR
 
 - homepage `/` and `/id`: `class="resolver"`, `kind=nation`, `/host/bali`, no `name="q"`, no `nav-search`
 - homepage `/id`: missing `Pulau Dewata`, `Cari bisnis`, `Jawa`
-- listing `/id`: English `Food & Drink`, `Address`, `Status published`, `Booking none`, `Review scores`, `Mon 09:00` instead of `Makanan & minuman` / `Alamat` / `Sen 09:00`
+- listing `/id`: English `Food & Drink`, `Address`, `Host`/`Booking`/`Status` dts, `Review scores`, `Mon` instead of `Alamat` / `Sen`
+- sitemap: `/host/bali` instead of `https://bali.nusa.business`
+- robots.txt: missing `Disallow: /search` and `/id/search`
 
 EN listing HTML already passing `http://api:8787` / `https://api.nusa.business`
 is not a substitute for homepage visitor chrome or `/id` chrome.
@@ -127,6 +131,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Island names on `/id` | pass (this branch) | `islandName`; `Java`/`Sumatra` → `Jawa`/`Sumatera`; hostname slugs stay English |
 | Listing/hub canonical JSON-LD on nested hosts | pass (this branch) | `tenantAbsHref`; production must not emit `/host/bali` in listing JSON-LD |
 | Sitemap nested-host locs | pass (this branch) | Geo locs are `bali.nusa.business` / `gianyar.bali.nusa.business` plus `/id`; live sitemap still `/host/` until deploy |
+| robots.txt search Disallow | pass (this branch) | `/search` and `/id/search`; live robots still Allow-all until deploy |
 | Category browse if search is down | pass (this branch) | Notice + `noindex`; not a 500 and not a fake empty index |
 | Public booking POST omits booking row | pass (this branch) | `{ ok: true }` only; owners still GET `/v1/bookings` |
 | JSON-LD opening hours | pass (this branch) | `openingHoursSpecification` when hours exist |

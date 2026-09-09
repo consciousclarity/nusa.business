@@ -4,9 +4,9 @@
 #
 #   bash scripts/live-public-check.sh
 #
-# Until the launch-readiness follow-up is deployed, homepage and listing /id
-# visitor-chrome checks are expected to FAIL (old resolver chrome on / and /id;
-# listing /id still English category/address/weekday labels).
+# Until the launch-readiness follow-up is deployed, homepage, listing /id,
+# sitemap, and robots.txt checks are expected to FAIL (old resolver chrome;
+# listing /id still English labels; sitemap still /host/; robots allows /search).
 # Listing API-origin checks may already pass.
 
 set -uo pipefail
@@ -17,6 +17,7 @@ LISTING_URL="${LIVE_LISTING_URL:-https://gianyar.bali.nusa.business/babi-guling-
 LISTING_ID_URL="${LIVE_LISTING_ID_URL:-https://gianyar.bali.nusa.business/id/babi-guling-pande-egi}"
 API_HEALTH_URL="${LIVE_API_HEALTH_URL:-https://api.nusa.business/health}"
 SITEMAP_URL="${LIVE_SITEMAP_URL:-https://nusa.business/sitemap.xml}"
+ROBOTS_URL="${LIVE_ROBOTS_URL:-https://nusa.business/robots.txt}"
 
 fails=0
 pass() { printf '  ok   %s\n' "$1"; }
@@ -75,6 +76,7 @@ echo "home/id $HOME_ID_URL"
 echo "listing $LISTING_URL"
 echo "list/id $LISTING_ID_URL"
 echo "sitemap $SITEMAP_URL"
+echo "robots  $ROBOTS_URL"
 echo
 
 home=$(fetch "$HOME_URL")
@@ -238,6 +240,28 @@ else
     pass "sitemap lists nested listing loc"
   else
     fail "sitemap missing nested listing loc"
+  fi
+fi
+
+robots=$(fetch "$ROBOTS_URL")
+if [ -z "$robots" ]; then
+  fail "GET $ROBOTS_URL (empty body)"
+else
+  pass "GET $ROBOTS_URL (${#robots} bytes)"
+  if printf '%s' "$robots" | grep -q 'Sitemap: https://nusa.business/sitemap.xml'; then
+    pass "robots.txt points at apex sitemap"
+  else
+    fail "robots.txt missing Sitemap: https://nusa.business/sitemap.xml"
+  fi
+  if printf '%s' "$robots" | grep -q 'Disallow: /search'; then
+    pass "robots.txt Disallow /search"
+  else
+    fail "robots.txt missing Disallow: /search"
+  fi
+  if printf '%s' "$robots" | grep -q 'Disallow: /id/search'; then
+    pass "robots.txt Disallow /id/search"
+  else
+    fail "robots.txt missing Disallow: /id/search"
   fi
 fi
 

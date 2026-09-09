@@ -437,3 +437,35 @@ export function placeTypeLabel(locale: Locale, type: string): string {
   if (type === "tourist_area") return t(locale, "placeTypeArea");
   return type;
 }
+
+const islandTaglines: Record<Locale, Record<string, string>> = {
+  en: {
+    bali: "Island of the Gods — local businesses for visitors and locals",
+    java: "Java’s cities, culture, and cuisine",
+    lombok: "Gilis, surf, and island life",
+    sumatra: "From Medan to the highlands",
+    sulawesi: "Makassar, Manado, and beyond",
+    kalimantan: "Borneo’s Indonesian shores",
+    maluku: "Spice islands",
+    papua: "Eastern frontier",
+  },
+  id: {
+    bali: "Pulau Dewata — bisnis lokal untuk wisatawan dan warga",
+    java: "Kota, budaya, dan kuliner Jawa",
+    lombok: "Gili, selancar, dan hidup pulau",
+    sumatra: "Dari Medan sampai dataran tinggi",
+    sulawesi: "Makassar, Manado, dan sekitarnya",
+    kalimantan: "Pesisir Kalimantan Indonesia",
+    maluku: "Kepulauan rempah",
+    papua: "Ujung timur",
+  },
+};
+
+/** Public island lede. Seed/API tagline stays English (canonical). */
+export function islandTagline(
+  locale: Locale,
+  slug: string,
+  fallback: string,
+): string {
+  return islandTaglines[locale][slug] ?? islandTaglines.en[slug] ?? fallback;
+}

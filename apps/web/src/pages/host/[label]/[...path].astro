@@ -2,7 +2,7 @@
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import CategoryBrowse from "../../../components/CategoryBrowse.astro";
-import { api, apiOrNull, browserApiOrigin } from "../../../lib/api";
+import { api, apiOrNull, apiTry, browserApiOrigin } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
 import { resolveFacetBrowse, searchQueryForBrowse } from "../../../lib/facet-browse";
 import {
@@ -101,6 +101,7 @@ type AreaFacetPage = {
   robots: string;
   titleCore: string;
   formAction: string;
+  unavailable?: boolean;
 };
 
 let areaFacet: AreaFacetPage | null = null;
@@ -134,15 +135,16 @@ if (isFacetBrowse) {
     );
   }
   const searchQs = searchQueryForBrowse(islandSlug!, areaSlug, resolved.browse);
-  const search = await api<{
+  const search = await apiTry<{
     results: {
       business: BrowseListing;
       place: HubPlace;
     }[];
   }>(`/v1/search?${searchQs}`);
-  const listings = search.results.map((r) => r.business);
+  const searchFailed = search === null;
+  const listings = search?.results.map((r) => r.business) ?? [];
   const policy = facetIndexPolicy(resolved.browse, {
-    resultCount: listings.length,
+    resultCount: searchFailed ? 0 : listings.length,
   });
   const canonicalPath = withLocale(
     seoHostPath({
@@ -166,10 +168,10 @@ if (isFacetBrowse) {
     browse: resolved.browse,
     listings,
     listingPlaces: Object.fromEntries(
-      search.results.map((r) => [r.business.placeId, r.place]),
+      (search?.results ?? []).map((r) => [r.business.placeId, r.place]),
     ),
     canonical: absoluteUrl(req, canonicalPath),
-    robots: policy.index ? "index,follow" : "noindex,follow",
+    robots: searchFailed || !policy.index ? "noindex,follow" : "index,follow",
     titleCore: resolved.browse.pathFacet
       ? `${facetValueLabel(resolved.browse.pathFacet.key, resolved.browse.pathFacet.value, locale)} ${categoryLabel(resolved.browse.category, locale)}`
       : categoryLabel(resolved.browse.category, locale),
@@ -180,6 +182,7 @@ if (isFacetBrowse) {
       category: resolved.browse.category,
       locale,
     }),
+    unavailable: searchFailed,
   };
 }
 
@@ -562,6 +565,7 @@ if (hub && categoryParam) {
       browse={areaFacet.browse}
       locale={locale}
       formAction={areaFacet.formAction}
+      unavailable={areaFacet.unavailable}
     />
   </Base>
 )}

@@ -1,7 +1,7 @@
 ---
 import Base from "../../../../layouts/Base.astro";
 import CategoryBrowse from "../../../../components/CategoryBrowse.astro";
-import { api, apiOrNull } from "../../../../lib/api";
+import { apiOrNull, apiTry } from "../../../../lib/api";
 import { resolveFacetBrowse, searchQueryForBrowse } from "../../../../lib/facet-browse";
 import { tenantHref } from "../../../../lib/links";
 import {
@@ -101,19 +101,22 @@ if (resolved.promoted) {
 
 const browse = resolved.browse;
 const searchQs = searchQueryForBrowse(islandSlug, hostPlaceSlug, browse);
-const search = await api<{
+const search = await apiTry<{
   results: {
     business: BrowseListing;
     place: HubPlace;
     island: { slug: string };
   }[];
 }>(`/v1/search?${searchQs}`);
+const searchFailed = search === null;
 
-const listings = search.results.map((r) => r.business);
+const listings = search?.results.map((r) => r.business) ?? [];
 const listingPlaces = Object.fromEntries(
-  search.results.map((r) => [r.business.placeId, r.place]),
+  (search?.results ?? []).map((r) => [r.business.placeId, r.place]),
 );
-const policy = facetIndexPolicy(browse, { resultCount: listings.length });
+const policy = facetIndexPolicy(browse, {
+  resultCount: searchFailed ? 0 : listings.length,
+});
 const canonicalPath = withLocale(
   seoHostPath({
     island: islandSlug,
@@ -168,7 +171,7 @@ const formAction = tenantHref(req, {
   ]}
   locale={locale}
   canonical={canonical}
-  robots={policy.index ? "index,follow" : "noindex,follow"}
+  robots={searchFailed || !policy.index ? "noindex,follow" : "index,follow"}
   jsonLd={[
     websiteJsonLd({
       locale,
@@ -213,5 +216,6 @@ const formAction = tenantHref(req, {
     browse={browse}
     locale={locale}
     formAction={formAction}
+    unavailable={searchFailed}
   />
 </Base>

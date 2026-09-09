@@ -61,6 +61,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(home, /class="resolver"/);
     assert.match(home, /tenantHref\(/);
     assert.doesNotMatch(home, /publicUrl\(/);
+    assert.match(home, /islandTagline\(locale, island.slug, island.tagline\)/);
     assert.match(home, /apiTry</);
     assert.match(home, /directoryUnavailable/);
     assert.match(apiHelper, /export async function apiTry/);
@@ -148,7 +149,9 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(place, /categoryLabel\(b\.categories\[0\] \?\? "", locale\)/);
     assert.match(browse, /categoryLabel\(browse\.category, locale\)/);
     assert.match(browse, /inWhere\(locale, facetHeading, where\)/);
-    assert.match(browse, /localizeFacetDef\(f, locale\)/);
+    assert.match(island, /islandTagline\(locale, islandData.island.slug/);
+    assert.match(browse, /unavailable/);
+    assert.match(browse, /directoryUnavailable/);
     assert.match(search, /categoryLabel\(group\.slug, locale\)/);
   });
 

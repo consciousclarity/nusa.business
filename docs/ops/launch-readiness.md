@@ -41,6 +41,7 @@ and the operator list below.
 | F20 | Unknown island/place hubs threw API errors (500). Public booking POST returned the full booking row (id, email, status). | P0/P1 | island `index.astro`, `POST /v1/businesses/:id/bookings` | `apiOrNull` + HTML 404; `{ ok: true }` without `booking` | `tests/web.visitor-chrome.test.mjs`, `tests/api.write-security.test.mjs` |
 | F21 | Nation homepage called `publicUrl` without importing it. Local `/host` paths worked; production `nusa.business` island links would throw. | P0 | `apps/web/src/pages/index.astro` | Use `tenantHref` for island links | `tests/web.visitor-chrome.test.mjs` |
 | F22 | Nation homepage and `/search` threw when `/v1/islands` was down, so the search form never rendered. No HTML 500. | P1 | `apiTry`, `index.astro`, `search.astro`, `500.astro` | Homepage/search degrade with a notice; other SSR throws use HTML 500 | `tests/web.visitor-chrome.test.mjs` |
+| F23 | `/id` island taglines were English seed copy. Category/facet browse threw when `/v1/search` failed. | P1 | `islandTagline`, `CategoryBrowse`, browse pages | Indonesian island ledes; browse uses `apiTry` + noindex when search is down | `tests/web.visitor-chrome.test.mjs`, `tests/web.facet-browse.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -105,6 +106,8 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Public HTML 404 | pass (this branch) | Search + home; unknown island/place hubs too |
 | Homepage/search if the API is down | pass (this branch) | `apiTry`; search form still renders; island list shows a notice |
 | Public HTML 500 | pass (this branch) | Search + home; hubs still 500 (not 404) when the API is down |
+| Island taglines on `/id` | pass (this branch) | `islandTagline`; seed/API tagline stays English |
+| Category browse if search is down | pass (this branch) | Notice + `noindex`; not a 500 and not a fake empty index |
 | Public booking POST omits booking row | pass (this branch) | `{ ok: true }` only; owners still GET `/v1/bookings` |
 | JSON-LD opening hours | pass (this branch) | `openingHoursSpecification` when hours exist |
 | Booking success omits request id/status | pass (this branch) | Visitor notice only; not submitted to production |

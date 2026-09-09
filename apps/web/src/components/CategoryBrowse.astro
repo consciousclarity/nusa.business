@@ -32,6 +32,7 @@ type Props = {
   browse: FacetBrowse;
   locale: Locale;
   formAction: string;
+  unavailable?: boolean;
 };
 
 const {
@@ -44,6 +45,7 @@ const {
   browse,
   locale,
   formAction,
+  unavailable = false,
 } = Astro.props as Props;
 
 const req = Astro.request;
@@ -110,11 +112,20 @@ const hubHref = tenantHref(req, {
 
 <section class="lede">
   <h1>{inWhere(locale, facetHeading, where)}</h1>
-  <p class="prose">
-    {listings.length} {t(locale, "listingsCount")}
-    {" · "}
-    <a href={hubHref}>{where}</a>
-  </p>
+  {unavailable ? (
+    <p class="prose">
+      {t(locale, "directoryUnavailable")}{" "}
+      <a href={tenantHref(req, { island: "bali", locale })}>
+        {t(locale, "browseBali")}
+      </a>
+    </p>
+  ) : (
+    <p class="prose">
+      {listings.length} {t(locale, "listingsCount")}
+      {" · "}
+      <a href={hubHref}>{where}</a>
+    </p>
+  )}
 </section>
 
 <form class="section filter-bar browse-filters" method="get" action={formAction}>
@@ -167,7 +178,7 @@ const hubHref = tenantHref(req, {
 )}
 
 <section class="section">
-  {listings.length === 0 ? (
+  {unavailable ? null : listings.length === 0 ? (
     <p class="prose">
       {t(locale, "noCategoryMatches")}{" "}
       <a href={formAction}>{t(locale, "showAll")}</a>

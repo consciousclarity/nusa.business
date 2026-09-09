@@ -9,7 +9,7 @@ import {
   hostPath,
   websiteJsonLd,
 } from "../../../lib/seo";
-import { t, withLocale, placeTypeLabel, type Locale } from "../../../i18n/ui";
+import { islandTagline, t, withLocale, placeTypeLabel, type Locale } from "../../../i18n/ui";
 import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory, TAXONOMY, categoryLabel } from "@nusa/shared";
 
 const label = Astro.params.label!;
@@ -157,7 +157,7 @@ const placeCanonical =
 {mode === "island" && islandData && (
   <Base
     title={`${islandData.island.name} — nusa.business`}
-    description={islandData.island.tagline}
+    description={islandTagline(locale, islandData.island.slug, islandData.island.tagline)}
     crumb={[{ label: islandData.island.name }]}
     locale={locale}
     canonical={islandCanonical!}
@@ -166,7 +166,7 @@ const placeCanonical =
         locale,
         url: islandCanonical!,
         name: `${islandData.island.name} — nusa.business`,
-        description: islandData.island.tagline,
+        description: islandTagline(locale, islandData.island.slug, islandData.island.tagline),
       }),
       breadcrumbJsonLd([
         { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
@@ -176,7 +176,7 @@ const placeCanonical =
   >
     <section class="lede">
       <h1>{islandData.island.name}</h1>
-      <p class="prose">{islandData.island.tagline}</p>
+      <p class="prose">{islandTagline(locale, islandData.island.slug, islandData.island.tagline)}</p>
     </section>
 
     {islandData.island.status === "coming_soon" && (

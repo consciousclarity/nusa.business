@@ -5,7 +5,7 @@ import { tenantHref } from "../lib/links";
 import { TAXONOMY, categoryLabel } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
 import { absoluteUrl, websiteJsonLd } from "../lib/seo";
-import { t, withLocale, type Locale } from "../i18n/ui";
+import { islandTagline, t, withLocale, type Locale } from "../i18n/ui";
 
 const locale: Locale = Astro.locals.locale ?? "en";
 const req = Astro.request;
@@ -98,7 +98,7 @@ const searchAction = withLocale("/search", locale);
           </div>
           <p class="index-desc">
             {island.status === "active"
-              ? island.tagline
+              ? islandTagline(locale, island.slug, island.tagline)
               : t(locale, "comingSoonNext")}
             {island.status !== "active" && (
               <>

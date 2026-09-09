@@ -227,6 +227,8 @@ describe("parseRegisterBody", () => {
     if (ok.ok) assert.equal(ok.value.kind, "invite");
   });
 });
+
+describe("parseReportBody", () => {
   it("accepts correction notes and rejects short or unknown kinds", () => {
     assert.equal(
       parseReportBody({ kind: "correction", note: "Hours are wrong on Sunday." }).ok,

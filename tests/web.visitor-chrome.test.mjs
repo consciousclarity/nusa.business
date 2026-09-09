@@ -34,12 +34,17 @@ const support = readFileSync(
   new URL("../apps/web/src/pages/support.astro", import.meta.url),
   "utf8",
 );
+const browse = readFileSync(
+  new URL("../apps/web/src/components/CategoryBrowse.astro", import.meta.url),
+  "utf8",
+);
 
 describe("visitor chrome (no debug resolver)", () => {
   it("homepage is search-first and omits host-resolver jargon", () => {
     assert.match(home, /name="q"/);
     assert.match(home, /name="category"/);
     assert.match(home, /action=\{searchAction\}/);
+    assert.match(home, /categoryLabel\(group.slug, locale\)/);
     assert.doesNotMatch(home, /kind=nation/);
     assert.doesNotMatch(home, /class="resolver"/);
   });
@@ -55,6 +60,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(listing, /Vendor store · 0% commission/);
     assert.doesNotMatch(listing, /data\.booking\.id/);
     assert.match(listing, /weekdayLabel\(locale, h\.day\)/);
+    assert.match(listing, /categoryLabel\(cat, locale\)/);
   });
 
   it("listing actions put contact first and claim second", () => {
@@ -105,6 +111,15 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(base, /\/terms/);
     assert.match(base, /\/support/);
     assert.doesNotMatch(base, /\/host\/gianyar\.bali/);
+  });
+
+  it("public category chrome passes locale into taxonomy labels", () => {
+    assert.match(place, /categoryFilterOptions\(/);
+    assert.match(place, /categoryLabel\(activeCategory, locale\)/);
+    assert.match(place, /categoryLabel\(b\.categories\[0\] \?\? "", locale\)/);
+    assert.match(browse, /categoryLabel\(browse\.category, locale\)/);
+    assert.match(browse, /inWhere\(locale, facetHeading, where\)/);
+    assert.match(search, /categoryLabel\(group\.slug, locale\)/);
   });
 
   it("search results are shareable query URLs and noindex", () => {

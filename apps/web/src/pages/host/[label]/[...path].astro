@@ -12,7 +12,7 @@ import {
   localBusinessJsonLd,
   websiteJsonLd,
 } from "../../../lib/seo";
-import { t, withLocale, weekdayLabel, type Locale } from "../../../i18n/ui";
+import { inWhere, t, withLocale, weekdayLabel, type Locale } from "../../../i18n/ui";
 import {
   categoryLabel,
   canonicalizeCategory,
@@ -171,8 +171,8 @@ if (isFacetBrowse) {
     canonical: absoluteUrl(req, canonicalPath),
     robots: policy.index ? "index,follow" : "noindex,follow",
     titleCore: resolved.browse.pathFacet
-      ? `${facetValueLabel(resolved.browse.pathFacet.key, resolved.browse.pathFacet.value)} ${categoryLabel(resolved.browse.category)}`
-      : categoryLabel(resolved.browse.category),
+      ? `${facetValueLabel(resolved.browse.pathFacet.key, resolved.browse.pathFacet.value)} ${categoryLabel(resolved.browse.category, locale)}`
+      : categoryLabel(resolved.browse.category, locale),
     formAction: tenantHref(req, {
       island: islandSlug!,
       place: hostPlaceSlug!,
@@ -483,8 +483,8 @@ if (hub && categoryParam) {
 ---
 {areaFacet && (
   <Base
-    title={`${areaFacet.titleCore} in ${areaFacet.area.name} — nusa.business`}
-    description={`${areaFacet.listings.length} listings in ${areaFacet.area.name}.`}
+    title={`${inWhere(locale, areaFacet.titleCore, areaFacet.area.name)} — nusa.business`}
+    description={`${areaFacet.listings.length} ${t(locale, "listingsCount")} ${t(locale, "inWhere")} ${areaFacet.area.name}.`}
     crumb={[
       {
         label: islandDetail.island.name,
@@ -515,7 +515,7 @@ if (hub && categoryParam) {
     jsonLd={[
       websiteJsonLd({
         url: areaFacet.canonical,
-        name: `${areaFacet.titleCore} in ${areaFacet.area.name}`,
+        name: inWhere(locale, areaFacet.titleCore, areaFacet.area.name),
       }),
       breadcrumbJsonLd([
         { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
@@ -723,7 +723,7 @@ if (hub && categoryParam) {
 
     <dl class="kv">
       <dt>{t(locale, "category")}</dt>
-      <dd>{data.business.categories.map(categoryLabel).join(" · ") || "—"}</dd>
+      <dd>{data.business.categories.map((c) => categoryLabel(c, locale)).join(" · ") || "—"}</dd>
       {data.business.address && (
         <>
           <dt>{t(locale, "addressLabel")}</dt>
@@ -822,7 +822,7 @@ if (hub && categoryParam) {
               <div class="index-row">
                 <span class="n">{String(i + 1).padStart(2, "0")}</span>
                 <a class="name" href={neighborHref(n)}>{n.business.name}</a>
-                <span class="rhs">{categoryLabel(n.business.categories[0] ?? "") || n.place.name}</span>
+                <span class="rhs">{categoryLabel(n.business.categories[0] ?? "", locale) || n.place.name}</span>
               </div>
               <p class="index-desc">{n.business.summary}</p>
             </li>
@@ -875,7 +875,7 @@ if (hub && categoryParam) {
               data-category={encodeURIComponent(cat)}
               aria-pressed={cat === discovery.activeCategory ? "true" : "false"}
             >
-              {categoryLabel(cat)}
+              {categoryLabel(cat, locale)}
             </button>
           ))}
         </div>

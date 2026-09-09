@@ -10,7 +10,7 @@ import {
   websiteJsonLd,
 } from "../../../lib/seo";
 import { t, withLocale, placeTypeLabel, type Locale } from "../../../i18n/ui";
-import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory, TAXONOMY } from "@nusa/shared";
+import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory, TAXONOMY, categoryLabel } from "@nusa/shared";
 
 const label = Astro.params.label!;
 const parts = label.split(".");
@@ -204,7 +204,7 @@ const placeCanonical =
         <select name="category">
           <option value="">{t(locale, "allCategories")}</option>
           {TAXONOMY.map((group) => (
-            <option value={group.slug}>{group.label}</option>
+            <option value={group.slug}>{categoryLabel(group.slug, locale)}</option>
           ))}
         </select>
       </label>

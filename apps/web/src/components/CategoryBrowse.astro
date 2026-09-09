@@ -1,10 +1,11 @@
 ---
 import { geoHref, tenantHref } from "../lib/links";
-import { t, type Locale } from "../i18n/ui";
+import { inWhere, t, type Locale } from "../i18n/ui";
 import {
   categoryLabel,
   facetValueLabel,
   facetsForCategory,
+  relatedAsLabel,
   relatedForCategory,
   type FacetBrowse,
   type FacetDef,
@@ -70,7 +71,7 @@ for (const f of primary) {
 }
 const more = globalShown.filter((f) => !seen.has(f.key));
 
-const categoryTitle = categoryLabel(browse.category);
+const categoryTitle = categoryLabel(browse.category, locale);
 const where = area?.name || hostPlace?.name || island.name;
 const facetHeading = browse.pathFacet
   ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value)} ${categoryTitle}`
@@ -105,10 +106,9 @@ const hubHref = tenantHref(req, {
 ---
 
 <section class="lede">
-  <h1>{facetHeading} in {where}</h1>
+  <h1>{inWhere(locale, facetHeading, where)}</h1>
   <p class="prose">
-    {listings.length}
-    {listings.length === 1 ? " listing" : " listings"}
+    {listings.length} {t(locale, "listingsCount")}
     {" · "}
     <a href={hubHref}>{where}</a>
   </p>
@@ -159,7 +159,7 @@ const hubHref = tenantHref(req, {
 {relatedShown.length > 0 && (
   <p class="meta">
     {t(locale, "relatedServices")}{" "}
-    {relatedShown.map((rel) => rel.as).join(" · ")}
+    {relatedShown.map((rel) => relatedAsLabel(rel.as, locale)).join(" · ")}
   </p>
 )}
 
@@ -176,7 +176,7 @@ const hubHref = tenantHref(req, {
           <div class="index-row">
             <span class="n">{String(i + 1).padStart(2, "0")}</span>
             <a class="name" href={listingHref(b)}>{b.name}</a>
-            <span class="rhs">{categoryLabel(b.categories[0] ?? "")}</span>
+            <span class="rhs">{categoryLabel(b.categories[0] ?? "", locale)}</span>
           </div>
           <p class="index-desc">{b.summary}</p>
         </li>

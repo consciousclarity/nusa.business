@@ -103,6 +103,7 @@ const ui = {
     termsTitle: "Terms — nusa.business",
     supportTitle: "Support — nusa.business",
     listingsCount: "listings",
+    inWhere: "in",
     placeTypeKabupaten: "Regency",
     placeTypeKota: "City",
     placeTypeArea: "Area",
@@ -277,6 +278,7 @@ const ui = {
     termsTitle: "Ketentuan — nusa.business",
     supportTitle: "Dukungan — nusa.business",
     listingsCount: "listing",
+    inWhere: "di",
     placeTypeKabupaten: "Kabupaten",
     placeTypeKota: "Kota",
     placeTypeArea: "Kawasan",
@@ -364,6 +366,11 @@ export type UiKey = keyof typeof ui.en;
 
 export function t(locale: Locale, key: UiKey): string {
   return ui[locale][key] ?? ui.en[key];
+}
+
+/** Category/place heading: "Warungs in Ubud" / "Warung di Ubud". */
+export function inWhere(locale: Locale, subject: string, where: string): string {
+  return `${subject} ${t(locale, "inWhere")} ${where}`;
 }
 
 export function weekdayLabel(locale: Locale, day: string): string {

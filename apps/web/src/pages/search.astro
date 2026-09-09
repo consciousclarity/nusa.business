@@ -87,7 +87,7 @@ const title = q
         <option value="">{t(locale, "allCategories")}</option>
         {TAXONOMY.map((group) => (
           <option value={group.slug} selected={group.slug === category}>
-            {group.label}
+            {categoryLabel(group.slug, locale)}
           </option>
         ))}
       </select>
@@ -100,7 +100,7 @@ const title = q
       {hits.length} {t(locale, "resultsIn")}
       {q ? ` · ${q}` : ""}
       {islandName ? ` · ${islandName}` : ""}
-      {category ? ` · ${categoryLabel(category)}` : ""}
+      {category ? ` · ${categoryLabel(category, locale)}` : ""}
     </h2>
     {hits.length === 0 ? (
       <p class="prose">
@@ -131,7 +131,7 @@ const title = q
                   {hit.business.sample ? (
                     <span class="stamp">{t(locale, "sampleListing")}</span>
                   ) : (
-                    categoryLabel(hit.business.categories[0] ?? "")
+                    categoryLabel(hit.business.categories[0] ?? "", locale)
                   )}
                 </span>
               </div>

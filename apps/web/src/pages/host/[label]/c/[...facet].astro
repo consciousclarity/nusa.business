@@ -10,7 +10,7 @@ import {
   hostPath as seoHostPath,
   websiteJsonLd,
 } from "../../../../lib/seo";
-import { withLocale, type Locale } from "../../../../i18n/ui";
+import { inWhere, t, withLocale, type Locale } from "../../../../i18n/ui";
 import {
   categoryLabel,
   facetIndexPolicy,
@@ -131,8 +131,8 @@ const canonicalPath = withLocale(
 const canonical = absoluteUrl(req, canonicalPath);
 const where = hostPlace?.name ?? islandDetail.island.name;
 const titleCore = browse.pathFacet
-  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value)} ${categoryLabel(browse.category)}`
-  : categoryLabel(browse.category);
+  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value)} ${categoryLabel(browse.category, locale)}`
+  : categoryLabel(browse.category, locale);
 const formAction = tenantHref(req, {
   island: islandSlug,
   place: hostPlaceSlug,
@@ -142,8 +142,8 @@ const formAction = tenantHref(req, {
 ---
 
 <Base
-  title={`${titleCore} in ${where} — nusa.business`}
-  description={`${listings.length} ${categoryLabel(browse.category)} listings in ${where}.`}
+  title={`${inWhere(locale, titleCore, where)} — nusa.business`}
+  description={`${listings.length} ${categoryLabel(browse.category, locale)} ${t(locale, "listingsCount")} ${t(locale, "inWhere")} ${where}.`}
   crumb={[
     {
       label: islandDetail.island.name,
@@ -161,7 +161,7 @@ const formAction = tenantHref(req, {
           },
         ]
       : []),
-    { label: categoryLabel(browse.category) },
+    { label: categoryLabel(browse.category, locale) },
     ...(browse.pathFacet
       ? [{ label: facetValueLabel(browse.pathFacet.key, browse.pathFacet.value) }]
       : []),
@@ -172,8 +172,8 @@ const formAction = tenantHref(req, {
   jsonLd={[
     websiteJsonLd({
       url: canonical,
-      name: `${titleCore} in ${where}`,
-      description: `${listings.length} listings in ${where}.`,
+      name: inWhere(locale, titleCore, where),
+      description: `${listings.length} ${t(locale, "listingsCount")} ${t(locale, "inWhere")} ${where}.`,
     }),
     breadcrumbJsonLd([
       { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },

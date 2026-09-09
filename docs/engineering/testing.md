@@ -19,7 +19,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Area | File | Why it matters |
 |---|---|---|
 | Host parsing | `tests/shared.host.test.mjs` | `parseHost()` turns a Host header into the geo context every surface renders from. If it drifts, tenancy silently breaks. Pins the "at most `place.island`" rule and rejects lookalike domains. |
-| Category taxonomy | `tests/shared.taxonomy.test.mjs` | Two-level Indonesia catalog: unique slugs, Events related pointers (no duplicate leaves), legacy label canonicalization, group filter expansion. |
+| Category taxonomy | `tests/shared.taxonomy.test.mjs` | Two-level Indonesia catalog: unique slugs, Events related pointers (no duplicate leaves), legacy label canonicalization, group filter expansion, Indonesian public labels. |
 | Directory facets | `tests/shared.facets.test.mjs`, `tests/db.facets.test.mjs`, `tests/api.search-facets.test.mjs`, `tests/web.facet-browse.test.mjs` | Allowlisted `/c/{category}/{facet}/{value}` index policy; listing match; seed filters; search query params; robots/canonical wiring. |
 | Geo nesting | `tests/shared.geo-nesting.test.mjs`, `tests/db.geo-nesting.test.mjs` | Tourist areas nest under kabupaten/kota hosts (`gianyar.bali/ubud/{slug}`). Pins `geoNesting` + seed `parentPlaceId`. |
 | Slugs | `tests/shared.host.test.mjs` | Slugs are URLs, and URLs are permanent once indexed. |

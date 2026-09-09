@@ -157,6 +157,8 @@ export function nationHomeHref(
 
 export {
   CATEGORIES,
+  CATEGORY_LABELS_ID,
+  RELATED_AS_ID,
   TAXONOMY,
   canonicalizeCategory,
   canonicalizeCategoryList,
@@ -167,9 +169,11 @@ export {
   expandCategoryFilter,
   isKnownCategory,
   listingMatchesCategory,
+  relatedAsLabel,
   relatedForCategory,
   taxonomyCatalog,
   type Category,
+  type CategoryLocale,
   type CategoryRecord,
   type RelatedCategory,
   type TaxonomyCatalogGroup,

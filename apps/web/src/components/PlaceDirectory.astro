@@ -6,6 +6,7 @@ import {
   categoryFilterOptions,
   categoryLabel,
   listingMatchesCategory,
+  relatedAsLabel,
   relatedForCategory,
 } from "@nusa/shared";
 
@@ -61,6 +62,7 @@ const recent = businesses.filter((b) => b.fieldRegistered).slice(0, 5);
 
 const placeCategoryOptions = categoryFilterOptions(
   businesses.flatMap((b) => b.categories),
+  locale,
 );
 
 const activeCategory = canonicalizeCategory(categoryParam) ?? "";
@@ -70,7 +72,7 @@ const placeBusinesses = activeCategory
   : businesses;
 
 const relatedShown = activeCategory ? relatedForCategory(activeCategory) : [];
-const activeCategoryLabel = activeCategory ? categoryLabel(activeCategory) : "";
+const activeCategoryLabel = activeCategory ? categoryLabel(activeCategory, locale) : "";
 
 const hubHref = geoHref(req, {
   island: island.slug,
@@ -184,7 +186,7 @@ const hubHref = geoHref(req, {
 {relatedShown.length > 0 && (
   <p class="meta">
     {t(locale, "relatedServices")}{" "}
-    {relatedShown.map((rel) => rel.as).join(" · ")}
+    {relatedShown.map((rel) => relatedAsLabel(rel.as, locale)).join(" · ")}
   </p>
 )}
 
@@ -231,7 +233,7 @@ const hubHref = geoHref(req, {
               ) : b.status === "draft" ? (
                 <span class="stamp">{t(locale, "listedUnclaimed")}</span>
               ) : (
-                categoryLabel(b.categories[0] ?? "")
+                categoryLabel(b.categories[0] ?? "", locale)
               )}
             </span>
           </div>

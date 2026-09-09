@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import { api } from "../lib/api";
 import { publicUrl } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
+import { absoluteUrl, websiteJsonLd } from "../lib/seo";
 import { t, withLocale, type Locale } from "../i18n/ui";
 
 const locale: Locale = Astro.locals.locale ?? "en";
@@ -39,8 +40,17 @@ function islandHref(slug: string) {
   }
   return withLocale(`/host/${slug}`, locale);
 }
+
+const nationUrl = absoluteUrl(Astro.request, withLocale("/", locale));
+const nationDescription = t(locale, "nationLede");
 ---
-<Base title={t(locale, "nationTitle")} locale={locale}>
+<Base
+  title={t(locale, "nationTitle")}
+  description={nationDescription}
+  canonical={nationUrl}
+  locale={locale}
+  jsonLd={websiteJsonLd({ url: nationUrl, description: nationDescription })}
+>
   <section class="lede">
     <h1>{t(locale, "nationH1")}</h1>
     <p class="prose">{t(locale, "nationLede")}</p>

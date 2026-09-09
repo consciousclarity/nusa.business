@@ -2,6 +2,12 @@
 import Base from "../../../layouts/Base.astro";
 import { api } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  hostPath,
+  websiteJsonLd,
+} from "../../../lib/seo";
 import { t, withLocale, type Locale } from "../../../i18n/ui";
 import { CATEGORIES } from "@nusa/shared";
 
@@ -87,6 +93,25 @@ const queryHost =
     : mode === "place" && placeData
       ? `${placeData.place.slug}.${placeData.island.slug}.nusa.business`
       : label;
+
+const islandCanonical =
+  islandData &&
+  absoluteUrl(
+    req,
+    withLocale(hostPath({ island: islandData.island.slug }), locale),
+  );
+const placeCanonical =
+  placeData &&
+  absoluteUrl(
+    req,
+    withLocale(
+      hostPath({
+        island: placeData.island.slug,
+        place: placeData.place.slug,
+      }),
+      locale,
+    ),
+  );
 ---
 
 {mode === "island" && islandData && (
@@ -95,6 +120,18 @@ const queryHost =
     description={islandData.island.tagline}
     crumb={[{ label: islandData.island.slug }]}
     locale={locale}
+    canonical={islandCanonical!}
+    jsonLd={[
+      websiteJsonLd({
+        url: islandCanonical!,
+        name: `${islandData.island.name} — nusa.business`,
+        description: islandData.island.tagline,
+      }),
+      breadcrumbJsonLd([
+        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        { name: islandData.island.name, url: islandCanonical! },
+      ]),
+    ]}
   >
     <section class="lede">
       <h1>{islandData.island.name}</h1>
@@ -177,6 +214,25 @@ const queryHost =
       { label: placeData.place.slug },
     ]}
     locale={locale}
+    canonical={placeCanonical!}
+    jsonLd={[
+      websiteJsonLd({
+        url: placeCanonical!,
+        name: `${placeData.place.name}, ${placeData.island.name}`,
+        description: placeData.place.summary,
+      }),
+      breadcrumbJsonLd([
+        { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+        {
+          name: placeData.island.name,
+          url: absoluteUrl(
+            req,
+            withLocale(hostPath({ island: placeData.island.slug }), locale),
+          ),
+        },
+        { name: placeData.place.name, url: placeCanonical! },
+      ]),
+    ]}
   >
     <section class="lede">
       <h1>{placeData.place.name}</h1>

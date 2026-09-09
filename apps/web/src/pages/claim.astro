@@ -1,11 +1,18 @@
 ---
 import Base from "../layouts/Base.astro";
-import { t, type Locale } from "../i18n/ui";
+import { absoluteUrl } from "../lib/seo";
+import { t, withLocale, type Locale } from "../i18n/ui";
 
 const locale: Locale = Astro.locals.locale ?? "en";
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
+const claimUrl = absoluteUrl(Astro.request, withLocale("/claim", locale));
 ---
-<Base title={t(locale, "claimTitle")} locale={locale}>
+<Base
+  title={t(locale, "claimTitle")}
+  description={t(locale, "claimLede")}
+  canonical={claimUrl}
+  locale={locale}
+>
   <section class="lede">
     <h1>{t(locale, "claimH1")}</h1>
     <p class="prose">{t(locale, "claimLede")}</p>

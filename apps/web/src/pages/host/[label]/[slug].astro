@@ -2,7 +2,13 @@
 import Base from "../../../layouts/Base.astro";
 import { api, browserApiOrigin } from "../../../lib/api";
 import { tenantHref } from "../../../lib/links";
-import { t, type Locale } from "../../../i18n/ui";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  hostPath as seoHostPath,
+  localBusinessJsonLd,
+} from "../../../lib/seo";
+import { t, withLocale, type Locale } from "../../../i18n/ui";
 import { telHref, whatsappHref } from "@nusa/shared";
 
 const label = Astro.params.label!;
@@ -52,6 +58,15 @@ const placeMeta = await api<{
 
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 const hostPath = `${placeSlug}.${islandSlug}.nusa.business/${slug}`;
+const listingPath = withLocale(
+  seoHostPath({
+    island: islandSlug!,
+    place: placeSlug!,
+    slug,
+  }),
+  locale,
+);
+const listingUrl = absoluteUrl(req, listingPath);
 const stamp =
   data.business.status === "draft"
     ? "Unclaimed"
@@ -118,6 +133,39 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
     { label: data.business.slug },
   ]}
   locale={locale}
+  canonical={listingUrl}
+  ogType="article"
+  jsonLd={[
+    localBusinessJsonLd({
+      name: data.business.name,
+      description: data.business.summary,
+      url: listingUrl,
+      address: data.business.address,
+      telephone: data.business.phone,
+      categories: data.business.categories,
+    }),
+    breadcrumbJsonLd([
+      { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+      {
+        name: placeMeta.island.name,
+        url: absoluteUrl(
+          req,
+          withLocale(seoHostPath({ island: islandSlug! }), locale),
+        ),
+      },
+      {
+        name: placeMeta.place.name,
+        url: absoluteUrl(
+          req,
+          withLocale(
+            seoHostPath({ island: islandSlug!, place: placeSlug! }),
+            locale,
+          ),
+        ),
+      },
+      { name: data.business.name, url: listingUrl },
+    ]),
+  ]}
 >
   <article class="record">
     <h1>{data.business.name}</h1>

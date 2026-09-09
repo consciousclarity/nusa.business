@@ -1,5 +1,5 @@
 ---
-import { geoHref } from "../lib/links";
+import { geoHref, tenantHref } from "../lib/links";
 import { t, type Locale } from "../i18n/ui";
 import {
   canonicalizeCategory,
@@ -70,6 +70,13 @@ const placeBusinesses = activeCategory
 
 const relatedShown = activeCategory ? relatedForCategory(activeCategory) : [];
 const activeCategoryLabel = activeCategory ? categoryLabel(activeCategory) : "";
+
+const hubHref = geoHref(req, {
+  island: island.slug,
+  place,
+  places: graph,
+  locale,
+});
 ---
 
 <section class="lede">
@@ -159,7 +166,18 @@ const activeCategoryLabel = activeCategory ? categoryLabel(activeCategory) : "";
   <form class="section filter-bar" method="get">
     <label>
       {t(locale, "category")}
-      <select name="category" onchange="this.form.submit()">
+      <select
+        name="category"
+        onchange="if (this.value) location = this.dataset.browse + this.value; else location = this.dataset.hub;"
+        data-hub={hubHref}
+        data-browse={tenantHref(req, {
+          island: island.slug,
+          place: parent && place.type === "tourist_area" ? parent.slug : place.slug,
+          area: place.type === "tourist_area" ? place.slug : undefined,
+          category: "x-cat-x",
+          locale,
+        }).replace("x-cat-x", "")}
+      >
         <option value="">{t(locale, "allCategories")}</option>
         {placeCategoryOptions.map((cat) => (
           <option value={cat.slug} selected={cat.slug === activeCategory}>
@@ -176,7 +194,7 @@ const activeCategoryLabel = activeCategory ? categoryLabel(activeCategory) : "";
 
 {relatedShown.length > 0 && (
   <p class="meta">
-    Also showing related services:{" "}
+    {t(locale, "relatedServices")}{" "}
     {relatedShown.map((rel) => rel.as).join(" · ")}
   </p>
 )}

@@ -20,4 +20,4 @@ Owner supplied a 17-group catalog. Events & Weddings must surface catering, phot
 
 - `/v1/meta/categories` returns `{ categories, taxonomy }` (`categories` remains the flat label list).
 - Existing JSON stores are rewritten on boot (`2026-09-canonicalize-category-slugs`).
-- Place-hub `?category=` accepts slug or label; UI shows labels.
+- Place-hub `?category=` 301s to `/c/{slug}`. Facet browse lives at `/c/{category}` and allowlisted `/c/{category}/{facet}/{value}` ([ADR-006](./006-indexable-facet-urls.md)).

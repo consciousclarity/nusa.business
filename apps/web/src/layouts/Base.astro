@@ -19,11 +19,13 @@ interface Props {
   canonical?: string;
   ogType?: string;
   jsonLd?: JsonLd;
+  /** Defaults to index,follow. Use noindex,follow for thin filter combinations. */
+  robots?: string;
 }
 
 const locale: Locale =
   Astro.props.locale ?? Astro.locals.locale ?? "en";
-const { title, description, crumb = [], ogType = "website", jsonLd } =
+const { title, description, crumb = [], ogType = "website", jsonLd, robots } =
   Astro.props;
 const portalUrl = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 const homeHref = nationHref(Astro.request, locale);
@@ -47,6 +49,7 @@ const jsonLdBlocks = jsonLd
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={metaDescription} />
+    <meta name="robots" content={robots || "index,follow"} />
     <meta name="color-scheme" content="light dark" />
     <link rel="canonical" href={canonical} />
     <link

@@ -13,7 +13,9 @@ import {
   geoNesting,
   haversineKm,
   listingMatchesCategory,
+  listingMatchesFacets,
   normalizeAddress,
+  type FacetSelection,
 } from "@nusa/shared";
 import { migrateStore } from "./migrations.js";
 import { hashPassword, isHashed, verifyPassword } from "./password.js";
@@ -192,11 +194,27 @@ export function getPlace(islandSlug: string, placeSlug: string) {
   );
 }
 
+function reviewAverageByBusiness(store: ReturnType<typeof getStore>) {
+  const sums = new Map<string, { total: number; count: number }>();
+  for (const r of store.reviews) {
+    const avg = (r.service + r.value + r.location + r.cleanliness) / 4;
+    const cur = sums.get(r.businessId) ?? { total: 0, count: 0 };
+    cur.total += avg;
+    cur.count += 1;
+    sums.set(r.businessId, cur);
+  }
+  const out = new Map<string, number>();
+  for (const [id, { total, count }] of sums) out.set(id, total / count);
+  return out;
+}
+
 export function listBusinesses(filters?: {
   islandSlug?: string;
   placeSlug?: string;
   category?: string;
   q?: string;
+  facets?: FacetSelection;
+  origin?: { lat: number; lng: number };
 }) {
   const store = getStore();
   let items = store.businesses.filter((b) => b.status !== "draft");
@@ -233,6 +251,30 @@ export function listBusinesses(filters?: {
           );
         }),
     );
+  }
+
+  if (filters?.facets && Object.keys(filters.facets).length) {
+    const selected = { ...filters.facets };
+    if (selected.distance && !filters.origin) delete selected.distance;
+    if (Object.keys(selected).length) {
+      const averages = selected.rating?.length
+        ? reviewAverageByBusiness(store)
+        : new Map<string, number>();
+      items = items.filter((b) =>
+        listingMatchesFacets(
+          {
+            facets: b.facets,
+            status: b.status,
+            openingHours: b.openingHours,
+            ratingAverage: averages.get(b.id) ?? null,
+            lat: b.lat,
+            lng: b.lng,
+            origin: filters.origin,
+          },
+          selected,
+        ),
+      );
+    }
   }
 
   return items;

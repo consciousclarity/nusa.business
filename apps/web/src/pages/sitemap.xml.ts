@@ -6,11 +6,22 @@ import {
   sitemapXml,
   siteOrigin,
 } from "../lib/seo";
-import { geoNesting, type NestablePlace } from "@nusa/shared";
+import {
+  geoNesting,
+  indexableBrowsePathsForListings,
+  type NestablePlace,
+} from "@nusa/shared";
 
 type Island = { slug: string; status: string };
 type Place = NestablePlace;
-type Business = { slug: string; placeId: string };
+type Business = {
+  slug: string;
+  placeId: string;
+  categories?: string[];
+  facets?: Record<string, string[]>;
+  status?: string;
+  openingHours?: { day: string; open: string; close: string; closed?: boolean }[];
+};
 
 /**
  * Sitemap for the public directory. Local/dev emits /host/… paths on the
@@ -64,6 +75,47 @@ export const GET: APIRoute = async ({ request }) => {
             }),
           ),
         );
+      }
+
+      const islandPaths = indexableBrowsePathsForListings(detail.businesses);
+      for (const row of islandPaths) {
+        urls.add(
+          absoluteUrl(
+            request,
+            hostPath({
+              island: island.slug,
+              category: row.category,
+              facet: row.facet,
+              facetValue: row.facetValue,
+            }),
+          ),
+        );
+      }
+
+      const byPlace = new Map<string, Business[]>();
+      for (const biz of detail.businesses) {
+        const list = byPlace.get(biz.placeId) ?? [];
+        list.push(biz);
+        byPlace.set(biz.placeId, list);
+      }
+      for (const place of detail.places) {
+        const nest = geoNesting(place, byId);
+        const rows = byPlace.get(place.id) ?? [];
+        for (const row of indexableBrowsePathsForListings(rows)) {
+          urls.add(
+            absoluteUrl(
+              request,
+              hostPath({
+                island: island.slug,
+                place: nest.hostPlace,
+                area: nest.area,
+                category: row.category,
+                facet: row.facet,
+                facetValue: row.facetValue,
+              }),
+            ),
+          );
+        }
       }
     }
   } catch {

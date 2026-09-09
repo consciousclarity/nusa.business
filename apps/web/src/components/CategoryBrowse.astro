@@ -1,0 +1,205 @@
+---
+import { geoHref, tenantHref } from "../lib/links";
+import { t, type Locale } from "../i18n/ui";
+import {
+  categoryLabel,
+  facetValueLabel,
+  facetsForCategory,
+  relatedForCategory,
+  type FacetBrowse,
+  type FacetDef,
+  type NestablePlace,
+} from "@nusa/shared";
+
+export type BrowseListing = {
+  slug: string;
+  name: string;
+  summary: string;
+  categories: string[];
+  status?: string;
+  placeId?: string;
+};
+
+type Props = {
+  island: { slug: string; name: string };
+  hostPlace?: NestablePlace & { name?: string };
+  area?: NestablePlace & { name?: string };
+  places: NestablePlace[];
+  listings: BrowseListing[];
+  listingPlaces: Record<string, NestablePlace>;
+  browse: FacetBrowse;
+  locale: Locale;
+  formAction: string;
+};
+
+const {
+  island,
+  hostPlace,
+  area,
+  places,
+  listings,
+  listingPlaces,
+  browse,
+  locale,
+  formAction,
+} = Astro.props as Props;
+
+const req = Astro.request;
+const relatedShown = relatedForCategory(browse.category);
+const allFacets = facetsForCategory(browse.category);
+const groupFacets = allFacets.filter((f) => f.source === "stored");
+const globalShown = allFacets.filter(
+  (f) =>
+    f.source !== "geo" &&
+    f.key !== "distance" &&
+    !groupFacets.some((g) => g.key === f.key),
+);
+
+const primary = [
+  ...groupFacets,
+  ...globalShown.filter((f) =>
+    ["availability", "price_level", "rating", "booking"].includes(f.key),
+  ),
+];
+const seen = new Set<string>();
+const primaryUnique: FacetDef[] = [];
+for (const f of primary) {
+  if (seen.has(f.key)) continue;
+  seen.add(f.key);
+  primaryUnique.push(f);
+}
+const more = globalShown.filter((f) => !seen.has(f.key));
+
+const categoryTitle = categoryLabel(browse.category);
+const where = area?.name || hostPlace?.name || island.name;
+const facetHeading = browse.pathFacet
+  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value)} ${categoryTitle}`
+  : categoryTitle;
+
+function selectedValue(key: string): string {
+  const vals = browse.selected[key] ?? [];
+  if (browse.pathFacet && key === browse.pathFacet.key && vals.length <= 1) {
+    return browse.pathFacet.value;
+  }
+  return vals.length === 1 ? vals[0]! : "";
+}
+
+function listingHref(row: BrowseListing) {
+  const place = listingPlaces[row.placeId ?? ""] ?? area ?? hostPlace;
+  if (!place) return "#";
+  return geoHref(req, {
+    island: island.slug,
+    place,
+    places,
+    slug: row.slug,
+    locale,
+  });
+}
+
+const hubHref = tenantHref(req, {
+  island: island.slug,
+  place: hostPlace?.slug,
+  area: area?.slug,
+  locale,
+});
+---
+
+<section class="lede">
+  <h1>{facetHeading} in {where}</h1>
+  <p class="prose">
+    {listings.length}
+    {listings.length === 1 ? " listing" : " listings"}
+    {" · "}
+    <a href={hubHref}>{where}</a>
+  </p>
+</section>
+
+<form class="section filter-bar browse-filters" method="get" action={formAction}>
+  <p class="meta">{t(locale, "filters")}</p>
+  <div class="filter-grid">
+    {primaryUnique.map((facet) => (
+      <label>
+        {facet.label}
+        <select name={facet.key} onchange="this.form.submit()">
+          <option value="">{t(locale, "anyFilter")}</option>
+          {facet.values.map((v) => (
+            <option value={v.slug} selected={selectedValue(facet.key) === v.slug}>
+              {v.label}
+            </option>
+          ))}
+        </select>
+      </label>
+    ))}
+  </div>
+  {more.length > 0 && (
+    <details class="more-filters">
+      <summary>{t(locale, "moreFilters")}</summary>
+      <div class="filter-grid">
+        {more.map((facet) => (
+          <label>
+            {facet.label}
+            <select name={facet.key} onchange="this.form.submit()">
+              <option value="">{t(locale, "anyFilter")}</option>
+              {facet.values.map((v) => (
+                <option value={v.slug} selected={selectedValue(facet.key) === v.slug}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        ))}
+      </div>
+    </details>
+  )}
+  <noscript>
+    <button type="submit">{t(locale, "apply")}</button>
+  </noscript>
+</form>
+
+{relatedShown.length > 0 && (
+  <p class="meta">
+    {t(locale, "relatedServices")}{" "}
+    {relatedShown.map((rel) => rel.as).join(" · ")}
+  </p>
+)}
+
+<section class="section">
+  {listings.length === 0 ? (
+    <p class="prose">
+      {t(locale, "noCategoryMatches")}{" "}
+      <a href={formAction}>{t(locale, "showAll")}</a>
+    </p>
+  ) : (
+    <ol class="index-list">
+      {listings.map((b, i) => (
+        <li>
+          <div class="index-row">
+            <span class="n">{String(i + 1).padStart(2, "0")}</span>
+            <a class="name" href={listingHref(b)}>{b.name}</a>
+            <span class="rhs">{categoryLabel(b.categories[0] ?? "")}</span>
+          </div>
+          <p class="index-desc">{b.summary}</p>
+        </li>
+      ))}
+    </ol>
+  )}
+</section>
+
+<style>
+  .browse-filters .filter-grid {
+    display: grid;
+    gap: 0.75rem 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    margin-top: 0.65rem;
+  }
+  .more-filters {
+    margin-top: 0.85rem;
+  }
+  .more-filters summary {
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+</style>

@@ -178,6 +178,8 @@ describe("store migrations", () => {
       "food-drink",
       "business-professional-services",
     ]);
+    assert.equal(applied.includes("2026-09-listing-facets"), true);
+    assert.deepEqual(store.businesses[0].facets, {});
     assert.deepEqual(migrateStore(store), []);
   });
 });

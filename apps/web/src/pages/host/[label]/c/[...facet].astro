@@ -1,0 +1,214 @@
+---
+import Base from "../../../../layouts/Base.astro";
+import CategoryBrowse from "../../../../components/CategoryBrowse.astro";
+import { api, apiOrNull } from "../../../../lib/api";
+import { resolveFacetBrowse, searchQueryForBrowse } from "../../../../lib/facet-browse";
+import { tenantHref } from "../../../../lib/links";
+import {
+  absoluteUrl,
+  breadcrumbJsonLd,
+  hostPath as seoHostPath,
+  websiteJsonLd,
+} from "../../../../lib/seo";
+import { withLocale, type Locale } from "../../../../i18n/ui";
+import {
+  categoryLabel,
+  facetIndexPolicy,
+  facetPathSegments,
+  facetQueryParams,
+  facetValueLabel,
+  geoNesting,
+  type NestablePlace,
+} from "@nusa/shared";
+
+type HubPlace = NestablePlace & { name: string; summary: string };
+type BrowseListing = {
+  id: string;
+  placeId: string;
+  slug: string;
+  name: string;
+  summary: string;
+  categories: string[];
+  status?: string;
+};
+
+const label = Astro.params.label!;
+const facetParam = String(Astro.params.facet ?? "");
+const segments = facetParam.split("/").filter(Boolean);
+const parts = label.split(".");
+const req = Astro.request;
+const locale: Locale = Astro.locals.locale ?? "en";
+
+if (parts.length !== 1 && parts.length !== 2) {
+  return Astro.redirect(withLocale("/", locale));
+}
+
+const resolved = resolveFacetBrowse(segments, Astro.url.searchParams);
+if (!resolved.ok) return new Response(null, { status: 404 });
+
+const islandSlug = parts.length === 2 ? parts[1]! : parts[0]!;
+const hostPlaceSlug = parts.length === 2 ? parts[0] : undefined;
+
+const islandDetail = await apiOrNull<{
+  island: { slug: string; name: string };
+  places: HubPlace[];
+}>(`/v1/islands/${islandSlug}`);
+if (!islandDetail) return new Response(null, { status: 404 });
+
+const placesById = Object.fromEntries(
+  islandDetail.places.map((p) => [p.id, p]),
+);
+
+let hostPlace: HubPlace | undefined;
+let area: HubPlace | undefined;
+
+if (hostPlaceSlug) {
+  hostPlace = islandDetail.places.find((p) => p.slug === hostPlaceSlug);
+  if (!hostPlace) return new Response(null, { status: 404 });
+  const nest = geoNesting(hostPlace, placesById);
+  if (nest.area) {
+    const segs = facetPathSegments(resolved.browse);
+    const q = facetQueryParams(resolved.browse).toString();
+    const target = withLocale(
+      seoHostPath({
+        island: islandSlug,
+        place: nest.hostPlace,
+        area: nest.area,
+        category: resolved.browse.category,
+        facet: resolved.browse.pathFacet?.key,
+        facetValue: resolved.browse.pathFacet?.value,
+      }) + (q ? `?${q}` : ""),
+      locale,
+    );
+    return Astro.redirect(target, 301);
+  }
+}
+
+if (resolved.promoted) {
+  const q = facetQueryParams(resolved.promoted).toString();
+  const target = withLocale(
+    seoHostPath({
+      island: islandSlug,
+      place: hostPlaceSlug,
+      category: resolved.promoted.category,
+      facet: resolved.promoted.pathFacet?.key,
+      facetValue: resolved.promoted.pathFacet?.value,
+    }) + (q ? `?${q}` : ""),
+    locale,
+  );
+  return Astro.redirect(target, 301);
+}
+
+const browse = resolved.browse;
+const searchQs = searchQueryForBrowse(islandSlug, hostPlaceSlug, browse);
+const search = await api<{
+  results: {
+    business: BrowseListing;
+    place: HubPlace;
+    island: { slug: string };
+  }[];
+}>(`/v1/search?${searchQs}`);
+
+const listings = search.results.map((r) => r.business);
+const listingPlaces = Object.fromEntries(
+  search.results.map((r) => [r.business.placeId, r.place]),
+);
+const policy = facetIndexPolicy(browse, { resultCount: listings.length });
+const canonicalPath = withLocale(
+  seoHostPath({
+    island: islandSlug,
+    place: hostPlaceSlug,
+    category: browse.category,
+    facet:
+      policy.canonicalKind === "facet-path" ? browse.pathFacet?.key : undefined,
+    facetValue:
+      policy.canonicalKind === "facet-path"
+        ? browse.pathFacet?.value
+        : undefined,
+  }),
+  locale,
+);
+const canonical = absoluteUrl(req, canonicalPath);
+const where = hostPlace?.name ?? islandDetail.island.name;
+const titleCore = browse.pathFacet
+  ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value)} ${categoryLabel(browse.category)}`
+  : categoryLabel(browse.category);
+const formAction = tenantHref(req, {
+  island: islandSlug,
+  place: hostPlaceSlug,
+  category: browse.category,
+  locale,
+});
+---
+
+<Base
+  title={`${titleCore} in ${where} — nusa.business`}
+  description={`${listings.length} ${categoryLabel(browse.category)} listings in ${where}.`}
+  crumb={[
+    {
+      label: islandSlug,
+      href: tenantHref(req, { island: islandSlug, locale }),
+    },
+    ...(hostPlaceSlug
+      ? [
+          {
+            label: hostPlaceSlug,
+            href: tenantHref(req, {
+              island: islandSlug,
+              place: hostPlaceSlug,
+              locale,
+            }),
+          },
+        ]
+      : []),
+    { label: browse.category },
+    ...(browse.pathFacet ? [{ label: browse.pathFacet.value }] : []),
+  ]}
+  locale={locale}
+  canonical={canonical}
+  robots={policy.index ? "index,follow" : "noindex,follow"}
+  jsonLd={[
+    websiteJsonLd({
+      url: canonical,
+      name: `${titleCore} in ${where}`,
+      description: `${listings.length} listings in ${where}.`,
+    }),
+    breadcrumbJsonLd([
+      { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
+      {
+        name: islandDetail.island.name,
+        url: absoluteUrl(
+          req,
+          withLocale(seoHostPath({ island: islandSlug }), locale),
+        ),
+      },
+      ...(hostPlace
+        ? [
+            {
+              name: hostPlace.name,
+              url: absoluteUrl(
+                req,
+                withLocale(
+                  seoHostPath({ island: islandSlug, place: hostPlaceSlug }),
+                  locale,
+                ),
+              ),
+            },
+          ]
+        : []),
+      { name: titleCore, url: canonical },
+    ]),
+  ]}
+>
+  <CategoryBrowse
+    island={islandDetail.island}
+    hostPlace={hostPlace}
+    area={area}
+    places={islandDetail.places}
+    listings={listings}
+    listingPlaces={listingPlaces}
+    browse={browse}
+    locale={locale}
+    formAction={formAction}
+  />
+</Base>

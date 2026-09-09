@@ -27,6 +27,8 @@ Astro `apps/web/src/pages/host/[label]/…`:
 - label `bali` → island page  
 - label `gianyar.bali` → kabupaten/kota hub  
 - `…/ubud` → nested tourist-area hub  
+- `…/c/{category}` and `…/c/{category}/{facet}/{value}` → category browse (see [ADR-006](./adr/006-indexable-facet-urls.md))  
+- `…/ubud/c/{category}` → the same under a nested area  
 - `…/ubud/warung-babi-guling-ibu-oka` → listing  
 - `…/babi-guling-pande-egi` → listing on the kabupaten itself  
 

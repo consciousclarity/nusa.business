@@ -119,6 +119,9 @@ export function publicUrl(opts: {
   place?: string;
   area?: string;
   slug?: string;
+  category?: string;
+  facet?: string;
+  facetValue?: string;
   root?: string;
 }): string {
   const root = opts.root ?? "https://nusa.business";
@@ -128,9 +131,12 @@ export function publicUrl(opts: {
   } else if (opts.island) {
     base.hostname = `${opts.island}.${base.hostname.replace(/^www\./, "")}`;
   }
-  const segs = [opts.area, opts.slug].filter(Boolean);
-  base.pathname = segs.length ? `/${segs.join("/")}` : "/";
-  return base.toString().replace(/\/$/, segs.length ? "" : "/");
+  const segs = opts.category
+    ? [opts.area, "c", opts.category, opts.facet, opts.facetValue]
+    : [opts.area, opts.slug];
+  const path = segs.filter(Boolean).join("/");
+  base.pathname = path ? `/${path}` : "/";
+  return base.toString().replace(/\/$/, path ? "" : "/");
 }
 
 /**
@@ -171,6 +177,41 @@ export {
   type TaxonomyLeaf,
   type TaxonomyRelated,
 } from "./taxonomy.js";
+
+export {
+  GLOBAL_FACETS,
+  INDEXABLE_FACET_PATHS,
+  canonicalizeFacetValue,
+  facetValueLabel,
+  facetsForCategory,
+  facetsForListingCategory,
+  isIndexableFacetPath,
+  isKnownFacetKey,
+  knownFacetKeys,
+  serializeFacetsCatalog,
+  type FacetDef,
+  type FacetSource,
+  type FacetValue,
+} from "./facets.js";
+
+export {
+  applyFacetQuery,
+  canonicalizeFacetMap,
+  extraQueryFacetCount,
+  facetIndexPolicy,
+  facetPathSegments,
+  facetQueryParams,
+  indexableBrowsePathsForListings,
+  listingMatchesFacets,
+  parseFacetPath,
+  parseFacetQueryParams,
+  promoteIndexablePath,
+  type FacetBrowse,
+  type FacetIndexPolicy,
+  type FacetMatchContext,
+  type FacetSelection,
+  type IndexableBrowsePath,
+} from "./facet-query.js";
 
 export {
   assertBrowserSafeApiOrigin,

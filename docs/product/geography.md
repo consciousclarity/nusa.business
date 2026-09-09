@@ -17,6 +17,8 @@ nusa.business
 | Island | `bali.nusa.business` | Island directory home |
 | Admin place | `gianyar.bali.nusa.business` | Kabupaten/kota hub |
 | Nested area | `gianyar.bali.nusa.business/ubud` | Tourist-area hub under its parent |
+| Category browse | `…/c/warungs-local-food` | Indexable when it has results ([ADR-006](../architecture/adr/006-indexable-facet-urls.md)) |
+| Allowlisted facet | `…/ubud/c/warungs-local-food/cuisine/balinese` | Single valuable pair; extra filters stay on the query string + noindex |
 | Business | `…/ubud/{slug}` or `…/{slug}` | Profile, reviews, booking, shop tab |
 
 See [ADR-004](../architecture/adr/004-admin-host-nested-path.md). `parseHost` still

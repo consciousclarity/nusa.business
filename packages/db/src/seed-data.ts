@@ -335,7 +335,10 @@ export function createSeed(): DataStore {
     partial: Omit<
       DataStore["businesses"][number],
       "gallery" | "openingHours" | "faq" | "createdAt" | "updatedAt" | "status"
-    > & { status?: DataStore["businesses"][number]["status"] },
+    > & {
+      status?: DataStore["businesses"][number]["status"];
+      openingHours?: DataStore["businesses"][number]["openingHours"];
+    },
   ) => ({
     gallery: [],
     openingHours: [
@@ -354,6 +357,16 @@ export function createSeed(): DataStore {
     ...partial,
   });
 
+  const hours24 = [
+    { day: "Mon", open: "00:00", close: "24:00" },
+    { day: "Tue", open: "00:00", close: "24:00" },
+    { day: "Wed", open: "00:00", close: "24:00" },
+    { day: "Thu", open: "00:00", close: "24:00" },
+    { day: "Fri", open: "00:00", close: "24:00" },
+    { day: "Sat", open: "00:00", close: "24:00" },
+    { day: "Sun", open: "00:00", close: "24:00" },
+  ];
+
   const businesses = [
     biz({
       id: "biz-single-fin",
@@ -361,6 +374,13 @@ export function createSeed(): DataStore {
       slug: "single-fin-uluwatu",
       name: "Single Fin Uluwatu",
       categories: ["cafes-coffee-shops", "bars-pubs"],
+      facets: {
+        cuisine: ["western"],
+        meal: ["breakfast", "brunch", "lunch", "dinner"],
+        setting: ["beachfront"],
+        features: ["ocean-view"],
+        alcohol: ["cocktails"],
+      },
       summary: "Cliffside surf café above Uluwatu.",
       description:
         "Iconic surf hangout with ocean views, cold drinks, and sunset energy.",
@@ -376,6 +396,7 @@ export function createSeed(): DataStore {
       slug: "uluwatu-temple-kecak",
       name: "Uluwatu Temple Kecak",
       categories: ["cultural-experiences", "tourist-attractions"],
+      facets: { activity: ["cultural"], duration: ["under-2-hours"], format: ["large-group"] },
       summary: "Sunset kecak and fire dance at the temple cliffs.",
       description: "Cultural performance operator for Uluwatu sunset shows.",
       bookingMode: "event",
@@ -388,6 +409,12 @@ export function createSeed(): DataStore {
       slug: "alchemy-uluwatu",
       name: "Alchemy Uluwatu",
       categories: ["vegetarian-vegan-dining", "cafes-coffee-shops"],
+      facets: {
+        cuisine: ["western"],
+        dietary: ["vegetarian", "vegan", "organic"],
+        meal: ["breakfast", "brunch", "lunch"],
+        food_type: ["healthy-food"],
+      },
       summary: "Plant-based wellness café and juice bar.",
       description: "Cold-pressed juices, bowls, and wellness-minded dining.",
       bookingMode: "service",
@@ -400,6 +427,13 @@ export function createSeed(): DataStore {
       slug: "menega-cafe",
       name: "Menega Cafe",
       categories: ["seafood-restaurants"],
+      facets: {
+        cuisine: ["indonesian"],
+        food_type: ["seafood"],
+        setting: ["beachfront"],
+        meal: ["lunch", "dinner"],
+        dining_service: ["dine-in"],
+      },
       summary: "Jimbaran beach seafood institution.",
       description: "Grilled seafood on the sand with bay views.",
       bookingMode: "service",
@@ -432,6 +466,12 @@ export function createSeed(): DataStore {
       slug: "babi-guling-pande-egi",
       name: "Babi Guling Pande Egi",
       categories: ["warungs-local-food"],
+      facets: {
+        cuisine: ["balinese", "indonesian"],
+        meal: ["lunch", "dinner"],
+        dining_service: ["dine-in", "takeaway"],
+        food_type: ["street-food"],
+      },
       summary: "Iconic Gianyar babi guling.",
       description:
         "Local favourite for Balinese roast pork — a must when visiting Gianyar.",
@@ -448,6 +488,12 @@ export function createSeed(): DataStore {
       slug: "kopi-ngurah-rai",
       name: "Kopi Ngurah Rai",
       categories: ["cafes-coffee-shops"],
+      facets: {
+        cuisine: ["indonesian"],
+        meal: ["breakfast", "brunch"],
+        food_type: ["coffee"],
+        dietary: ["halal"],
+      },
       summary: "Neighbour coffee stall in the same ruko row.",
       description: "Espresso and Bali kopi next door to the babi guling counters.",
       address: "Jl. Ngurah Rai 12, Gianyar",
@@ -515,11 +561,19 @@ export function createSeed(): DataStore {
       placeId: "pl-gianyar",
       slug: "klinik-sehat-gianyar",
       name: "Klinik Sehat Gianyar",
-      categories: ["clinics-hospitals"],
+      categories: ["clinics-hospitals", "pharmacies"],
+      facets: {
+        availability: ["24-hours"],
+        specialty: ["general-practice"],
+        facility: ["pharmacy"],
+        hours: ["24-hour-pharmacy", "24-hour-clinic"],
+        care_mode: ["in-clinic"],
+      },
       summary: "Neighbourhood clinic and apotek counter.",
-      description: "General practice and basic pharmacy services.",
+      description: "General practice and basic pharmacy services. Open 24 hours.",
       address: "Jl. Bypass Dharma Giri",
       bookingMode: "service",
+      openingHours: hours24,
       lat: -8.54,
       lng: 115.329,
     }),
@@ -555,6 +609,12 @@ export function createSeed(): DataStore {
       slug: "warung-babi-guling-ibu-oka",
       name: "Warung Babi Guling Ibu Oka",
       categories: ["warungs-local-food"],
+      facets: {
+        cuisine: ["balinese", "indonesian"],
+        meal: ["lunch", "dinner"],
+        dining_service: ["dine-in"],
+        food_type: ["street-food"],
+      },
       summary: "Famous Ubud babi guling warung.",
       description: "Classic Balinese roast pork in central Ubud.",
       address: "Jalan Suweta, Ubud",
@@ -603,6 +663,12 @@ export function createSeed(): DataStore {
       slug: "canggu-surf-school",
       name: "Canggu Surf School",
       categories: ["surf-schools-rentals"],
+      facets: {
+        activity: ["surfing"],
+        skill_level: ["beginner", "intermediate"],
+        duration: ["half-day"],
+        pickup: ["meeting-point"],
+      },
       summary: "Surf lessons for all levels.",
       description: "Board rental and lessons on Canggu breaks.",
       bookingMode: "service",
@@ -623,6 +689,7 @@ export function createSeed(): DataStore {
       slug: "gudeg-yu-djum",
       name: "Gudeg Yu Djum",
       categories: ["warungs-local-food"],
+      facets: { cuisine: ["javanese", "indonesian"], dietary: ["halal"], meal: ["lunch"] },
       summary: "Classic Yogyakarta gudeg.",
       description: "Legendary jackfruit stew institution.",
       bookingMode: "none",
@@ -654,6 +721,12 @@ export function createSeed(): DataStore {
       slug: "scuba-republic-gili",
       name: "Scuba Republic Gili",
       categories: ["diving-snorkeling"],
+      facets: {
+        activity: ["diving", "snorkeling"],
+        certification: ["padi"],
+        duration: ["half-day", "full-day"],
+        skill_level: ["beginner", "intermediate", "advanced"],
+      },
       summary: "Diving centre on Gili Trawangan.",
       description: "Fun dives and courses around the Gilis.",
       bookingMode: "service",
@@ -667,6 +740,64 @@ export function createSeed(): DataStore {
       summary: "Traditional Makassar coto.",
       description: "Local beef stew warung favourites.",
       bookingMode: "none",
+    }),
+    biz({
+      id: "biz-nusa-dua-beach",
+      placeId: "pl-nusa-dua",
+      slug: "nusa-dua-beach-hotel",
+      name: "Nusa Dua Beach Hotel",
+      categories: ["hotels"],
+      facets: {
+        property_type: ["hotel"],
+        star_rating: ["4"],
+        location_feature: ["beachfront", "ocean-view"],
+        facilities: ["pool", "restaurant", "spa"],
+        meal_plan: ["breakfast-included"],
+      },
+      summary: "Beachfront hotel on the Nusa Dua peninsula.",
+      description: "Ocean-front rooms, pool, and a quiet lagoon beach.",
+      address: "Kawasan Pariwisata Nusa Dua",
+      bookingMode: "rental",
+      lat: -8.8009,
+      lng: 115.2324,
+    }),
+    biz({
+      id: "biz-canggu-scooter",
+      placeId: "pl-canggu",
+      slug: "canggu-scooter-rental",
+      name: "Canggu Scooter Rental",
+      categories: ["motorcycle-scooter-rentals"],
+      facets: {
+        vehicle_type: ["scooter", "motorcycle"],
+        rental_type: ["self-drive", "daily", "weekly"],
+        transmission: ["automatic"],
+        rental_features: ["helmet-included", "insurance-included"],
+      },
+      summary: "Daily scooter hire in Canggu.",
+      description: "Automatic scooters with helmets, delivered in the Canggu area.",
+      address: "Jl. Pantai Batu Bolong, Canggu",
+      bookingMode: "rental",
+      lat: -8.6478,
+      lng: 115.1385,
+    }),
+    biz({
+      id: "biz-denpasar-halal",
+      placeId: "pl-denpasar",
+      slug: "rumah-makan-halal-denpasar",
+      name: "Rumah Makan Halal Denpasar",
+      categories: ["restaurants"],
+      facets: {
+        cuisine: ["indonesian"],
+        dietary: ["halal"],
+        meal: ["lunch", "dinner"],
+        dining_service: ["dine-in", "takeaway"],
+      },
+      summary: "Halal Indonesian restaurant in Denpasar.",
+      description: "Certified halal kitchen serving Indonesian plates in the city.",
+      address: "Jl. Teuku Umar, Denpasar",
+      bookingMode: "none",
+      lat: -8.6724,
+      lng: 115.2126,
     }),
   ];
 

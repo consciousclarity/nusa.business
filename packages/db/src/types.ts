@@ -55,6 +55,8 @@ export type Business = {
   ownerUserId?: string;
   vendorId?: string;
   registeredByAgentId?: string;
+  /** Directory filters: facet key → value slugs. Geo location is the host, not stored here. */
+  facets?: Record<string, string[]>;
   createdAt: string;
   updatedAt: string;
 };

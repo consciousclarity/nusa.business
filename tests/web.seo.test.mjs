@@ -35,6 +35,21 @@ describe("public SEO helpers (C11)", () => {
       "/host/gianyar.bali/babi-guling",
     );
     assert.equal(
+      hostPath({
+        island: "bali",
+        place: "gianyar",
+        area: "ubud",
+        category: "warungs-local-food",
+        facet: "cuisine",
+        facetValue: "balinese",
+      }),
+      "/host/gianyar.bali/ubud/c/warungs-local-food/cuisine/balinese",
+    );
+    assert.equal(
+      hostPath({ island: "bali", category: "pharmacies", facet: "availability", facetValue: "24-hours" }),
+      "/host/bali/c/pharmacies/availability/24-hours",
+    );
+    assert.equal(
       absoluteUrl(r, withLocale(hostPath({ island: "bali" }), "id")),
       "http://localhost:4321/id/host/bali",
     );

@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
 import { api } from "../lib/api";
+import { tenantAbsHref } from "../lib/links";
 import {
   absoluteUrl,
-  hostPath,
   localeSitemapPaths,
   sitemapXml,
 } from "../lib/seo";
@@ -24,30 +24,45 @@ type Business = {
 };
 
 /**
- * Sitemap for the public directory. Local/dev emits /host/… paths on the
- * request origin; each loc is also emitted under `/id`. A single apex
- * sitemap stays crawlable until per-host sitemaps land.
+ * Sitemap for the public directory.
+ *
+ * Local/dev emits /host/… paths on the request origin. On nusa.business the
+ * same rows use nested hosts (`https://bali.nusa.business`,
+ * `https://gianyar.bali.nusa.business/…`). Each loc is also emitted under `/id`.
  */
 export const GET: APIRoute = async ({ request }) => {
   const urls = new Set<string>();
 
-  const add = (path: string) => {
+  const addNation = (path: string) => {
     for (const localized of localeSitemapPaths(path)) {
       urls.add(absoluteUrl(request, localized));
     }
   };
 
-  add("/");
-  add("/claim");
-  add("/privacy");
-  add("/terms");
-  add("/support");
+  const addGeo = (opts: {
+    island: string;
+    place?: string;
+    area?: string;
+    slug?: string;
+    category?: string;
+    facet?: string;
+    facetValue?: string;
+  }) => {
+    urls.add(tenantAbsHref(request, { ...opts, locale: "en" }));
+    urls.add(tenantAbsHref(request, { ...opts, locale: "id" }));
+  };
+
+  addNation("/");
+  addNation("/claim");
+  addNation("/privacy");
+  addNation("/terms");
+  addNation("/support");
 
   try {
     const { islands } = await api<{ islands: Island[] }>("/v1/islands");
     for (const island of islands) {
       if (island.status !== "active") continue;
-      add(hostPath({ island: island.slug }));
+      addGeo({ island: island.slug });
 
       const detail = await api<{
         places: Place[];
@@ -59,39 +74,33 @@ export const GET: APIRoute = async ({ request }) => {
 
       for (const place of detail.places) {
         const nest = geoNesting(place, byId);
-        add(
-          hostPath({
-            island: island.slug,
-            place: nest.hostPlace,
-            area: nest.area,
-          }),
-        );
+        addGeo({
+          island: island.slug,
+          place: nest.hostPlace,
+          area: nest.area,
+        });
       }
 
       for (const biz of detail.businesses) {
         const place = placeById.get(biz.placeId);
         if (!place) continue;
         const nest = geoNesting(place, byId);
-        add(
-          hostPath({
-            island: island.slug,
-            place: nest.hostPlace,
-            area: nest.area,
-            slug: biz.slug,
-          }),
-        );
+        addGeo({
+          island: island.slug,
+          place: nest.hostPlace,
+          area: nest.area,
+          slug: biz.slug,
+        });
       }
 
       const islandPaths = indexableBrowsePathsForListings(detail.businesses);
       for (const row of islandPaths) {
-        add(
-          hostPath({
-            island: island.slug,
-            category: row.category,
-            facet: row.facet,
-            facetValue: row.facetValue,
-          }),
-        );
+        addGeo({
+          island: island.slug,
+          category: row.category,
+          facet: row.facet,
+          facetValue: row.facetValue,
+        });
       }
 
       const byPlace = new Map<string, Business[]>();
@@ -104,16 +113,14 @@ export const GET: APIRoute = async ({ request }) => {
         const nest = geoNesting(place, byId);
         const rows = byPlace.get(place.id) ?? [];
         for (const row of indexableBrowsePathsForListings(rows)) {
-          add(
-            hostPath({
-              island: island.slug,
-              place: nest.hostPlace,
-              area: nest.area,
-              category: row.category,
-              facet: row.facet,
-              facetValue: row.facetValue,
-            }),
-          );
+          addGeo({
+            island: island.slug,
+            place: nest.hostPlace,
+            area: nest.area,
+            category: row.category,
+            facet: row.facet,
+            facetValue: row.facetValue,
+          });
         }
       }
     }

@@ -16,6 +16,7 @@ HOME_ID_URL="${LIVE_HOME_ID_URL:-https://nusa.business/id}"
 LISTING_URL="${LIVE_LISTING_URL:-https://gianyar.bali.nusa.business/babi-guling-pande-egi}"
 LISTING_ID_URL="${LIVE_LISTING_ID_URL:-https://gianyar.bali.nusa.business/id/babi-guling-pande-egi}"
 API_HEALTH_URL="${LIVE_API_HEALTH_URL:-https://api.nusa.business/health}"
+SITEMAP_URL="${LIVE_SITEMAP_URL:-https://nusa.business/sitemap.xml}"
 
 fails=0
 pass() { printf '  ok   %s\n' "$1"; }
@@ -73,6 +74,7 @@ echo "home    $HOME_URL"
 echo "home/id $HOME_ID_URL"
 echo "listing $LISTING_URL"
 echo "list/id $LISTING_ID_URL"
+echo "sitemap $SITEMAP_URL"
 echo
 
 home=$(fetch "$HOME_URL")
@@ -210,6 +212,33 @@ if [ "$code" = "200" ]; then
   pass "GET $API_HEALTH_URL → 200"
 else
   fail "GET $API_HEALTH_URL → ${code:-no response}"
+fi
+
+sitemap=$(fetch "$SITEMAP_URL")
+if [ -z "$sitemap" ]; then
+  fail "GET $SITEMAP_URL (empty body)"
+else
+  pass "GET $SITEMAP_URL (${#sitemap} bytes)"
+  if printf '%s' "$sitemap" | grep -q '/host/bali'; then
+    fail "sitemap still lists /host/bali (nested hosts not deployed)"
+  else
+    pass "sitemap has no /host/bali"
+  fi
+  if printf '%s' "$sitemap" | grep -q 'https://bali.nusa.business'; then
+    pass "sitemap lists https://bali.nusa.business"
+  else
+    fail "sitemap missing https://bali.nusa.business"
+  fi
+  if printf '%s' "$sitemap" | grep -q 'https://bali.nusa.business/id'; then
+    pass "sitemap lists Indonesian Bali hub"
+  else
+    fail "sitemap missing https://bali.nusa.business/id"
+  fi
+  if printf '%s' "$sitemap" | grep -q 'https://gianyar.bali.nusa.business/babi-guling-pande-egi'; then
+    pass "sitemap lists nested listing loc"
+  else
+    fail "sitemap missing nested listing loc"
+  fi
 fi
 
 echo

@@ -15,8 +15,8 @@ Three columns. Do not treat a **code** pass as a live pass.
 
 | Kind | Item | Evidence / who |
 |---|---|---|
-| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F26) | `npm test` + findings table below. Not on the VPS until deploy. |
-| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`, `Address`, `Host`/`Status`/`Booking` dts, and English weekdays. | `bash scripts/live-public-check.sh` (25 fails until this PR deploys). Listing API origin already ok. |
+| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F27) | `npm test` + findings table below. Not on the VPS until deploy. |
+| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`, `Address`, `Host`/`Status`/`Booking` dts, and English weekdays. Sitemap still lists `/host/bali`. | `bash scripts/live-public-check.sh` until this PR deploys. Listing API origin already ok. |
 | **Operator only** | VPS SHA, PM2 vs Compose, `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL`, `NUSA_AUTH_SECRET`, demo-store inventory, store backup + isolated restore, Search Console sitemap submit | [release-decision.md](./release-decision.md) gates 1–6. Cursor must not run these. |
 | **Not this launch** | Priced booking inventory, cookie sessions/CSRF, error tracking, RUM, WCAG AA screen-reader, Dependabot/`npm audit` CI | Security / parity backlog. Do not block GO on these unless product says so. |
 
@@ -52,6 +52,7 @@ Local HTTP on synthetic seed (`/host/…`, booking 400/409) is not a live HTTPS 
 | F24 | Portal login embeds demo passwords in source. Vite DCE must keep them out of the production JS bundle. | P0 | `LoginPage.tsx`, portal `dist/` | Prefill only in `DEV` / `VITE_NUSA_DEMO_LOGIN`; CI greps production assets | `tests/portal.production-bundle.test.mjs` |
 | F25 | `/id` island names used English seed copy (`Java`, `Sumatra`) while category labels were already localized. | P1 | `islandName`, homepage/search/hubs/listing crumbs | Indonesian island names (`Jawa`, `Sumatera`); seed/API name stays English | `tests/web.visitor-chrome.test.mjs`, `scripts/live-public-check.sh` |
 | F26 | Listing/hub canonical + JSON-LD breadcrumbs used `hostPath` + `absoluteUrl`, so nested hosts emitted `/id/host/bali`. | P1 | `tenantAbsHref`, listing/hub/facet pages | Public canonical/JSON-LD use `tenantHref` (real hosts in production, `/host` locally) | `tests/web.visitor-chrome.test.mjs` |
+| F27 | Apex sitemap locs were `https://nusa.business/host/…` (162 `/host/` rows live). Nested hosts and `/id` hubs were not the canonical locs. | P1 | `sitemap.xml.ts` | Geo locs use `tenantAbsHref` (nested hosts + `/id`); nation pages keep apex `/id` | `tests/web.facet-browse.test.mjs`, `scripts/live-public-check.sh` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -125,6 +126,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Island taglines on `/id` | pass (this branch) | `islandTagline`; seed/API tagline stays English |
 | Island names on `/id` | pass (this branch) | `islandName`; `Java`/`Sumatra` → `Jawa`/`Sumatera`; hostname slugs stay English |
 | Listing/hub canonical JSON-LD on nested hosts | pass (this branch) | `tenantAbsHref`; production must not emit `/host/bali` in listing JSON-LD |
+| Sitemap nested-host locs | pass (this branch) | Geo locs are `bali.nusa.business` / `gianyar.bali.nusa.business` plus `/id`; live sitemap still `/host/` until deploy |
 | Category browse if search is down | pass (this branch) | Notice + `noindex`; not a 500 and not a fake empty index |
 | Public booking POST omits booking row | pass (this branch) | `{ ok: true }` only; owners still GET `/v1/bookings` |
 | JSON-LD opening hours | pass (this branch) | `openingHoursSpecification` when hours exist |

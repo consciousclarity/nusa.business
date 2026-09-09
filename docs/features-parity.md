@@ -21,7 +21,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | Private messages | planned | Phase 6 |
 | Bookmarks | planned | Phase 6 |
 | i18n en/id | partial | Public `/id` prefix + chrome copy including listing widgets, Indonesian category/facet labels, island names/taglines, JSON-LD, localized form errors, and HTML 404/500; listing body stays author language |
-| Public SEO chrome | partial | Canonical + OG locale + JSON-LD + `/robots.txt` + `/sitemap.xml` (en + `/id`); privacy/terms/support |
+| Public SEO chrome | partial | Canonical + OG locale + JSON-LD + `/robots.txt` + `/sitemap.xml` (nested hosts + `/id`); privacy/terms/support |
 | AI local guide | planned | Optional |
 
 ## Marketplace capabilities

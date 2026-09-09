@@ -34,7 +34,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Geo helpers | `tests/shared.geo.test.mjs` | Address normalisation + haversine for listing discovery. |
 | Listing discovery | `tests/db.discovery.test.mjs` | Same-address peers, similar ≤2 km, category nearby filter. |
 | Listing coord backfill | `tests/scripts.backfill-listing-coords.test.mjs` | Standalone ops script fills missing lat/lng from seed + place centroids; does not import `@nusa/db`. |
-| Live public check | `tests/scripts.live-public-check.test.mjs` | Source pins that `scripts/live-public-check.sh` is read-only and asserts live resolver chrome, `/id` island names, listing `/id` category/address/weekday chrome, and browser API origin. |
+| Live public check | `tests/scripts.live-public-check.test.mjs` | Source pins that `scripts/live-public-check.sh` is read-only and asserts live resolver chrome, `/id` island names, listing `/id` category/address/weekday chrome, nested-host sitemap locs, and browser API origin. |
 | Portal production bundle | `tests/portal.production-bundle.test.mjs` | Demo passwords must not appear in `apps/portal/dist` (CI builds portal first). |
 | Production bootstrap | `tests/db.bootstrap.test.mjs` | Production missing store refuses demo seed; bootstrap admin creates geography-only store; existing stores are preserved. |
 | JSON durability | `tests/db.persist.test.mjs` | Atomic write + `.bak` rotation; recover truncated `store.json`; refuse silent re-seed when both files are corrupt. |

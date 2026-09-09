@@ -8,7 +8,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 |---|---|---|
 | Listings + categories | done | `packages/db`, API `/v1/...`, Astro pages |
 | Geo regions as first-class places | done | Island / Place model + host parser |
-| Nested hosts `place.island.nusa.business` | done | `@nusa/shared` `parseHost` + `/host/` dev routes |
+| Nested hosts `place.island.nusa.business` | done | `@nusa/shared` `parseHost` + `/host/` dev routes; tourist areas nest as `/{area}/{slug}` under the kabupaten/kota host ([ADR-004](architecture/adr/004-admin-host-nested-path.md)) |
 | Search / filters | partial | API `/v1/search`; place-hub category filter (`?category=`) |
 | Map search | planned | MapLibre + PostGIS (schema outlined); listing nearby uses Leaflet + haversine MVP |
 | Opening hours / gallery / FAQ fields | partial | Hours seeded; gallery/FAQ schema present; lat/lng seeded for discovery |

@@ -11,7 +11,7 @@ const css = readFileSync(
   "utf8",
 );
 const listing = readFileSync(
-  new URL("../apps/web/src/pages/host/[label]/[slug].astro", import.meta.url),
+  new URL("../apps/web/src/pages/host/[label]/[...path].astro", import.meta.url),
   "utf8",
 );
 

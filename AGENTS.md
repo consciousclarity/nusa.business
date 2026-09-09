@@ -6,7 +6,7 @@ Read this before changing code. Detailed docs live in [`docs/`](docs/README.md).
 
 Indonesia-wide local business directory with nested geo hosts:
 
-`nusa.business` → `{island}.nusa.business` → `{place}.{island}.nusa.business` → `/{business-slug}`
+`nusa.business` → `{island}.nusa.business` → `{kabupaten}.{island}.nusa.business` → `/{area}/{business-slug}`
 
 Prototype product: [bali.business](https://bali.business) (WordPress). This repo is a greenfield OSS rebuild — the same **capabilities**, none of the WordPress.
 
@@ -32,7 +32,7 @@ Prototype product: [bali.business](https://bali.business) (WordPress). This repo
 
 | Task | Start here |
 |---|---|
-| Host / slug rules | `packages/shared/src/index.ts` |
+| Host / slug rules | `packages/shared/src/index.ts`, `packages/shared/src/geo-urls.ts` |
 | Seed businesses / places | `packages/db/src/seed-data.ts` |
 | API routes | `apps/api/src/index.ts` |
 | Public pages | `apps/web/src/pages/` |
@@ -76,4 +76,4 @@ Dependencies are refreshed automatically on VM startup by the update script (`np
 - **Checks = TypeScript builds plus the test suite.** There is no ESLint config, so "lint" means the strict TypeScript builds. CI (`.github/workflows/ci.yml`) runs `npm run build:packages`, then `npm run build -w @nusa/api`, `-w @nusa/portal`, `-w @nusa/web`, then `npm test` (Node's built-in runner over `tests/*.test.mjs` — see [docs/engineering/testing.md](docs/engineering/testing.md)) and a `npm run seed` smoke check. Locally that is `npm run build && npm test && npm run seed`. Tests import the **built** packages, so rebuild after touching `packages/*` or you are testing stale `dist/`.
 - **`apps/api` dev uses `npx --yes tsx@4.19.3`**, which may fetch tsx on the very first run.
 - **Demo accounts** (portal at `/login`): `admin@nusa.business`/`admin123`, `agent@nusa.business`/`agent123`, `owner@example.com`/`owner123`.
-- **Dev tenant browsing** uses `/host/{label}` paths, e.g. `http://localhost:4321/host/gianyar.bali` (Astro treats `_`-prefixed folders as private, so never use `/_host/...`).
+- **Dev tenant browsing** uses `/host/{label}` paths, e.g. `http://localhost:4321/host/gianyar.bali/ubud` (Astro treats `_`-prefixed folders as private, so never use `/_host/...`).

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CATEGORIES } from "@nusa/shared";
+import { CATEGORIES, publicHostLine } from "@nusa/shared";
 import { api, type User } from "../api";
 
 type Island = { slug: string; name: string };
@@ -43,7 +43,11 @@ export function FieldPage({ user }: { user: User }) {
     try {
       const data = await api<{
         business: { name: string; slug: string };
-        context: { place: Place; island: Island };
+        context: {
+          place: Place;
+          island: Island;
+          geo?: { hostPlace: string; area?: string };
+        };
       }>("/v1/field/register", {
         method: "POST",
         body: JSON.stringify({
@@ -59,7 +63,12 @@ export function FieldPage({ user }: { user: User }) {
         }),
       });
       setMsg(
-        `Registered ${data.business.name} at ${data.context.place.slug}.${data.context.island.slug}.nusa.business/${data.business.slug}`,
+        `Registered ${data.business.name} at ${publicHostLine({
+          island: data.context.island.slug,
+          place: data.context.geo?.hostPlace ?? data.context.place.slug,
+          area: data.context.geo?.area,
+          slug: data.business.slug,
+        })}`,
       );
       setForm((f) => ({ ...f, name: "", summary: "", whatsapp: "", address: "" }));
     } catch (err) {

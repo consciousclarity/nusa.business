@@ -9,7 +9,7 @@ const cssPath = join(root, "apps/web/src/styles/global.css");
 const pagesDir = join(root, "apps/web/src/pages");
 const listingPath = join(
   root,
-  "apps/web/src/pages/host/[label]/[slug].astro",
+  "apps/web/src/pages/host/[label]/[...path].astro",
 );
 const middlewarePath = join(root, "apps/web/src/middleware.ts");
 

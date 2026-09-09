@@ -6,7 +6,12 @@ import {
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { canonicalizeIslandSlug, haversineKm, normalizeAddress } from "@nusa/shared";
+import {
+  canonicalizeIslandSlug,
+  geoNesting,
+  haversineKm,
+  normalizeAddress,
+} from "@nusa/shared";
 import { migrateStore } from "./migrations.js";
 import { hashPassword, isHashed, verifyPassword } from "./password.js";
 import { atomicWriteFile, backupPathFor } from "./persist.js";
@@ -508,13 +513,15 @@ export function resolveBusinessContext(businessId: string) {
   if (!place) return null;
   const island = store.islands.find((i) => i.id === place.islandId);
   if (!island) return null;
-  return { business, place, island };
+  const placesById = Object.fromEntries(store.places.map((p) => [p.id, p]));
+  return { business, place, island, geo: geoNesting(place, placesById) };
 }
 
 export type DiscoveryNeighbor = {
   business: Business;
   place: { id: string; slug: string; name: string };
   island: { id: string; slug: string; name: string };
+  geo: { hostPlace: string; area?: string };
   distanceKm: number;
 };
 
@@ -546,12 +553,13 @@ export function getBusinessDiscovery(
   const selfAddr = normalizeAddress(self.address);
   const sameAddress: DiscoveryNeighbor[] = [];
   const withDistance: DiscoveryNeighbor[] = [];
+  const placesById = Object.fromEntries(store.places.map((p) => [p.id, p]));
 
   for (const b of store.businesses) {
     if (b.id === self.id || b.status === "draft") continue;
     const peerCtx = resolveBusinessContext(b.id);
     if (!peerCtx) continue;
-    const row = {
+    const row: DiscoveryNeighbor = {
       business: b,
       place: {
         id: peerCtx.place.id,
@@ -563,6 +571,7 @@ export function getBusinessDiscovery(
         slug: peerCtx.island.slug,
         name: peerCtx.island.name,
       },
+      geo: geoNesting(peerCtx.place, placesById),
       distanceKm: 0,
     };
 

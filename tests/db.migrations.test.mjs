@@ -47,6 +47,7 @@ describe("store migrations", () => {
       "2026-08-rename-jawa-to-java",
       "2026-08-rename-sumatera-to-sumatra",
       "2026-09-onboarding-collections",
+      "2026-09-admin-host-parents",
     ]);
     assert.deepEqual(store.invites, []);
     assert.deepEqual(store.recoveryTokens, []);
@@ -132,6 +133,34 @@ describe("store migrations", () => {
     }
     store.invites = [];
     store.recoveryTokens = [];
-    assert.deepEqual(migrateStore(store), []);
+    assert.deepEqual(migrateStore(store), ["2026-09-admin-host-parents"]);
+  });
+
+  it("nests Bali tourist areas under kabupaten/kota on an existing store", () => {
+    const store = legacyStore();
+    store.places = store.places.filter((p) => p.slug !== "gianyar");
+    store.places.push(
+      {
+        id: "pl-gianyar",
+        islandId: "isl-bali",
+        slug: "gianyar",
+        name: "Gianyar",
+        type: "kabupaten",
+        summary: "Heartland.",
+      },
+      {
+        id: "pl-ubud",
+        islandId: "isl-bali",
+        slug: "ubud",
+        name: "Ubud",
+        type: "tourist_area",
+        summary: "Arts.",
+      },
+    );
+    migrateStore(store);
+    const ubud = store.places.find((p) => p.slug === "ubud");
+    const gianyar = store.places.find((p) => p.slug === "gianyar");
+    assert.equal(ubud.parentPlaceId, gianyar.id);
+    assert.ok(store.places.some((p) => p.slug === "badung"));
   });
 });

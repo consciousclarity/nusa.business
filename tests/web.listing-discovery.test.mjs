@@ -11,7 +11,7 @@ import { describe, it } from "node:test";
  * substitute for that.
  */
 const listing = new URL(
-  "../apps/web/src/pages/host/[label]/[slug].astro",
+  "../apps/web/src/pages/host/[label]/[...path].astro",
   import.meta.url,
 );
 
@@ -28,7 +28,7 @@ describe("listing discovery wiring", () => {
       "discovery links must come from data-href-template",
     );
     assert.match(script, /root\.dataset\.hrefTemplate/);
-    for (const token of ["x-place-x", "x-island-x", "x-slug-x"]) {
+    for (const token of ["x-place-x", "x-island-x", "x-area-x", "x-slug-x"]) {
       assert.match(script, new RegExp(token), `template token ${token}`);
       assert.match(src, new RegExp(token), `${token} must be produced server-side`);
     }

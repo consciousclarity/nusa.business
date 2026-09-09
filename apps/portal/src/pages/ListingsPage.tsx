@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CATEGORIES } from "@nusa/shared";
+import { CATEGORIES, publicHostLine } from "@nusa/shared";
 import { api, type User } from "../api";
 
 type Place = { id: string; slug: string; name: string; islandId: string };
@@ -14,7 +14,11 @@ type ListingRow = {
     categories: string[];
     bookingMode: string;
   };
-  context: { place: Place; island: Island } | null;
+  context: {
+    place: Place;
+    island: Island;
+    geo?: { hostPlace: string; area?: string };
+  } | null;
 };
 
 export function ListingsPage({ user }: { user: User }) {
@@ -154,8 +158,12 @@ export function ListingsPage({ user }: { user: User }) {
           <p className="muted">{row.business.summary}</p>
           {row.context && (
             <p className="muted">
-              {row.context.place.slug}.{row.context.island.slug}.nusa.business/
-              {row.business.slug}
+              {publicHostLine({
+                island: row.context.island.slug,
+                place: row.context.geo?.hostPlace ?? row.context.place.slug,
+                area: row.context.geo?.area,
+                slug: row.business.slug,
+              })}
             </p>
           )}
         </div>

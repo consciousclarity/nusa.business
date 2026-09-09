@@ -88,6 +88,116 @@ const MIGRATIONS: Migration[] = [
       return changed;
     },
   },
+  {
+    id: "2026-09-admin-host-parents",
+    apply: (store) => {
+      let changed = false;
+
+      const ensurePlace = (row: DataStore["places"][number]) => {
+        const existing = store.places.find(
+          (p) => p.id === row.id || (p.slug === row.slug && p.islandId === row.islandId),
+        );
+        if (existing) {
+          if (existing.type !== row.type) {
+            existing.type = row.type;
+            changed = true;
+          }
+          if (!existing.summary && row.summary) {
+            existing.summary = row.summary;
+            changed = true;
+          }
+          return existing;
+        }
+        store.places.push(row);
+        changed = true;
+        return row;
+      };
+
+      const nest = (
+        islandId: string,
+        areaSlug: string,
+        parentSlug: string,
+      ) => {
+        const parent = store.places.find(
+          (p) => p.slug === parentSlug && p.islandId === islandId,
+        );
+        const area = store.places.find(
+          (p) => p.slug === areaSlug && p.islandId === islandId,
+        );
+        if (!parent || !area) return;
+        if (area.parentPlaceId !== parent.id) {
+          area.parentPlaceId = parent.id;
+          changed = true;
+        }
+        if (area.type !== "tourist_area") {
+          area.type = "tourist_area";
+          changed = true;
+        }
+      };
+
+      const hasIsland = (id: string) => store.islands.some((i) => i.id === id);
+
+      if (hasIsland("isl-bali")) {
+        ensurePlace({
+          id: "pl-badung",
+          islandId: "isl-bali",
+          slug: "badung",
+          name: "Badung",
+          type: "kabupaten",
+          summary: "South Bali — surf coasts, Canggu, and the Bukit.",
+        });
+        ensurePlace({
+          id: "pl-buleleng",
+          islandId: "isl-bali",
+          slug: "buleleng",
+          name: "Buleleng",
+          type: "kabupaten",
+          summary: "North-coast Bali — Lovina and black-sand villages.",
+        });
+        ensurePlace({
+          id: "pl-karangasem",
+          islandId: "isl-bali",
+          slug: "karangasem",
+          name: "Karangasem",
+          type: "kabupaten",
+          summary: "East Bali — Amed, Agung, and traditional villages.",
+        });
+        nest("isl-bali", "ubud", "gianyar");
+        nest("isl-bali", "uluwatu", "badung");
+        nest("isl-bali", "jimbaran", "badung");
+        nest("isl-bali", "canggu", "badung");
+        nest("isl-bali", "seminyak", "badung");
+        nest("isl-bali", "kuta", "badung");
+        nest("isl-bali", "nusa-dua", "badung");
+        nest("isl-bali", "sanur", "denpasar");
+        nest("isl-bali", "lovina", "buleleng");
+        nest("isl-bali", "amed", "karangasem");
+      }
+
+      if (hasIsland("isl-lombok")) {
+        ensurePlace({
+          id: "pl-lombok-utara",
+          islandId: "isl-lombok",
+          slug: "lombok-utara",
+          name: "Lombok Utara",
+          type: "kabupaten",
+          summary: "North Lombok and the Gili islands.",
+        });
+        ensurePlace({
+          id: "pl-lombok-tengah",
+          islandId: "isl-lombok",
+          slug: "lombok-tengah",
+          name: "Lombok Tengah",
+          type: "kabupaten",
+          summary: "Central Lombok — Kuta and south-coast surf.",
+        });
+        nest("isl-lombok", "gili-trawangan", "lombok-utara");
+        nest("isl-lombok", "kuta", "lombok-tengah");
+      }
+
+      return changed;
+    },
+  },
 ];
 
 /**

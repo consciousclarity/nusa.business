@@ -34,8 +34,10 @@ npm run cf:zone
 |---|---|
 | `nusa.business` | Astro nation hub |
 | `{island}.nusa.business` | Astro island hub (`parseHost`) |
-| `{place}.{island}.nusa.business` | Astro place hub |
-| `{place}.{island}.nusa.business/{slug}` | listing |
+| `{place}.{island}.nusa.business` | Astro kabupaten/kota hub (`parseHost`) |
+| `{place}.{island}.nusa.business/{area}` | nested tourist-area hub |
+| `{place}.{island}.nusa.business/{area}/{slug}` | listing in that area |
+| `{place}.{island}.nusa.business/{slug}` | listing on the kabupaten/kota |
 | `portal.nusa.business` | Portal |
 | `api.nusa.business` | Hono API |
 

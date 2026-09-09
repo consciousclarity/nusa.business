@@ -102,9 +102,22 @@ type DiscoveryPayload = {
   radiusKm: number;
 };
 
+const emptyDiscovery: DiscoveryPayload = {
+  origin: null,
+  sameAddress: [],
+  similar: [],
+  nearbyCategories: [],
+  nearby: [],
+  activeCategory: null,
+  radiusKm: 0,
+};
+
+// Discovery is an enhancement on top of the record. `api()` throws on a
+// non-2xx or a network error, so without this an outage limited to this one
+// endpoint would take down an otherwise perfectly renderable listing.
 const discovery = await api<DiscoveryPayload>(
   `/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`,
-);
+).catch(() => emptyDiscovery);
 
 function neighborHref(n: DiscoveryNeighbor) {
   return tenantHref(req, {
@@ -116,6 +129,28 @@ function neighborHref(n: DiscoveryNeighbor) {
 }
 
 const discoveryApi = `${browserApiOrigin()}/v1/islands/${islandSlug}/places/${placeSlug}/businesses/${slug}/discovery`;
+
+// Links for results the browser refetches have to match the ones rendered
+// here: the right host on production tenants, and the /id prefix on
+// Indonesian pages. Rather than reimplement tenantHref in the script, ask it
+// for one templated URL and substitute. The tokens are lowercase and are
+// valid hostname labels, so URL normalisation leaves them intact.
+const HREF_TOKEN = { island: "x-island-x", place: "x-place-x", slug: "x-slug-x" };
+const neighborHrefTemplate = tenantHref(req, {
+  island: HREF_TOKEN.island,
+  place: HREF_TOKEN.place,
+  slug: HREF_TOKEN.slug,
+  locale,
+});
+
+// --- Fix 3: seed the map from what the server already rendered ---
+// Marker set for the categories the page opens on. Without it the map would
+// open empty on the fallback view and only agree with the list after a chip
+// click.
+const nearbySeed = JSON.stringify({
+  origin: discovery.origin,
+  nearby: discovery.nearby,
+});
 const nearbyWithHref = discovery.nearby.map((n) => ({
   ...n,
   href: neighborHref(n),
@@ -291,6 +326,8 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
         data-endpoint={discoveryApi}
         data-active-category={discovery.activeCategory ? encodeURIComponent(discovery.activeCategory) : ""}
         data-empty-label={t(locale, "noNearbyInCategory")}
+        data-href-template={neighborHrefTemplate}
+        data-initial={nearbySeed}
       >
         <h2 id="nearby-cat-heading">{t(locale, "nearbyByCategory")}</h2>
         <div
@@ -627,10 +664,21 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
     const chips = Array.from(root.querySelectorAll("[data-category]"));
     if (!endpoint || !listEl || !mapEl) return;
 
+    const hrefTemplate = root.dataset.hrefTemplate || "";
     let map = null;
     let layer = null;
-    let latest = { origin: null, items: [] };
     let seq = 0;
+
+    // Seeded from the server so the map agrees with the rendered list the
+    // moment it opens, without spending a request to re-fetch what is
+    // already on the page.
+    let latest = { origin: null, items: [] };
+    try {
+      const seed = JSON.parse(root.dataset.initial || "null");
+      if (seed) latest = { origin: seed.origin, items: seed.nearby || [] };
+    } catch {
+      // Keep the empty default; the map simply opens without markers.
+    }
 
     function escapeHtml(value) {
       return String(value)
@@ -640,8 +688,13 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
         .replace(/"/g, "&quot;");
     }
 
+    // Substituted into the template tenantHref produced for this request, so
+    // refetched links keep the locale prefix and the canonical tenant host.
     function hrefFor(n) {
-      return `/host/${n.place.slug}.${n.island.slug}/${n.business.slug}`;
+      return hrefTemplate
+        .replaceAll("x-place-x", n.place.slug)
+        .replaceAll("x-island-x", n.island.slug)
+        .replaceAll("x-slug-x", n.business.slug);
     }
 
     function renderList(items) {

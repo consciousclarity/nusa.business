@@ -171,6 +171,7 @@ const formAction = tenantHref(req, {
   robots={policy.index ? "index,follow" : "noindex,follow"}
   jsonLd={[
     websiteJsonLd({
+      locale,
       url: canonical,
       name: inWhere(locale, titleCore, where),
       description: `${listings.length} ${t(locale, "listingsCount")} ${t(locale, "inWhere")} ${where}.`,

@@ -514,6 +514,7 @@ if (hub && categoryParam) {
     robots={areaFacet.robots}
     jsonLd={[
       websiteJsonLd({
+        locale,
         url: areaFacet.canonical,
         name: inWhere(locale, areaFacet.titleCore, areaFacet.area.name),
       }),
@@ -576,6 +577,7 @@ if (hub && categoryParam) {
     canonical={hubCanonical}
     jsonLd={[
       websiteJsonLd({
+        locale,
         url: hubCanonical,
         name: `${hub.place.name}, ${hub.island.name}`,
         description: hub.place.summary,
@@ -669,6 +671,7 @@ if (hub && categoryParam) {
       categories: data.business.categories,
       lat: data.business.lat,
       lng: data.business.lng,
+      locale,
     }),
     breadcrumbJsonLd([
       { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },

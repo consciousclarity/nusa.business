@@ -31,7 +31,12 @@ const portalUrl = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 const homeHref = nationHref(Astro.request, locale);
 const { pathWithoutLocale } = detectLocale(Astro.url.pathname);
 const other = alternateLocale(locale);
-const switchHref = withLocale(pathWithoutLocale + Astro.url.search, other);
+const pathWithSearch = pathWithoutLocale + Astro.url.search;
+const enHref = absoluteUrl(Astro.request, withLocale(pathWithSearch, "en"));
+const idHref = absoluteUrl(Astro.request, withLocale(pathWithSearch, "id"));
+const switchHref = withLocale(pathWithSearch, other);
+const ogLocale = locale === "id" ? "id_ID" : "en_GB";
+const ogLocaleAlt = locale === "id" ? "en_GB" : "id_ID";
 const metaDescription =
   description || t(locale, "metaDescription");
 const canonical =
@@ -52,18 +57,13 @@ const jsonLdBlocks = jsonLd
     <meta name="robots" content={robots || "index,follow"} />
     <meta name="color-scheme" content="light dark" />
     <link rel="canonical" href={canonical} />
-    <link
-      rel="alternate"
-      hreflang="en"
-      href={absoluteUrl(Astro.request, withLocale(pathWithoutLocale, "en"))}
-    />
-    <link
-      rel="alternate"
-      hreflang="id"
-      href={absoluteUrl(Astro.request, withLocale(pathWithoutLocale, "id"))}
-    />
+    <link rel="alternate" hreflang="en" href={enHref} />
+    <link rel="alternate" hreflang="id" href={idHref} />
+    <link rel="alternate" hreflang="x-default" href={enHref} />
     <meta property="og:site_name" content="nusa.business" />
     <meta property="og:type" content={ogType} />
+    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:locale:alternate" content={ogLocaleAlt} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={metaDescription} />
     <meta property="og:url" content={canonical} />

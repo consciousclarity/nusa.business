@@ -159,6 +159,7 @@ const placeCanonical =
     canonical={islandCanonical!}
     jsonLd={[
       websiteJsonLd({
+        locale,
         url: islandCanonical!,
         name: `${islandData.island.name} — nusa.business`,
         description: islandData.island.tagline,
@@ -302,6 +303,7 @@ const placeCanonical =
     canonical={placeCanonical!}
     jsonLd={[
       websiteJsonLd({
+        locale,
         url: placeCanonical!,
         name: `${placeData.place.name}, ${placeData.island.name}`,
         description: placeData.place.summary,

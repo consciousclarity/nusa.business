@@ -61,6 +61,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(listing, /data\.booking\.id/);
     assert.match(listing, /weekdayLabel\(locale, h\.day\)/);
     assert.match(listing, /categoryLabel\(cat, locale\)/);
+    assert.match(listing, /localBusinessJsonLd\(\{[\s\S]*locale,/);
   });
 
   it("listing actions put contact first and claim second", () => {
@@ -86,6 +87,12 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(place, / published/);
     assert.doesNotMatch(island, /replaceAll\("_"/);
     assert.doesNotMatch(place, /replaceAll\("_"/);
+  });
+
+  it("hreflang and og:locale advertise en/id plus x-default", () => {
+    assert.match(base, /hreflang="x-default"/);
+    assert.match(base, /property="og:locale"/);
+    assert.match(base, /og:locale:alternate/);
   });
 
   it("header leads with Search; Claim is secondary; Portal stays in the footer", () => {

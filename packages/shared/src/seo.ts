@@ -4,6 +4,7 @@
  * nested *.nusa.business hosts work in production.
  */
 
+import { withLocale } from "./locale.js";
 import { categoryLabels } from "./taxonomy.js";
 
 export function requestHost(request: Request): string {
@@ -72,12 +73,15 @@ export function websiteJsonLd(opts: {
   url: string;
   name?: string;
   description?: string;
+  locale?: string;
 }): Record<string, unknown> {
+  const locale = opts.locale === "id" ? "id" : "en";
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: opts.name ?? "nusa.business",
     url: opts.url,
+    inLanguage: locale,
     description:
       opts.description ??
       "Local business directory indexed by nested geography across Indonesia.",
@@ -108,13 +112,16 @@ export function localBusinessJsonLd(opts: {
   categories?: string[];
   lat?: number;
   lng?: number;
+  locale?: string;
 }): Record<string, unknown> {
+  const locale = opts.locale === "id" ? "id" : "en";
   const node: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
     name: opts.name,
     description: opts.description,
     url: opts.url,
+    inLanguage: locale,
   };
   if (opts.address) {
     node.address = {
@@ -124,7 +131,9 @@ export function localBusinessJsonLd(opts: {
     };
   }
   if (opts.telephone) node.telephone = opts.telephone;
-  if (opts.categories?.length) node.additionalType = categoryLabels(opts.categories);
+  if (opts.categories?.length) {
+    node.additionalType = categoryLabels(opts.categories, locale);
+  }
   if (
     typeof opts.lat === "number" &&
     Number.isFinite(opts.lat) &&
@@ -138,6 +147,20 @@ export function localBusinessJsonLd(opts: {
     };
   }
   return node;
+}
+
+/** Canonical path plus `/id` counterpart for the public sitemap. */
+export function localeSitemapPaths(path: string): string[] {
+  const normalized =
+    !path || path === "/"
+      ? "/"
+      : path.startsWith("/")
+        ? path
+        : `/${path}`;
+  if (normalized === "/id" || normalized.startsWith("/id/")) {
+    return [normalized];
+  }
+  return [normalized, withLocale(normalized, "id")];
 }
 
 export function escapeXml(value: string): string {

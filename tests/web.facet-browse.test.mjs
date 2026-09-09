@@ -28,6 +28,7 @@ describe("facet browse SEO wiring", () => {
   it("sitemaps only indexable browse paths", () => {
     const src = readFileSync(sitemap, "utf8");
     assert.match(src, /indexableBrowsePathsForListings/);
+    assert.match(src, /localeSitemapPaths/);
     assert.doesNotMatch(src, /searchParams/);
   });
 });

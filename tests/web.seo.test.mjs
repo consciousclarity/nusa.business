@@ -6,6 +6,7 @@ import {
   escapeXml,
   hostPath,
   localBusinessJsonLd,
+  localeSitemapPaths,
   siteOrigin,
   sitemapXml,
   websiteJsonLd,
@@ -66,6 +67,8 @@ describe("public SEO helpers (C11)", () => {
     });
     assert.equal(biz["@type"], "LocalBusiness");
     assert.equal(biz.name, "Test Warung");
+    assert.equal(biz.inLanguage, "en");
+    assert.deepEqual(biz.additionalType, ["Food & Drink"]);
     const crumbs = breadcrumbJsonLd([
       { name: "nusa.business", url: "http://localhost:4321/" },
       {
@@ -79,6 +82,34 @@ describe("public SEO helpers (C11)", () => {
       websiteJsonLd({ url: "http://localhost:4321/" })["@type"],
       "WebSite",
     );
+    assert.equal(
+      websiteJsonLd({ url: "http://localhost:4321/id", locale: "id" }).inLanguage,
+      "id",
+    );
+  });
+
+  it("localBusinessJsonLd additionalType follows locale", () => {
+    const node = localBusinessJsonLd({
+      name: "Warung Example",
+      description: "Babi guling",
+      url: "https://gianyar.bali.nusa.business/foo",
+      categories: ["food-drink", "warungs-local-food"],
+      locale: "id",
+    });
+    assert.equal(node.inLanguage, "id");
+    assert.deepEqual(node.additionalType, [
+      "Makanan & minuman",
+      "Warung & makanan lokal",
+    ]);
+  });
+
+  it("localeSitemapPaths adds /id counterparts once", () => {
+    assert.deepEqual(localeSitemapPaths("/"), ["/", "/id"]);
+    assert.deepEqual(localeSitemapPaths("/host/bali"), [
+      "/host/bali",
+      "/id/host/bali",
+    ]);
+    assert.deepEqual(localeSitemapPaths("/id/host/bali"), ["/id/host/bali"]);
   });
 
   it("escapes sitemap XML and lists locs", () => {

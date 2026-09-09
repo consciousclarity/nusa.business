@@ -27,8 +27,9 @@ agents must not deploy without explicit human authorization.
 
 C01–C14 code is on `main`. Remaining launch work is operator verification plus
 the follow-up in [launch-readiness.md](./launch-readiness.md) (booking
-date/duplicate rules, visitor search, Indonesian category/facet labels, sample
-stamps). Do not treat merged code as a live GO. Read-only live HTML:
+date/duplicate rules, visitor search, Indonesian category/facet labels, JSON-LD
+locale, `/id` sitemap locs, sample stamps). Do not treat merged code as a live
+GO. Read-only live HTML:
 
 ```bash
 bash scripts/live-public-check.sh

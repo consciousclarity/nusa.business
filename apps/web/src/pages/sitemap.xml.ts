@@ -3,8 +3,8 @@ import { api } from "../lib/api";
 import {
   absoluteUrl,
   hostPath,
+  localeSitemapPaths,
   sitemapXml,
-  siteOrigin,
 } from "../lib/seo";
 import {
   geoNesting,
@@ -25,24 +25,29 @@ type Business = {
 
 /**
  * Sitemap for the public directory. Local/dev emits /host/… paths on the
- * request origin; a single apex sitemap stays crawlable until per-host
- * sitemaps land.
+ * request origin; each loc is also emitted under `/id`. A single apex
+ * sitemap stays crawlable until per-host sitemaps land.
  */
 export const GET: APIRoute = async ({ request }) => {
-  const origin = siteOrigin(request);
-  const urls = new Set<string>([
-    `${origin}/`,
-    absoluteUrl(request, "/claim"),
-    absoluteUrl(request, "/privacy"),
-    absoluteUrl(request, "/terms"),
-    absoluteUrl(request, "/support"),
-  ]);
+  const urls = new Set<string>();
+
+  const add = (path: string) => {
+    for (const localized of localeSitemapPaths(path)) {
+      urls.add(absoluteUrl(request, localized));
+    }
+  };
+
+  add("/");
+  add("/claim");
+  add("/privacy");
+  add("/terms");
+  add("/support");
 
   try {
     const { islands } = await api<{ islands: Island[] }>("/v1/islands");
     for (const island of islands) {
       if (island.status !== "active") continue;
-      urls.add(absoluteUrl(request, hostPath({ island: island.slug })));
+      add(hostPath({ island: island.slug }));
 
       const detail = await api<{
         places: Place[];
@@ -54,15 +59,12 @@ export const GET: APIRoute = async ({ request }) => {
 
       for (const place of detail.places) {
         const nest = geoNesting(place, byId);
-        urls.add(
-          absoluteUrl(
-            request,
-            hostPath({
-              island: island.slug,
-              place: nest.hostPlace,
-              area: nest.area,
-            }),
-          ),
+        add(
+          hostPath({
+            island: island.slug,
+            place: nest.hostPlace,
+            area: nest.area,
+          }),
         );
       }
 
@@ -70,31 +72,25 @@ export const GET: APIRoute = async ({ request }) => {
         const place = placeById.get(biz.placeId);
         if (!place) continue;
         const nest = geoNesting(place, byId);
-        urls.add(
-          absoluteUrl(
-            request,
-            hostPath({
-              island: island.slug,
-              place: nest.hostPlace,
-              area: nest.area,
-              slug: biz.slug,
-            }),
-          ),
+        add(
+          hostPath({
+            island: island.slug,
+            place: nest.hostPlace,
+            area: nest.area,
+            slug: biz.slug,
+          }),
         );
       }
 
       const islandPaths = indexableBrowsePathsForListings(detail.businesses);
       for (const row of islandPaths) {
-        urls.add(
-          absoluteUrl(
-            request,
-            hostPath({
-              island: island.slug,
-              category: row.category,
-              facet: row.facet,
-              facetValue: row.facetValue,
-            }),
-          ),
+        add(
+          hostPath({
+            island: island.slug,
+            category: row.category,
+            facet: row.facet,
+            facetValue: row.facetValue,
+          }),
         );
       }
 
@@ -108,18 +104,15 @@ export const GET: APIRoute = async ({ request }) => {
         const nest = geoNesting(place, byId);
         const rows = byPlace.get(place.id) ?? [];
         for (const row of indexableBrowsePathsForListings(rows)) {
-          urls.add(
-            absoluteUrl(
-              request,
-              hostPath({
-                island: island.slug,
-                place: nest.hostPlace,
-                area: nest.area,
-                category: row.category,
-                facet: row.facet,
-                facetValue: row.facetValue,
-              }),
-            ),
+          add(
+            hostPath({
+              island: island.slug,
+              place: nest.hostPlace,
+              area: nest.area,
+              category: row.category,
+              facet: row.facet,
+              facetValue: row.facetValue,
+            }),
           );
         }
       }

@@ -262,6 +262,7 @@ export {
   escapeXml,
   hostPath,
   localBusinessJsonLd,
+  localeSitemapPaths,
   requestHost,
   siteOrigin,
   sitemapXml,

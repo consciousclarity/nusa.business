@@ -49,7 +49,11 @@ const searchAction = withLocale("/search", locale);
   description={nationDescription}
   canonical={nationUrl}
   locale={locale}
-  jsonLd={websiteJsonLd({ url: nationUrl, description: nationDescription })}
+  jsonLd={websiteJsonLd({
+    url: nationUrl,
+    description: nationDescription,
+    locale,
+  })}
 >
   <section class="lede">
     <h1>{t(locale, "nationH1")}</h1>

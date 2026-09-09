@@ -34,6 +34,8 @@ and the operator list below.
 | F13 | `/support` still said owner registration was invite-only after self-signup shipped. Privacy/terms/support bodies were English-only. Opening-hour days stayed `Mon` on `/id`. | P0/P1 | `support.astro`, legal pages, listing hours | Support describes free owner accounts; legal pages use `t()`; weekday labels | `tests/web.visitor-chrome.test.mjs` |
 | F14 | `/id` category chips and filters used English taxonomy labels (`Banks & ATMs`). | P1 | `packages/shared` taxonomy-id + public pages | `categoryLabel(slug, locale)`; browse headings use `inWhere` | `tests/shared.taxonomy.test.mjs`, `tests/web.visitor-chrome.test.mjs` |
 | F15 | `/id` category browse filters used English facet keys (`Price level`, `Service mode`). | P1 | `packages/shared` facets-id + CategoryBrowse | `facetKeyLabel` / `facetValueLabel(..., locale)` | `tests/shared.facets.test.mjs` |
+| F16 | `/id` listing JSON-LD `additionalType` used English taxonomy labels (`Food & Drink`). | P1 | `packages/shared/src/seo.ts`, listing `[...path].astro` | `localBusinessJsonLd` takes `locale`; `inLanguage` + Indonesian `additionalType` | `tests/web.seo.test.mjs` |
+| F17 | Sitemap listed English `/host` paths only; `/id` pages existed with hreflang but were not submitted. | P1 | `sitemap.xml.ts`, `localeSitemapPaths` | Emit `/id` counterparts; `og:locale` + `hreflang="x-default"` | `tests/web.seo.test.mjs`, `tests/web.visitor-chrome.test.mjs` |
 
 ### Assumptions (not treated as proven bugs)
 
@@ -90,6 +92,9 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Listing review/booking/shop chrome i18n | pass (this branch) | `/id` listing widgets; listing body still author language |
 | Category labels on `/id` | pass (this branch) | Taxonomy Indonesian labels; English remains canonical for slugs |
 | Facet key/value labels on `/id` | pass (this branch) | Browse filters and path-facet headings; English remains canonical for slugs |
+| JSON-LD `additionalType` on `/id` | pass (this branch) | Indonesian labels + `inLanguage`; listing body still author language |
+| Sitemap includes `/id` URLs | pass (this branch) | English + `/id` locs; Search Console submission still operator |
+| `og:locale` / hreflang x-default | pass (this branch) | `en_GB` / `id_ID`; x-default is English |
 | Booking success omits request id/status | pass (this branch) | Visitor notice only; not submitted to production |
 | Field “just registered” without agent ids | pass (this branch) | `fieldRegistered` on public cards |
 | Sample listings labelled | pass (local seed) | Production must not publish this catalog |

@@ -232,10 +232,12 @@ in order of effort: a Cloudflare rate-limiting rule at the edge (the free tier
 covers one login rule, and it also protects against traffic that never reaches
 the origin), or a shared Redis counter.
 
-## Still to do before public launch
+## Not a GO blocker (post-launch)
 
-- Consider HTTP-only cookies scoped to `.nusa.business` for SSO across
-  subdomains, instead of `localStorage`.
+Portal sessions still use a signed token in `localStorage` rather than an
+HTTP-only cookie scoped to `.nusa.business`. That is listed under **Not this
+launch** in [launch-readiness.md](../ops/launch-readiness.md). Do not hold GO
+for cookie/CSRF work.
 
 ## CORS
 

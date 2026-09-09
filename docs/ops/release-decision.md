@@ -36,9 +36,10 @@ bash scripts/live-public-check.sh
 ```
 
 That script currently **fails** homepage visitor chrome on `/` and `/id`
-(`class="resolver"`, `kind=nation`, missing `name="q"`) and live listing `/id`
-English `Food & Drink` until the follow-up is deployed. EN listing API origin may
-already pass. Cursor agents must not deploy.
+(`class="resolver"`, `kind=nation`, missing `name="q"` / `nav-search`) and live
+listing `/id` English chrome (`Food & Drink`, `Address`, `Status published`,
+`Mon`) until the follow-up is deployed. EN listing API origin may already pass.
+Cursor agents must not deploy.
 
 ## Operator gates (live VPS)
 
@@ -59,7 +60,7 @@ Change the decision line at the top to **GO** only when:
 
 - Operator gates 1–6 are checked on the VPS
 - Launch-readiness follow-up is merged or waived
-- `bash scripts/live-public-check.sh` passes (no resolver jargon on `/` or `/id`; listing `/id` is Indonesian category chrome, not `Food & Drink`)
+- `bash scripts/live-public-check.sh` passes (no resolver jargon on `/` or `/id`; listing `/id` is Indonesian chrome, not `Food & Drink` / `Address` / `Status published`)
 - A human names the release SHA and authorizes deploy
 
 Until then: **HOLD**.

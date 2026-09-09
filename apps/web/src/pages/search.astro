@@ -3,7 +3,7 @@ import Base from "../layouts/Base.astro";
 import { apiTry } from "../lib/api";
 import { tenantHref } from "../lib/links";
 import { absoluteUrl } from "../lib/seo";
-import { t, withLocale, type Locale } from "../i18n/ui";
+import { islandName, t, withLocale, type Locale } from "../i18n/ui";
 import { categoryLabel, TAXONOMY } from "@nusa/shared";
 
 const locale: Locale = Astro.locals.locale ?? "en";
@@ -40,7 +40,13 @@ const search = queried
   : { results: [] as Hit[] };
 const searchFailed = islands === null || (queried && search === null);
 const hits = search?.results.slice(0, 50) ?? [];
-const islandName = active.find((row) => row.slug === island)?.name ?? island;
+const selectedIslandName = island
+  ? islandName(
+      locale,
+      island,
+      active.find((row) => row.slug === island)?.name ?? island,
+    )
+  : "";
 const searchPath = withLocale("/search", locale) + (params.toString() ? `?${params}` : "");
 const canonical = absoluteUrl(Astro.request, searchPath);
 const title = q
@@ -77,7 +83,7 @@ const title = q
         <option value="">{t(locale, "allIslands")}</option>
         {active.map((row) => (
           <option value={row.slug} selected={row.slug === island}>
-            {row.name}
+            {islandName(locale, row.slug, row.name)}
           </option>
         ))}
       </select>
@@ -109,7 +115,7 @@ const title = q
     <h2>
       {hits.length} {t(locale, "resultsIn")}
       {q ? ` · ${q}` : ""}
-      {islandName ? ` · ${islandName}` : ""}
+      {selectedIslandName ? ` · ${selectedIslandName}` : ""}
       {category ? ` · ${categoryLabel(category, locale)}` : ""}
     </h2>
     {hits.length === 0 ? (
@@ -148,7 +154,7 @@ const title = q
               <p class="index-desc">
                 {hit.business.summary}
                 {hit.place && hit.island
-                  ? ` — ${hit.place.name}, ${hit.island.name}`
+                  ? ` — ${hit.place.name}, ${islandName(locale, hit.island.slug, hit.island.name)}`
                   : ""}
               </p>
             </li>

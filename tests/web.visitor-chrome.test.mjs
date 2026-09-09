@@ -62,6 +62,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(home, /tenantHref\(/);
     assert.doesNotMatch(home, /publicUrl\(/);
     assert.match(home, /islandTagline\(locale, island.slug, island.tagline\)/);
+    assert.match(home, /islandName\(locale, island.slug, island.name\)/);
     assert.match(home, /apiTry</);
     assert.match(home, /directoryUnavailable/);
     assert.match(apiHelper, /export async function apiTry/);
@@ -79,6 +80,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(listing, /Vendor store · 0% commission/);
     assert.doesNotMatch(listing, /data\.booking\.id/);
     assert.match(listing, /weekdayLabel\(locale, h\.day\)/);
+    assert.match(listing, /islandName\(locale, islandSlug/);
     assert.match(listing, /categoryLabel\(cat, locale\)/);
     assert.match(listing, /localBusinessJsonLd\(\{[\s\S]*locale,/);
     assert.match(listing, /visitorError\(/);
@@ -150,6 +152,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(browse, /categoryLabel\(browse\.category, locale\)/);
     assert.match(browse, /inWhere\(locale, facetHeading, where\)/);
     assert.match(island, /islandTagline\(locale, islandData.island.slug/);
+    assert.match(island, /islandName\(locale, islandData.island.slug/);
     assert.match(browse, /unavailable/);
     assert.match(browse, /directoryUnavailable/);
     assert.match(search, /categoryLabel\(group\.slug, locale\)/);
@@ -160,11 +163,11 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(search, /name="island"/);
     assert.match(search, /name="category"/);
     assert.match(search, /robots="noindex,follow"/);
-    assert.match(search, /islandName/);
+    assert.match(search, /islandName\(locale/);
   });
 
   it("breadcrumbs use human names, not URL slugs", () => {
-    assert.match(island, /label: islandData.island.name/);
+    assert.match(island, /islandName\(locale, islandData.island.slug/);
     assert.doesNotMatch(island, /label: islandData.island.slug/);
     assert.match(listing, /label: data.business.name/);
     assert.doesNotMatch(listing, /label: data.business.slug/);

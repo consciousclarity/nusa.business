@@ -22,9 +22,18 @@ describe("live public check script", () => {
     assert.match(script, /nusa\.business\//);
     assert.match(script, /nusa\.business\/id/);
     assert.match(script, /name="q"/);
+    assert.match(script, /nav-search/);
+    assert.match(script, /Pulau Dewata/);
+    assert.match(script, /Cari bisnis/);
+    assert.match(script, /Jawa/);
     assert.match(script, /gianyar\.bali\.nusa\.business/);
     assert.match(script, /\/id\/babi-guling-pande-egi/);
     assert.match(script, /Food &amp; Drink/);
     assert.match(script, /Makanan/);
+    assert.match(script, /Status published/);
+    assert.match(script, /Booking none/);
+    assert.match(script, /Alamat/);
+    assert.match(script, /Nilai ulasan/);
+    assert.match(script, /Sen 09:00/);
   });
 });

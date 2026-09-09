@@ -2,8 +2,8 @@
 
 Inspected against `main` at `bfd899c` (2026-09-09). C01–C14 already
 landed (PRs #23–#39). This follow-up PR (booking rules, visitor chrome,
-Indonesian `/id` labels, HTML 404/500, portal demo-bundle grep) verified
-those items in **code**. It is **not** a live GO.
+Indonesian `/id` labels including island names, HTML 404/500, portal
+demo-bundle grep) verified those items in **code**. It is **not** a live GO.
 
 Cursor agents must not deploy or mutate production. Long-running on-box
 work belongs to **Warden** (Hermes on the VPS) — see
@@ -15,8 +15,8 @@ Three columns. Do not treat a **code** pass as a live pass.
 
 | Kind | Item | Evidence / who |
 |---|---|---|
-| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F24) | `npm test` (254) + findings table below. Not on the VPS until deploy. |
-| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`. | `bash scripts/live-public-check.sh` (2026-09-09): 10 fails. Listing API origin already ok. |
+| **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F25) | `npm test` + findings table below. Not on the VPS until deploy. |
+| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`, `Address`, `Status published`, and English weekdays. | `bash scripts/live-public-check.sh`. Listing API origin already ok. |
 | **Operator only** | VPS SHA, PM2 vs Compose, `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL`, `NUSA_AUTH_SECRET`, demo-store inventory, store backup + isolated restore, Search Console sitemap submit | [release-decision.md](./release-decision.md) gates 1–6. Cursor must not run these. |
 | **Not this launch** | Priced booking inventory, cookie sessions/CSRF, error tracking, RUM, WCAG AA screen-reader, Dependabot/`npm audit` CI | Security / parity backlog. Do not block GO on these unless product says so. |
 
@@ -50,11 +50,12 @@ Local HTTP on synthetic seed (`/host/…`, booking 400/409) is not a live HTTPS 
 | F22 | Nation homepage and `/search` threw when `/v1/islands` was down, so the search form never rendered. No HTML 500. | P1 | `apiTry`, `index.astro`, `search.astro`, `500.astro` | Homepage/search degrade with a notice; other SSR throws use HTML 500 | `tests/web.visitor-chrome.test.mjs` |
 | F23 | `/id` island taglines were English seed copy. Category/facet browse threw when `/v1/search` failed. | P1 | `islandTagline`, `CategoryBrowse`, browse pages | Indonesian island ledes; browse uses `apiTry` + noindex when search is down | `tests/web.visitor-chrome.test.mjs`, `tests/web.facet-browse.test.mjs` |
 | F24 | Portal login embeds demo passwords in source. Vite DCE must keep them out of the production JS bundle. | P0 | `LoginPage.tsx`, portal `dist/` | Prefill only in `DEV` / `VITE_NUSA_DEMO_LOGIN`; CI greps production assets | `tests/portal.production-bundle.test.mjs` |
+| F25 | `/id` island names used English seed copy (`Java`, `Sumatra`) while category labels were already localized. | P1 | `islandName`, homepage/search/hubs/listing crumbs | Indonesian island names (`Jawa`, `Sumatera`); seed/API name stays English | `tests/web.visitor-chrome.test.mjs`, `scripts/live-public-check.sh` |
 
 ### Assumptions (not treated as proven bugs)
 
 - Live `nusa.business/` and `/id` (2026-09-09 GET) still have `kind=nation` resolver chrome and `/host/…` footer — this PR’s visitor chrome is **not deployed**. Live `/id` also lacks the search field (`name="q"`).
-- Live listing `/id` (2026-09-09 GET `…/id/babi-guling-pande-egi`) still shows English `Food & Drink` because this PR is not deployed.
+- Live `/id` listing (2026-09-09 GET `…/id/babi-guling-pande-egi`) still shows English `Food & Drink`, `Address`, `Status published`, and `Mon` weekdays because this PR is not deployed.
 - Live listing HTML already embeds `https://api.nusa.business` (not `http://api:8787`). Hermes should still confirm env after deploy.
 - Live `.data/store.json` may still contain seed emails — **unverified**. Dry-run in [demo-bootstrap.md](./demo-bootstrap.md).
 - Process supervisor is PM2 vs Compose — Hermes 2026-09-07 saw PM2.
@@ -68,14 +69,14 @@ authorized operator can run the read-only public check from anywhere:
 bash scripts/live-public-check.sh
 ```
 
-That script does not SSH or mutate the VPS. It currently **fails** (10 checks
-on 2026-09-09) until this PR is deployed:
+That script does not SSH or mutate the VPS. It currently **fails** until this PR is deployed:
 
-- homepage `/` and `/id`: `class="resolver"`, `kind=nation`, `/host/bali`, no `name="q"`
-- listing `/id`: English `Food & Drink` instead of `Makanan & minuman`
+- homepage `/` and `/id`: `class="resolver"`, `kind=nation`, `/host/bali`, no `name="q"`, no `nav-search`
+- homepage `/id`: missing `Pulau Dewata`, `Cari bisnis`, `Jawa`
+- listing `/id`: English `Food & Drink`, `Address`, `Status published`, `Booking none`, `Review scores`, `Mon 09:00` instead of `Makanan & minuman` / `Alamat` / `Sen 09:00`
 
 EN listing HTML already passing `http://api:8787` / `https://api.nusa.business`
-is not a substitute for homepage visitor chrome or `/id` category labels.
+is not a substitute for homepage visitor chrome or `/id` chrome.
 
 On the VPS:
 
@@ -121,6 +122,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Homepage/search if the API is down | pass (this branch) | `apiTry`; search form still renders; island list shows a notice |
 | Public HTML 500 | pass (this branch) | Search + home; hubs still 500 (not 404) when the API is down |
 | Island taglines on `/id` | pass (this branch) | `islandTagline`; seed/API tagline stays English |
+| Island names on `/id` | pass (this branch) | `islandName`; `Java`/`Sumatra` → `Jawa`/`Sumatera`; hostname slugs stay English |
 | Category browse if search is down | pass (this branch) | Notice + `noindex`; not a 500 and not a fake empty index |
 | Public booking POST omits booking row | pass (this branch) | `{ ok: true }` only; owners still GET `/v1/bookings` |
 | JSON-LD opening hours | pass (this branch) | `openingHoursSpecification` when hours exist |
@@ -132,7 +134,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | CSP Report-Only | pass (code) | No report URI yet; unverified in browsers |
 | CORS restricted to `*.nusa.business` | pass (C06) | |
 | Sitemap / robots | pass (C11 + search noindex) | Search Console unverified |
-| Live public HTTPS smoke | fail (homepage + listing `/id`) | Script is read-only; EN listing API origin already ok; homepage chrome and `/id` category labels wait on deploy |
+| Live public HTTPS smoke | fail (homepage + listing `/id`) | Script is read-only; EN listing API origin already ok; homepage chrome and `/id` visitor labels wait on deploy |
 | WCAG 2.2 AA on phone | unverified | C10 chrome tests pass; no screen-reader run here |
 | Lighthouse / RUM | unverified | C12 lab budget in CI; no field data |
 | Staging e2e owner onboarding | unverified | Local API self-register + pending-claim PATCH 403 pass; staging HTTPS unverified |

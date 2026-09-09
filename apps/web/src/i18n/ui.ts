@@ -469,3 +469,35 @@ export function islandTagline(
 ): string {
   return islandTaglines[locale][slug] ?? islandTaglines.en[slug] ?? fallback;
 }
+
+const islandNames: Record<Locale, Record<string, string>> = {
+  en: {
+    bali: "Bali",
+    java: "Java",
+    lombok: "Lombok",
+    sumatra: "Sumatra",
+    sulawesi: "Sulawesi",
+    kalimantan: "Kalimantan",
+    maluku: "Maluku",
+    papua: "Papua",
+  },
+  id: {
+    bali: "Bali",
+    java: "Jawa",
+    lombok: "Lombok",
+    sumatra: "Sumatera",
+    sulawesi: "Sulawesi",
+    kalimantan: "Kalimantan",
+    maluku: "Maluku",
+    papua: "Papua",
+  },
+};
+
+/** Public island name. Seed/API name stays English (canonical). */
+export function islandName(
+  locale: Locale,
+  slug: string,
+  fallback: string,
+): string {
+  return islandNames[locale][slug] ?? islandNames.en[slug] ?? fallback;
+}

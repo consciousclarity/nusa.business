@@ -4,8 +4,9 @@
 #
 #   bash scripts/live-public-check.sh
 #
-# Until the launch-readiness follow-up is deployed, homepage visitor-chrome
-# checks are expected to FAIL (old resolver chrome on both / and /id).
+# Until the launch-readiness follow-up is deployed, homepage and listing /id
+# visitor-chrome checks are expected to FAIL (old resolver chrome on / and /id;
+# listing /id still English category/address/weekday labels).
 # Listing API-origin checks may already pass.
 
 set -uo pipefail
@@ -59,6 +60,12 @@ check_home() {
   else
     fail "$label missing search field name=\"q\""
   fi
+
+  if printf '%s' "$html" | grep -q 'class="nav-search"'; then
+    pass "$label header has Search (nav-search)"
+  else
+    fail "$label header missing Search (nav-search)"
+  fi
 }
 
 echo "== live public check (read-only) =="
@@ -73,6 +80,26 @@ check_home "homepage" "$HOME_URL" "$home"
 
 home_id=$(fetch "$HOME_ID_URL")
 check_home "homepage /id" "$HOME_ID_URL" "$home_id"
+
+if [ -n "$home_id" ]; then
+  if printf '%s' "$home_id" | grep -q 'Pulau Dewata'; then
+    pass "homepage /id has Indonesian Bali tagline Pulau Dewata"
+  else
+    fail "homepage /id missing Indonesian Bali tagline Pulau Dewata"
+  fi
+
+  if printf '%s' "$home_id" | grep -q 'Cari bisnis'; then
+    pass "homepage /id has Indonesian search chrome Cari bisnis"
+  else
+    fail "homepage /id missing Indonesian search chrome Cari bisnis"
+  fi
+
+  if printf '%s' "$home_id" | grep -q 'Jawa'; then
+    pass "homepage /id has Indonesian island name Jawa"
+  else
+    fail "homepage /id missing Indonesian island name Jawa"
+  fi
+fi
 
 check_listing_origin() {
   local label="$1"
@@ -114,6 +141,62 @@ if printf '%s' "$listing_id" | grep -qE 'Makanan &amp; minuman|Makanan & minuman
   pass "listing /id has Indonesian food-drink category"
 else
   fail "listing /id missing Indonesian food-drink category"
+fi
+
+if [ -n "$listing_id" ]; then
+  if printf '%s' "$listing_id" | grep -q 'Status published'; then
+    fail "listing /id still has Status published (resolver jargon)"
+  else
+    pass "listing /id has no Status published"
+  fi
+
+  if printf '%s' "$listing_id" | grep -q 'Booking none'; then
+    fail "listing /id still has Booking none (resolver jargon)"
+  else
+    pass "listing /id has no Booking none"
+  fi
+
+  if printf '%s' "$listing_id" | grep -q '/host/bali'; then
+    fail "listing /id still points at /host/bali"
+  else
+    pass "listing /id does not link /host/bali"
+  fi
+
+  if printf '%s' "$listing_id" | grep -q '>Address</dt>'; then
+    fail "listing /id still has English Address label"
+  else
+    pass "listing /id has no English Address dt"
+  fi
+
+  if printf '%s' "$listing_id" | grep -q '>Alamat</dt>'; then
+    pass "listing /id has Indonesian Alamat label"
+  else
+    fail "listing /id missing Indonesian Alamat label"
+  fi
+
+  if printf '%s' "$listing_id" | grep -q 'Review scores'; then
+    fail "listing /id still has English Review scores"
+  else
+    pass "listing /id has no English Review scores"
+  fi
+
+  if printf '%s' "$listing_id" | grep -q 'Nilai ulasan'; then
+    pass "listing /id has Indonesian review chrome Nilai ulasan"
+  else
+    fail "listing /id missing Indonesian review chrome Nilai ulasan"
+  fi
+
+  if printf '%s' "$listing_id" | grep -q 'Mon 09:00'; then
+    fail "listing /id still has English weekday Mon"
+  else
+    pass "listing /id has no English weekday Mon"
+  fi
+
+  if printf '%s' "$listing_id" | grep -q 'Sen 09:00'; then
+    pass "listing /id has Indonesian weekday Sen"
+  else
+    fail "listing /id missing Indonesian weekday Sen"
+  fi
 fi
 
 code=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "$API_HEALTH_URL" 2>/dev/null || true)

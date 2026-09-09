@@ -9,7 +9,7 @@ import {
   hostPath,
   websiteJsonLd,
 } from "../../../lib/seo";
-import { islandTagline, t, withLocale, placeTypeLabel, type Locale } from "../../../i18n/ui";
+import { islandName, islandTagline, t, withLocale, placeTypeLabel, type Locale } from "../../../i18n/ui";
 import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory, TAXONOMY, categoryLabel } from "@nusa/shared";
 
 const label = Astro.params.label!;
@@ -70,6 +70,13 @@ if (parts.length === 1) {
 if ((mode === "island" && !islandData) || (mode === "place" && !placeData)) {
   return Astro.rewrite(withLocale("/404", locale));
 }
+
+const islandHubLabel = islandData
+  ? islandName(locale, islandData.island.slug, islandData.island.name)
+  : "";
+const placeIslandLabel = placeData
+  ? islandName(locale, placeData.island.slug, placeData.island.name)
+  : "";
 
 if (placeData) {
   const byId: Record<string, HubPlace> = {
@@ -156,26 +163,26 @@ const placeCanonical =
 
 {mode === "island" && islandData && (
   <Base
-    title={`${islandData.island.name} — nusa.business`}
+    title={`${islandHubLabel} — nusa.business`}
     description={islandTagline(locale, islandData.island.slug, islandData.island.tagline)}
-    crumb={[{ label: islandData.island.name }]}
+    crumb={[{ label: islandHubLabel }]}
     locale={locale}
     canonical={islandCanonical!}
     jsonLd={[
       websiteJsonLd({
         locale,
         url: islandCanonical!,
-        name: `${islandData.island.name} — nusa.business`,
+        name: `${islandHubLabel} — nusa.business`,
         description: islandTagline(locale, islandData.island.slug, islandData.island.tagline),
       }),
       breadcrumbJsonLd([
         { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
-        { name: islandData.island.name, url: islandCanonical! },
+        { name: islandHubLabel, url: islandCanonical! },
       ]),
     ]}
   >
     <section class="lede">
-      <h1>{islandData.island.name}</h1>
+      <h1>{islandHubLabel}</h1>
       <p class="prose">{islandTagline(locale, islandData.island.slug, islandData.island.tagline)}</p>
     </section>
 
@@ -294,11 +301,11 @@ const placeCanonical =
 
 {mode === "place" && placeData && (
   <Base
-    title={`${placeData.place.name}, ${placeData.island.name} — nusa.business`}
+    title={`${placeData.place.name}, ${placeIslandLabel} — nusa.business`}
     description={placeData.place.summary}
     crumb={[
       {
-        label: placeData.island.name,
+        label: placeIslandLabel,
         href: tenantHref(req, { island: placeData.island.slug, locale }),
       },
       { label: placeData.place.name },
@@ -309,13 +316,13 @@ const placeCanonical =
       websiteJsonLd({
         locale,
         url: placeCanonical!,
-        name: `${placeData.place.name}, ${placeData.island.name}`,
+        name: `${placeData.place.name}, ${placeIslandLabel}`,
         description: placeData.place.summary,
       }),
       breadcrumbJsonLd([
         { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
         {
-          name: placeData.island.name,
+          name: placeIslandLabel,
           url: absoluteUrl(
             req,
             withLocale(hostPath({ island: placeData.island.slug }), locale),

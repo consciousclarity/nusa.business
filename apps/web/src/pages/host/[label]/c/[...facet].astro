@@ -10,7 +10,7 @@ import {
   hostPath as seoHostPath,
   websiteJsonLd,
 } from "../../../../lib/seo";
-import { inWhere, t, withLocale, type Locale } from "../../../../i18n/ui";
+import { inWhere, islandName, t, withLocale, type Locale } from "../../../../i18n/ui";
 import {
   categoryLabel,
   facetIndexPolicy,
@@ -132,7 +132,8 @@ const canonicalPath = withLocale(
   locale,
 );
 const canonical = absoluteUrl(req, canonicalPath);
-const where = hostPlace?.name ?? islandDetail.island.name;
+const islandLabel = islandName(locale, islandSlug, islandDetail.island.name);
+const where = hostPlace?.name ?? islandLabel;
 const titleCore = browse.pathFacet
   ? `${facetValueLabel(browse.pathFacet.key, browse.pathFacet.value, locale)} ${categoryLabel(browse.category, locale)}`
   : categoryLabel(browse.category, locale);
@@ -149,7 +150,7 @@ const formAction = tenantHref(req, {
   description={`${listings.length} ${categoryLabel(browse.category, locale)} ${t(locale, "listingsCount")} ${t(locale, "inWhere")} ${where}.`}
   crumb={[
     {
-      label: islandDetail.island.name,
+      label: islandLabel,
       href: tenantHref(req, { island: islandSlug, locale }),
     },
     ...(hostPlace
@@ -182,7 +183,7 @@ const formAction = tenantHref(req, {
     breadcrumbJsonLd([
       { name: "nusa.business", url: absoluteUrl(req, withLocale("/", locale)) },
       {
-        name: islandDetail.island.name,
+        name: islandLabel,
         url: absoluteUrl(
           req,
           withLocale(seoHostPath({ island: islandSlug }), locale),

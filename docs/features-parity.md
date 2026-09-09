@@ -20,7 +20,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | Paid packages | planned | Model later; launch is free like bali.business |
 | Private messages | planned | Phase 6 |
 | Bookmarks | planned | Phase 6 |
-| i18n en/id | partial | Public `/id` prefix + chrome copy including listing widgets, Indonesian category/facet labels, island taglines, JSON-LD, localized form errors, and HTML 404/500; listing body stays author language |
+| i18n en/id | partial | Public `/id` prefix + chrome copy including listing widgets, Indonesian category/facet labels, island names/taglines, JSON-LD, localized form errors, and HTML 404/500; listing body stays author language |
 | Public SEO chrome | partial | Canonical + OG locale + JSON-LD + `/robots.txt` + `/sitemap.xml` (en + `/id`); privacy/terms/support |
 | AI local guide | planned | Optional |
 

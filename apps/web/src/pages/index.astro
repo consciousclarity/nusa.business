@@ -5,7 +5,7 @@ import { tenantHref } from "../lib/links";
 import { TAXONOMY, categoryLabel } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
 import { absoluteUrl, websiteJsonLd } from "../lib/seo";
-import { islandTagline, t, withLocale, type Locale } from "../i18n/ui";
+import { islandName, islandTagline, t, withLocale, type Locale } from "../i18n/ui";
 
 const locale: Locale = Astro.locals.locale ?? "en";
 const req = Astro.request;
@@ -59,7 +59,7 @@ const searchAction = withLocale("/search", locale);
       <select name="island">
         <option value="">{t(locale, "allIslands")}</option>
         {active.map((island) => (
-          <option value={island.slug}>{island.name}</option>
+          <option value={island.slug}>{islandName(locale, island.slug, island.name)}</option>
         ))}
       </select>
     </label>
@@ -84,9 +84,9 @@ const searchAction = withLocale("/search", locale);
           <div class="index-row">
             <span class="n">{String(i + 1).padStart(2, "0")}</span>
             {island.status === "active" ? (
-              <a class="name" href={tenantHref(req, { island: island.slug, locale })}>{island.name}</a>
+              <a class="name" href={tenantHref(req, { island: island.slug, locale })}>{islandName(locale, island.slug, island.name)}</a>
             ) : (
-              <span class="name">{island.name}</span>
+              <span class="name">{islandName(locale, island.slug, island.name)}</span>
             )}
             <span class="rhs">
               {island.status === "active" ? (

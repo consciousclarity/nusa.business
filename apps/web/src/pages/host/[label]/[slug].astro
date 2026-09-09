@@ -313,6 +313,7 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
           <div
             class="nearby-map"
             data-nearby-map
+            hidden
             role="img"
             aria-label={t(locale, "nearbyMap")}
           ></div>
@@ -606,10 +607,265 @@ const nearbyWithHref = discovery.nearby.map((n) => ({
       lockForm(bookingForm, false);
     }
   });
+  // Written by apps/web/scripts/copy-vendor.mjs into public/vendor/.
+  const leafletJs = "/vendor/leaflet/leaflet.js";
+  const leafletCss = "/vendor/leaflet/leaflet.css";
+
+  // —— Nearby discovery ————————————————————————————————————————————
+  // The list is server-rendered; this only adds category switching and the
+  // map. Leaflet (~148 KB) is fetched from our own origin the first time the
+  // map is about to come into view, so readers who never scroll there — the
+  // 3G phone case the performance budget is written for — never pay for it.
+  const nearbyRoot = document.querySelector("[data-nearby-root]");
+  if (nearbyRoot) initNearby(nearbyRoot);
+
+  function initNearby(root) {
+    const endpoint = root.dataset.endpoint;
+    const emptyLabel = root.dataset.emptyLabel || "";
+    const listEl = root.querySelector("[data-nearby-list]");
+    const mapEl = root.querySelector("[data-nearby-map]");
+    const chips = Array.from(root.querySelectorAll("[data-category]"));
+    if (!endpoint || !listEl || !mapEl) return;
+
+    let map = null;
+    let layer = null;
+    let latest = { origin: null, items: [] };
+    let seq = 0;
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function hrefFor(n) {
+      return `/host/${n.place.slug}.${n.island.slug}/${n.business.slug}`;
+    }
+
+    function renderList(items) {
+      if (items.length === 0) {
+        listEl.innerHTML = `<p class="meta">${escapeHtml(emptyLabel)}</p>`;
+        return;
+      }
+      const ol = document.createElement("ol");
+      ol.className = "index-list";
+      items.forEach((n, i) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+      <div class="index-row">
+        <span class="n">${String(i + 1).padStart(2, "0")}</span>
+        <a class="name" href="${escapeHtml(hrefFor(n))}">${escapeHtml(n.business.name)}</a>
+        <span class="rhs">${n.distanceKm.toFixed(2)} km</span>
+      </div>
+      <p class="index-desc">${escapeHtml(n.business.summary)}</p>`;
+        ol.appendChild(li);
+      });
+      listEl.replaceChildren(ol);
+    }
+
+    function syncMap() {
+      if (!map || !layer) return;
+      const L = window.L;
+      layer.clearLayers();
+      const bounds = [];
+      if (latest.origin) {
+        layer.addLayer(
+          L.circleMarker([latest.origin.lat, latest.origin.lng], {
+            radius: 7,
+            color: "#1a1c22",
+            fillColor: "#1a1c22",
+            fillOpacity: 1,
+            weight: 1,
+          }).bindPopup("Here"),
+        );
+        bounds.push([latest.origin.lat, latest.origin.lng]);
+      }
+      latest.items.forEach((n, i) => {
+        if (typeof n.business.lat !== "number" || typeof n.business.lng !== "number") {
+          return;
+        }
+        layer.addLayer(
+          L.circleMarker([n.business.lat, n.business.lng], {
+            radius: 6,
+            color: "#1a29c4",
+            fillColor: "#1a29c4",
+            fillOpacity: 0.85,
+            weight: 1,
+          }).bindPopup(
+            `<strong>${String(i + 1).padStart(2, "0")}. ${escapeHtml(n.business.name)}</strong><br>${n.distanceKm.toFixed(2)} km`,
+          ),
+        );
+        bounds.push([n.business.lat, n.business.lng]);
+      });
+      if (bounds.length > 0) {
+        map.fitBounds(L.latLngBounds(bounds), { padding: [24, 24], maxZoom: 15 });
+      }
+      map.invalidateSize();
+    }
+
+    let mapReady = null;
+    function loadMap() {
+      if (mapReady) return mapReady;
+      mapReady = new Promise((resolve, reject) => {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = leafletCss;
+        document.head.appendChild(link);
+        const tag = document.createElement("script");
+        tag.src = leafletJs;
+        tag.onload = () => resolve(window.L);
+        tag.onerror = () => reject(new Error("leaflet failed to load"));
+        document.head.appendChild(tag);
+      })
+        .then((L) => {
+          mapEl.hidden = false;
+          map = L.map(mapEl, { scrollWheelZoom: false, attributionControl: true });
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          }).addTo(map);
+          layer = L.layerGroup().addTo(map);
+          map.setView([-8.54, 115.32], 13);
+          // Leaflet measures its pane after layout.
+          requestAnimationFrame(() => {
+            map.invalidateSize();
+            syncMap();
+          });
+        })
+        .catch(() => {
+          // No map is fine — the list above it is the real content.
+          mapEl.hidden = true;
+        });
+      return mapReady;
+    }
+
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            io.disconnect();
+            void loadMap();
+          }
+        },
+        { rootMargin: "200px" },
+      );
+      io.observe(root);
+    } else {
+      void loadMap();
+    }
+
+    async function load(category) {
+      const mine = ++seq;
+      const url = new URL(endpoint);
+      if (category) url.searchParams.set("category", category);
+      else url.searchParams.delete("category");
+      let data;
+      try {
+        const res = await fetch(url.toString());
+        if (!res.ok || mine !== seq) return;
+        data = await res.json();
+      } catch {
+        return;
+      }
+      if (mine !== seq) return;
+      chips.forEach((btn) => {
+        const cat = decodeURIComponent(btn.dataset.category || "");
+        const active = cat === (data.activeCategory ?? "");
+        btn.setAttribute("aria-pressed", active ? "true" : "false");
+        btn.classList.toggle("is-active", active);
+      });
+      latest = { origin: data.origin, items: data.nearby };
+      renderList(latest.items);
+      syncMap();
+    }
+
+    chips.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const raw = btn.dataset.category || "";
+        void load(raw ? decodeURIComponent(raw) : null);
+      });
+    });
+  }
 </script>
 
-<script>
-  import { mountNearbyDiscovery } from "../../../scripts/nearby-discovery";
-  const root = document.querySelector("[data-nearby-root]");
-  if (root instanceof HTMLElement) mountNearbyDiscovery(root);
-</script>
+<style>
+  /* Listing-only styles: kept off global.css so every other page — and the
+     shared stylesheet's budget — stays untouched by the discovery panels. */
+  .nearby-layout {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 0.85rem;
+  }
+
+  .nearby-controls {
+    display: grid;
+    gap: 0.85rem;
+  }
+
+  .category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    position: relative;
+    z-index: 2;
+    margin-top: 0.65rem;
+  }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid var(--rule);
+    padding: 0.45em 0.7em;
+    cursor: pointer;
+    min-height: 0;
+    position: relative;
+    z-index: 2;
+  }
+
+  .chip.is-active,
+  .chip[aria-pressed="true"] {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+
+  .chip:hover {
+    border-color: var(--ink);
+  }
+
+  .nearby-map {
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    height: min(22rem, 55vh);
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Leaflet builds this element at runtime, so it never carries Astro's
+     scope attribute. */
+  .nearby-map :global(.leaflet-container) {
+    width: 100%;
+    height: 100%;
+    font: inherit;
+    background: var(--paper-2);
+    position: absolute;
+    inset: 0;
+  }
+
+  @media (min-width: 48rem) {
+    .nearby-layout {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+</style>

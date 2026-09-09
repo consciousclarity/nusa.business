@@ -22,7 +22,14 @@ it("booking form sends enabled values, reuses keys on unchanged retries and rota
   const calls = [];
   runInNewContext(script, {
     apiBase: "http://example.test", businessId: "biz-test",
-    document: { getElementById: (id) => id === "booking-form" ? form : null },
+    // The page's single script also carries the nearby-discovery bootstrap;
+    // with no [data-nearby-root] in this sandbox it returns early, leaving
+    // the booking behaviour under test untouched.
+    document: {
+      getElementById: (id) => id === "booking-form" ? form : null,
+      querySelector: () => null,
+    },
+    window: {},
     crypto: { randomUUID },
     FormData: class {
       constructor() { this.values = new Map(fields.filter((field) => !field.disabled).map((field) => [field.name, field.value])); }

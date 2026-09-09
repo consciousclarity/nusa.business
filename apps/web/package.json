@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev --port 4321",
+    "prebuild": "node scripts/copy-vendor.mjs",
+    "predev": "node scripts/copy-vendor.mjs",
     "build": "astro build",
     "preview": "astro preview --port 4321"
   },

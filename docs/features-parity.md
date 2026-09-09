@@ -6,7 +6,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 
 | Capability | Status | Where |
 |---|---|---|
-| Listings + categories | done | `packages/db`, API `/v1/...`, Astro pages |
+| Listings + categories | done | Two-level Indonesia taxonomy in `@nusa/shared`; listings store slugs |
 | Geo regions as first-class places | done | Island / Place model + host parser |
 | Nested hosts `place.island.nusa.business` | done | `@nusa/shared` `parseHost` + `/host/` dev routes; tourist areas nest as `/{area}/{slug}` under the kabupaten/kota host ([ADR-004](architecture/adr/004-admin-host-nested-path.md)) |
 | Search / filters | partial | API `/v1/search`; place-hub category filter (`?category=`) |

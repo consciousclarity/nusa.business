@@ -16,7 +16,7 @@ Production target: PostgreSQL + PostGIS (`packages/db/src/schema.sql.ts`).
 
 ### Business
 
-Core listing. Key fields: `placeId`, `slug`, `name`, `status` (`draft` | `published` | `claimed`), `categories[]`, profile/contact, `openingHours`, `gallery`, `bookingMode`, `ownerUserId`, `vendorId`, `registeredByAgentId`.
+Core listing. Key fields: `placeId`, `slug`, `name`, `status` (`draft` | `published` | `claimed`), `categories[]` (canonical taxonomy slugs from `@nusa/shared`), profile/contact, `openingHours`, `gallery`, `bookingMode`, `ownerUserId`, `vendorId`, `registeredByAgentId`.
 
 ### User
 

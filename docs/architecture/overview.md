@@ -37,3 +37,4 @@
 - [002 Hybrid places](./adr/002-hybrid-places.md)  
 - [003 Marketplace Mercur](./adr/003-marketplace-mercur.md)  
 - [004 Administrative host + nested area path](./adr/004-admin-host-nested-path.md)  
+- [005 Two-level Indonesia category taxonomy](./adr/005-category-taxonomy.md)  

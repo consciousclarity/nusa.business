@@ -2,16 +2,20 @@
 
 | Field | Value |
 |---|---|
-| Status | `exploring` |
+| Status | `done` |
 | Captured | 2026-09-07 |
-| Updated | 2026-09-07 |
-| Related | [`CATEGORIES` in `@nusa/shared`](../../packages/shared/src/index.ts), [product overview](../product/overview.md), [tutti research — Swiss only](../research/README.md) |
+| Updated | 2026-09-09 |
+| Related | [ADR-005](../architecture/adr/005-category-taxonomy.md), [`TAXONOMY` in `@nusa/shared`](../../packages/shared/src/taxonomy.ts), [product overview](../product/overview.md), [tutti research — Swiss only](../research/README.md) |
 
 ## Problem / itch
 
 Category research must stay **Indonesia / Nusa-shaped**: nested geo local-business directory (warung, villa, spa, tour, bengkel…), not a Swiss classifieds / flea-market tree.
 
 Owner correction (2026-09-07): do not use tutti.ch as the model — it is a Swiss platform. Keep that dump as optional research only.
+
+## Decision (2026-09-09)
+
+Option **B** — two-level tree, 17 groups, English labels + kebab slugs. Events & Weddings links catering, photography, makeup, florists, and cakes as related services (canonical leaves stay in Food & Drink / Creative / Beauty / Shopping). Promoted to [ADR-005](../architecture/adr/005-category-taxonomy.md).
 
 ## Notes from chat
 
@@ -25,14 +29,11 @@ Owner correction (2026-09-07): do not use tutti.ch as the model — it is a Swis
 - **B — Two-level Indonesia tree** — parent (Food & Drink) → children (Warung, Café, Fine dining, Catering) with `en`/`id` labels; still business-typed.
 - **C — Mirror an ID marketplace taxonomy** — higher risk of classifieds skew; only if owner picks a specific source.
 
-**Lean (pending owner):** A or B, grounded in Bali launch + field-agent reality; ignore Swiss classifieds structure.
-
 ## Open questions
 
-- Expand the current 10 categories, or design a proper parent/child tree for Indonesia?
-- Primary language for category slugs/labels at launch: English, Indonesian, or both?
-- Which Indonesian reference (if any) should we skim next: bali.business, OLX ID, Google Business types, something else?
+- Indonesian labels (`id`) for the same slugs — not in this catalog dump.
+- Religion/community bucket still absent from the owner tree.
 
 ## Next step
 
-Owner picks expand-flat vs two-level tree (and optional ID reference). Then draft taxonomy in ideas → promote into `@nusa/shared` + seed when decided.
+Living catalog is `@nusa/shared` `TAXONOMY`. Further edits go there + ADR-005 if the shape changes.

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { CATEGORIES, publicHostLine } from "@nusa/shared";
+import { categoryLabel, publicHostLine } from "@nusa/shared";
 import { api, type User } from "../api";
+import { CategoryPicker } from "../components/CategoryPicker";
 
 type Place = { id: string; slug: string; name: string; islandId: string };
 type Island = { id: string; slug: string; name: string };
@@ -30,7 +31,7 @@ export function ListingsPage({ user }: { user: User }) {
     name: "",
     summary: "",
     description: "",
-    categories: "Food & Drink",
+    categories: ["food-drink"],
     bookingMode: "none",
   });
 
@@ -60,7 +61,7 @@ export function ListingsPage({ user }: { user: User }) {
         name: form.name,
         summary: form.summary,
         description: form.description || form.summary,
-        categories: form.categories.split(",").map((s) => s.trim()),
+        categories: form.categories,
         bookingMode: form.bookingMode,
         ownerUserId: user.id,
         status: "published",
@@ -115,19 +116,10 @@ export function ListingsPage({ user }: { user: User }) {
               }
             />
           </label>
-          <label>
-            Categories (comma-separated)
-            <input
-              value={form.categories}
-              onChange={(e) => setForm({ ...form, categories: e.target.value })}
-              list="cats"
-            />
-            <datalist id="cats">
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-          </label>
+          <CategoryPicker
+            value={form.categories}
+            onChange={(categories) => setForm({ ...form, categories })}
+          />
           <label>
             Booking mode
             <select
@@ -154,6 +146,9 @@ export function ListingsPage({ user }: { user: User }) {
             <strong>{row.business.name}</strong>
             <span className="pill">{row.business.status}</span>
             <span className="pill">{row.business.bookingMode}</span>
+            {row.business.categories.map((c) => (
+              <span className="pill" key={c}>{categoryLabel(c)}</span>
+            ))}
           </div>
           <p className="muted">{row.business.summary}</p>
           {row.context && (

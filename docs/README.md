@@ -34,6 +34,8 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 - [ADR-001: Greenfield stack](./architecture/adr/001-greenfield-stack.md)
 - [ADR-002: Hybrid places](./architecture/adr/002-hybrid-places.md)
 - [ADR-003: Marketplace via Mercur](./architecture/adr/003-marketplace-mercur.md)
+- [ADR-004: Administrative host + nested area path](./architecture/adr/004-admin-host-nested-path.md)
+- [ADR-005: Two-level Indonesia category taxonomy](./architecture/adr/005-category-taxonomy.md)
 
 ### Design
 

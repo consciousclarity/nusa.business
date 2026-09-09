@@ -11,7 +11,7 @@
 | GET | `/v1/islands/:island/places/:place/businesses/:slug/discovery` | Same-address peers, similar ≤10 within `radiusKm` (default 2), nearby-by-category + map payload |
 | GET | `/v1/places?island=` | Place list |
 | GET | `/v1/search?q=&island=&place=&category=` | Flat search |
-| GET | `/v1/meta/categories` | Category catalog |
+| GET | `/v1/meta/categories` | Flat `categories` labels plus `taxonomy` tree (groups, leaves, related slugs) |
 | GET | `/v1/host` | Debug: parsed `Host` header |
 
 ## Portal listings

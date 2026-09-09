@@ -19,14 +19,27 @@ describe("business discovery", () => {
     assert.ok(self);
     const disc = getBusinessDiscovery(self.id, {
       radiusKm: 2,
-      category: "Professional Services",
+      category: "banks-atms",
     });
     assert.ok(disc);
     assert.equal(disc.sameAddress.length >= 1, true);
     assert.ok(disc.sameAddress.some((n) => n.business.slug === "kopi-ngurah-rai"));
     assert.ok(disc.similar.some((n) => n.business.slug === "warung-pasar-gianyar"));
-    assert.equal(disc.activeCategory, "Professional Services");
+    assert.equal(disc.activeCategory, "banks-atms");
     assert.ok(disc.nearby.some((n) => n.business.slug === "bpr-gianyar-pusat"));
     assert.ok(!disc.nearby.some((n) => n.business.slug === "warung-babi-guling-ibu-oka"));
+  });
+
+  it("includes Events related services when filtering the Events group", async () => {
+    const { resetSeed, listBusinesses } = await import("@nusa/db");
+    resetSeed();
+    const rows = listBusinesses({
+      islandSlug: "bali",
+      placeSlug: "gianyar",
+      category: "events-weddings",
+    });
+    assert.ok(rows.some((b) => b.slug === "gianyar-wedding-organizer"));
+    assert.ok(rows.some((b) => b.slug === "ibu-made-catering"));
+    assert.ok(!rows.some((b) => b.slug === "babi-guling-pande-egi"));
   });
 });

@@ -1,10 +1,9 @@
-import { CATEGORIES } from "@nusa/shared";
+import { canonicalizeCategoryList } from "@nusa/shared";
 
 export type ValidationOk<T> = { ok: true; value: T };
 export type ValidationErr = { ok: false; error: string };
 export type ValidationResult<T> = ValidationOk<T> | ValidationErr;
 
-const CATEGORY_SET = new Set<string>(CATEGORIES);
 const BOOKING_MODES = new Set(["none", "service", "rental", "event"]);
 
 const SAFE_URL = /^(https?:)\/\//i;
@@ -13,6 +12,23 @@ const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function fail(error: string): ValidationErr {
   return { ok: false, error };
+}
+
+export function parseCategories(raw: unknown): ValidationResult<string[]> {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return fail("categories must be a non-empty array");
+  }
+  if (raw.length > 12) return fail("categories: too many (max 12)");
+  const asStrings: string[] = [];
+  for (const c of raw) {
+    if (typeof c !== "string") {
+      return fail(`categories contains unknown value: ${String(c)}`);
+    }
+    asStrings.push(c);
+  }
+  const canonical = canonicalizeCategoryList(asStrings);
+  if (!canonical.ok) return fail(canonical.error);
+  return { ok: true, value: canonical.value };
 }
 
 function asObject(body: unknown): ValidationResult<Record<string, unknown>> {
@@ -375,17 +391,9 @@ export function parseListingPatchBody(
     out.bookingMode = raw as ListingPatchInput["bookingMode"];
   }
   if ("categories" in row) {
-    const raw = row.categories;
-    if (!Array.isArray(raw) || raw.length === 0) {
-      return fail("categories must be a non-empty array");
-    }
-    if (raw.length > 12) return fail("categories: too many (max 12)");
-    for (const c of raw) {
-      if (typeof c !== "string" || !CATEGORY_SET.has(c)) {
-        return fail(`categories contains unknown value: ${String(c)}`);
-      }
-    }
-    out.categories = raw as string[];
+    const parsed = parseCategories(row.categories);
+    if (!parsed.ok) return parsed;
+    out.categories = parsed.value;
   }
   if ("gallery" in row) {
     const raw = row.gallery;

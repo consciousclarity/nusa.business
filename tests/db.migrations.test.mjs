@@ -163,4 +163,21 @@ describe("store migrations", () => {
     assert.equal(ubud.parentPlaceId, gianyar.id);
     assert.ok(store.places.some((p) => p.slug === "badung"));
   });
+
+  it("rewrites legacy category labels to canonical slugs", () => {
+    const store = legacyStore();
+    store.businesses = [
+      {
+        id: "biz-legacy",
+        categories: ["Food & Drink", "food-drink", "Professional Services"],
+      },
+    ];
+    const applied = migrateStore(store);
+    assert.equal(applied.includes("2026-09-canonicalize-category-slugs"), true);
+    assert.deepEqual(store.businesses[0].categories, [
+      "food-drink",
+      "business-professional-services",
+    ]);
+    assert.deepEqual(migrateStore(store), []);
+  });
 });

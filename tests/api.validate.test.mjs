@@ -96,6 +96,9 @@ describe("parseListingPatchBody", () => {
       parseListingPatchBody({ categories: ["Not A Real Category"] }).ok,
       false,
     );
+    const mapped = parseListingPatchBody({ categories: ["Food & Drink"] });
+    assert.equal(mapped.ok, true);
+    if (mapped.ok) assert.deepEqual(mapped.value.categories, ["food-drink"]);
   });
 });
 

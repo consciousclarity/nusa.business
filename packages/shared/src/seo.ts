@@ -4,6 +4,8 @@
  * nested *.nusa.business hosts work in production.
  */
 
+import { categoryLabels } from "./taxonomy.js";
+
 export function requestHost(request: Request): string {
   return (
     request.headers.get("x-forwarded-host") ||
@@ -107,7 +109,7 @@ export function localBusinessJsonLd(opts: {
     };
   }
   if (opts.telephone) node.telephone = opts.telephone;
-  if (opts.categories?.length) node.additionalType = opts.categories;
+  if (opts.categories?.length) node.additionalType = categoryLabels(opts.categories);
   return node;
 }
 

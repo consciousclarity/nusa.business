@@ -37,7 +37,7 @@ export type Business = {
   slug: string;
   name: string;
   status: BusinessStatus;
-  categories: string[];
+  categories: string[]; // canonical taxonomy slugs (@nusa/shared)
   summary: string;
   description: string;
   address?: string;

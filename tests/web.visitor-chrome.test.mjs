@@ -42,6 +42,14 @@ const notFound = readFileSync(
   new URL("../apps/web/src/pages/404.astro", import.meta.url),
   "utf8",
 );
+const serverError = readFileSync(
+  new URL("../apps/web/src/pages/500.astro", import.meta.url),
+  "utf8",
+);
+const apiHelper = readFileSync(
+  new URL("../apps/web/src/lib/api.ts", import.meta.url),
+  "utf8",
+);
 
 describe("visitor chrome (no debug resolver)", () => {
   it("homepage is search-first and omits host-resolver jargon", () => {
@@ -53,6 +61,10 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(home, /class="resolver"/);
     assert.match(home, /tenantHref\(/);
     assert.doesNotMatch(home, /publicUrl\(/);
+    assert.match(home, /apiTry</);
+    assert.match(home, /directoryUnavailable/);
+    assert.match(apiHelper, /export async function apiTry/);
+    assert.match(apiHelper, /AbortSignal\.timeout/);
   });
 
   it("listing chrome uses i18n keys for reviews, booking, shop, and address", () => {
@@ -165,5 +177,20 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(listing, /new Response\(null, \{ status: 404 \}/);
     assert.match(island, /apiOrNull/);
     assert.match(island, /Astro\.rewrite\(withLocale\("\/404", locale\)\)/);
+  });
+
+  it("search and homepage stay up when the directory API fails", () => {
+    assert.match(search, /apiTry</);
+    assert.match(search, /searchFailed/);
+    assert.match(search, /directoryUnavailable/);
+    assert.doesNotMatch(search, /await api</);
+  });
+
+  it("SSR errors render a localized 500 with search, not a blank body", () => {
+    assert.match(serverError, /t\(locale, "serverErrorH1"\)/);
+    assert.match(serverError, /robots="noindex,follow"/);
+    assert.match(serverError, /withLocale\("\/search", locale\)/);
+    assert.match(serverError, /Astro\.response\.status = 500/);
+    assert.doesNotMatch(serverError, /from "\.\.\/lib\/api"/);
   });
 });

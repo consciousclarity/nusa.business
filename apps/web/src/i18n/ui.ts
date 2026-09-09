@@ -188,6 +188,12 @@ const ui = {
     notFoundH1: "Page not found",
     notFoundLede:
       "That listing or page is not here. Search for a business, or go back to the homepage.",
+    serverErrorTitle: "Something went wrong — nusa.business",
+    serverErrorH1: "Something went wrong",
+    serverErrorLede:
+      "This page could not be loaded. Search for a business, or go back to the homepage.",
+    directoryUnavailable:
+      "The directory is temporarily unavailable. Try again in a moment, or browse Bali.",
     backHome: "Back to homepage",
     bookingPastDate: "Date must be today or later.",
     bookingNeedEndDate: "Rentals need an end date.",
@@ -380,6 +386,12 @@ const ui = {
     notFoundH1: "Halaman tidak ditemukan",
     notFoundLede:
       "Listing atau halaman itu tidak ada. Cari bisnis, atau kembali ke beranda.",
+    serverErrorTitle: "Ada gangguan — nusa.business",
+    serverErrorH1: "Ada gangguan",
+    serverErrorLede:
+      "Halaman ini tidak bisa dimuat sekarang. Cari bisnis, atau kembali ke beranda.",
+    directoryUnavailable:
+      "Direktori sedang tidak tersedia. Coba lagi sebentar lagi, atau buka Bali.",
     backHome: "Kembali ke beranda",
     bookingPastDate: "Tanggal harus hari ini atau setelahnya.",
     bookingNeedEndDate: "Sewa membutuhkan tanggal selesai.",

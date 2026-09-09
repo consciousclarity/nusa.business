@@ -1,6 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
-import { api } from "../lib/api";
+import { apiTry } from "../lib/api";
 import { tenantHref } from "../lib/links";
 import { absoluteUrl } from "../lib/seo";
 import { t, withLocale, type Locale } from "../i18n/ui";
@@ -11,10 +11,10 @@ const q = (Astro.url.searchParams.get("q") || "").trim();
 const island = (Astro.url.searchParams.get("island") || "").trim();
 const category = (Astro.url.searchParams.get("category") || "").trim();
 
-const islands = await api<{
+const islands = await apiTry<{
   islands: { slug: string; name: string; status: string }[];
 }>("/v1/islands");
-const active = islands.islands.filter((i) => i.status === "active");
+const active = (islands?.islands ?? []).filter((i) => i.status === "active");
 
 const params = new URLSearchParams();
 if (q) params.set("q", q);
@@ -34,11 +34,12 @@ type Hit = {
   geo?: { hostPlace: string; area?: string };
 };
 
-const search = params.toString()
-  ? await api<{ results: Hit[] }>(`/v1/search?${params.toString()}`)
+const queried = Boolean(params.toString());
+const search = queried
+  ? await apiTry<{ results: Hit[] }>(`/v1/search?${params.toString()}`)
   : { results: [] as Hit[] };
-
-const hits = search.results.slice(0, 50);
+const searchFailed = queried && search === null;
+const hits = search?.results.slice(0, 50) ?? [];
 const islandName = active.find((row) => row.slug === island)?.name ?? island;
 const searchPath = withLocale("/search", locale) + (params.toString() ? `?${params}` : "");
 const canonical = absoluteUrl(Astro.request, searchPath);
@@ -96,6 +97,15 @@ const title = q
   </form>
 
   <section class="section">
+    {searchFailed ? (
+      <p class="prose">
+        {t(locale, "directoryUnavailable")}{" "}
+        <a href={tenantHref(Astro.request, { island: "bali", locale })}>
+          {t(locale, "browseBali")}
+        </a>
+      </p>
+    ) : (
+      <>
     <h2>
       {hits.length} {t(locale, "resultsIn")}
       {q ? ` · ${q}` : ""}
@@ -145,6 +155,8 @@ const title = q
           );
         })}
       </ol>
+    )}
+      </>
     )}
   </section>
 </Base>

@@ -1,6 +1,6 @@
 ---
 import Base from "../layouts/Base.astro";
-import { api } from "../lib/api";
+import { apiTry } from "../lib/api";
 import { tenantHref } from "../lib/links";
 import { TAXONOMY, categoryLabel } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
@@ -16,11 +16,12 @@ if (context.kind !== "nation") {
   return Astro.redirect(withLocale("/", locale));
 }
 
-const data = await api<{
+const data = await apiTry<{
   islands: { slug: string; name: string; tagline: string; status: string }[];
 }>("/v1/islands");
-
-const active = data.islands.filter((i) => i.status === "active");
+const islands = data?.islands ?? [];
+const directoryUp = data !== null;
+const active = islands.filter((i) => i.status === "active");
 const baliHref = tenantHref(req, { island: "bali", locale });
 const nationUrl = absoluteUrl(req, withLocale("/", locale));
 const nationDescription = t(locale, "nationLede");
@@ -76,8 +77,9 @@ const searchAction = withLocale("/search", locale);
 
   <section class="section">
     <h2>{t(locale, "islands")}</h2>
+    {directoryUp ? (
     <ol class="index-list">
-      {data.islands.map((island, i) => (
+      {islands.map((island, i) => (
         <li>
           <div class="index-row">
             <span class="n">{String(i + 1).padStart(2, "0")}</span>
@@ -108,6 +110,9 @@ const searchAction = withLocale("/search", locale);
         </li>
       ))}
     </ol>
+    ) : (
+      <p class="prose">{t(locale, "directoryUnavailable")}</p>
+    )}
     <p class="actions">
       <a class="cta" href={baliHref}>{t(locale, "openBali")}</a>
       <a class="cta secondary" href={withLocale("/claim", locale)}>

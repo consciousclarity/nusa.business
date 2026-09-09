@@ -837,6 +837,43 @@ export async function redeemInvite(input: {
   return { ok: true, user, invite };
 }
 
+/**
+ * Public owner signup. Role is always `owner` — clients cannot self-assign
+ * admin or field_agent. Claim approval is still required before editing an
+ * existing listing.
+ */
+export async function registerOwner(input: {
+  email: string;
+  name: string;
+  password: string;
+}): Promise<{ ok: true; user: User } | { ok: false; error: string }> {
+  const email = input.email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "email must be a valid email" };
+  }
+  if (getUserByEmail(email)) {
+    return { ok: false, error: "An account with this email already exists" };
+  }
+  if (input.password.length < 12) {
+    return { ok: false, error: "Password must be at least 12 characters" };
+  }
+  const name = input.name.trim();
+  if (name.length < 1 || name.length > 120) {
+    return { ok: false, error: "Name is required" };
+  }
+  const store = getStore();
+  const user: User = {
+    id: `usr-${crypto.randomUUID().slice(0, 8)}`,
+    email,
+    name,
+    role: "owner",
+    password: await hashPassword(input.password),
+  };
+  store.users.push(user);
+  save(store);
+  return { ok: true, user };
+}
+
 export function createRecoveryToken(userId: string, ttlHours = 2): {
   token: RecoveryToken;
   rawToken: string;

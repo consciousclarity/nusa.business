@@ -23,7 +23,7 @@ and the operator list below.
 | F02 | Browser API origin already rejects `http://api:8787`. Live HTML with that host is a **VPS env** miss, not missing code. | P0 (ops) | `packages/shared/src/api-origins.ts` | No code change; operator must set `PUBLIC_BROWSER_API_URL` | `tests/shared.api-origins.test.mjs` |
 | F03 | Review/booking widgets already checked `res.ok`, busy flags, and kept fields on failure. | P0 (done earlier) | listing `[...path].astro` | Unchanged behaviour; report form added with the same pattern | `tests/web.booking-form.test.mjs` |
 | F04 | Bookings ignored client prices but accepted past dates and duplicate pending rows. No inventory calendar exists. | P0 | `apps/api/src/validate.ts`, `app.ts` | Reject past dates, require rental `endDate` / event `tickets`, 409 duplicate pending | `tests/api.validate.test.mjs`, `tests/api.write-security.test.mjs` |
-| F05 | Claims already stay pending until admin approve; PATCH is owner/admin. Invite register + recovery exist. | P0 (done earlier) | `apps/api/src/app.ts` | Public claim page now distinguishes add vs claim | `tests/api.authz-cors.test.mjs`, `tests/api.onboarding-claims.test.mjs` |
+| F05 | Claims already stay pending until admin approve; PATCH is owner/admin. Register was invite-only, so a new owner could not complete onboarding. | P0 | API register + portal `/register` | Public owner self-signup; clients cannot set `role`; pending claim still 403 on PATCH | `tests/api.onboarding-claims.test.mjs` |
 | F06 | Public pages still showed host-resolver jargon (`kind=nation`, `published`, `/host/…` footer). | P1 | `apps/web` | Search-first home, listing contact actions, legal footer | `tests/web.visitor-chrome.test.mjs` |
 | F07 | Seed catalog is sample data with no public stamp. | P1 | `packages/db`, listing UI | `sample: true` on seed businesses; stamp in UI | seed + visitor chrome |
 | F08 | No correction/abuse report path. | P1 | API + listing | `POST /v1/businesses/:id/reports` | `parseReportBody` tests |
@@ -61,10 +61,10 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Browser API origin fails closed in production builds | pass (code) | Live env unverified |
 | Reviews check HTTP status; keep text on failure | pass | Not submitted to production |
 | Bookings reject past dates, bad quantities, duplicates | pass (code) | No priced inventory yet — request-only |
-| Claim does not grant edit until approved | pass | Invite-only registration |
-| Owners cannot PATCH another listing | pass | `tests/api.authz-cors.test.mjs` |
+| Claim does not grant edit until approved | pass (API tests) | Owner self-register + invite; pending PATCH 403 |
+| Owners cannot PATCH another listing | pass | `tests/api.authz-cors.test.mjs` (incl. field agent) |
 | Visitor pages omit resolver jargon | pass | |
-| Homepage search + shareable `/search?q=` | pass | |
+| Homepage search + shareable `/search?q=` | pass | Category filter in the same query URL |
 | Listing Directions / Call / Website / WhatsApp | pass | Seed website on one listing; maps from lat/lng |
 | Sample listings labelled | pass (local seed) | Production must not publish this catalog |
 | Privacy / terms / support pages | pass | Legal text is launch-minimum, not counsel-reviewed |
@@ -73,7 +73,7 @@ Status key: **pass** (this PR or earlier tests) · **fail** · **unverified** (n
 | Sitemap / robots | pass (C11 + search noindex) | Search Console unverified |
 | WCAG 2.2 AA on phone | unverified | C10 chrome tests pass; no screen-reader run here |
 | Lighthouse / RUM | unverified | C12 lab budget in CI; no field data |
-| Staging e2e owner onboarding | unverified | Needs staging accounts, not production |
+| Staging e2e owner onboarding | unverified | Local API self-register + pending-claim PATCH 403 pass; staging HTTPS unverified |
 | Error tracking / alerts | fail | Not implemented |
 | DB backup restore drill | unverified | Operator |
 | Dependabot / npm audit in CI | fail | Listed in security backlog |

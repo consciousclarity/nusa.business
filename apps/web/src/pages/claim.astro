@@ -6,6 +6,8 @@ import { t, withLocale, type Locale } from "../i18n/ui";
 const locale: Locale = Astro.locals.locale ?? "en";
 const portal = import.meta.env.PUBLIC_PORTAL_URL || "http://localhost:5173";
 const claimUrl = absoluteUrl(Astro.request, withLocale("/claim", locale));
+const claimReturn = encodeURIComponent("/claim");
+const addReturn = encodeURIComponent("/listings");
 ---
 <Base
   title={t(locale, "claimTitle")}
@@ -25,7 +27,7 @@ const claimUrl = absoluteUrl(Astro.request, withLocale("/claim", locale));
       <a class="cta" href={`${portal}/claim`}>{t(locale, "claimOpen")}</a>
       <a
         class="cta secondary"
-        href={`${portal}/login?returnTo=${encodeURIComponent("/claim")}`}
+        href={`${portal}/login?returnTo=${claimReturn}`}
       >
         {t(locale, "claimLogin")}
       </a>
@@ -36,7 +38,7 @@ const claimUrl = absoluteUrl(Astro.request, withLocale("/claim", locale));
     <h2>{t(locale, "addListing")}</h2>
     <p class="prose">{t(locale, "addListingHelp")}</p>
     <p class="actions">
-      <a class="cta secondary" href={`${portal}/register`}>
+      <a class="cta secondary" href={`${portal}/register?returnTo=${addReturn}`}>
         {t(locale, "addListingOpen")}
       </a>
       <a class="cta secondary" href={`${portal}/register`}>

@@ -37,6 +37,7 @@ export function ClaimPage({ user }: { user: User }) {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const selected = useMemo(
     () => hits.find((h) => h.business.id === businessId),
@@ -88,8 +89,10 @@ export function ClaimPage({ user }: { user: User }) {
 
   async function submitClaim(e: React.FormEvent) {
     e.preventDefault();
+    if (busy || !businessId) return;
     setMsg("");
     setError("");
+    setBusy(true);
     try {
       await api("/v1/claims", {
         method: "POST",
@@ -102,6 +105,8 @@ export function ClaimPage({ user }: { user: User }) {
       await refreshClaims();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Claim failed");
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -175,11 +180,19 @@ export function ClaimPage({ user }: { user: User }) {
               required
             />
           </label>
-          <button type="submit" disabled={!businessId}>
-            Submit free claim
+          <button type="submit" disabled={!businessId || busy}>
+            {busy ? "Submitting…" : "Submit free claim"}
           </button>
-          {msg && <p className="success">{msg}</p>}
-          {error && <p className="error">{error}</p>}
+          {msg && (
+            <p className="success" role="status">
+              {msg}
+            </p>
+          )}
+          {error && (
+            <p className="error" role="alert">
+              {error}
+            </p>
+          )}
         </form>
       </div>
 

@@ -33,6 +33,7 @@ import {
   listPlaces,
   listReviews,
   redeemInvite,
+  registerOwner,
   resolveBusinessContext,
   upsertBusiness,
   upsertVendor,
@@ -79,6 +80,7 @@ import {
   parseBookingBody,
   parseCategories,
   parseListingPatchBody,
+  parseRegisterBody,
   parseReportBody,
   parseReviewBody,
 } from "./validate.js";
@@ -339,30 +341,53 @@ app.post(
   },
 );
 
-/** Invitation-based registration — launch path (no open self-signup). */
+/**
+ * Owner self-signup (email + name + password) or invite redeem.
+ * Clients cannot choose a role. Claim approval is still required before
+ * editing an existing listing.
+ */
 app.post(
   "/v1/auth/register",
   rateLimit({ id: "register-ip", limit: LOGIN_MAX, windowMs: LOGIN_WINDOW_MS }),
   async (c) => {
-    let body: { token?: string; name?: string; password?: string };
+    let raw: unknown;
     try {
-      body = await c.req.json();
+      raw = await c.req.json();
     } catch {
       return c.json({ error: "Malformed JSON" }, 400);
     }
-    if (!body.token || !body.name || !body.password) {
-      return c.json({ error: "token, name, and password are required" }, 400);
+    const parsed = parseRegisterBody(raw);
+    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+
+    if (parsed.value.kind === "invite") {
+      const result = await redeemInvite({
+        rawToken: parsed.value.token,
+        name: parsed.value.name,
+        password: parsed.value.password,
+      });
+      if (!result.ok) return c.json({ error: result.error }, 400);
+      const { password: _, ...safe } = result.user;
+      const returnTo = result.invite.businessId
+        ? `/claim?businessId=${encodeURIComponent(result.invite.businessId)}`
+        : parsed.value.returnTo || "/";
+      return c.json(
+        {
+          user: safe,
+          token: issueToken(result.user),
+          returnTo: safePortalReturnTo(returnTo),
+        },
+        201,
+      );
     }
-    const result = await redeemInvite({
-      rawToken: body.token,
-      name: body.name,
-      password: body.password,
+
+    const result = await registerOwner({
+      email: parsed.value.email,
+      name: parsed.value.name,
+      password: parsed.value.password,
     });
     if (!result.ok) return c.json({ error: result.error }, 400);
     const { password: _, ...safe } = result.user;
-    const returnTo = result.invite.businessId
-      ? `/claim?businessId=${encodeURIComponent(result.invite.businessId)}`
-      : "/";
+    const returnTo = parsed.value.returnTo || "/listings";
     return c.json(
       {
         user: safe,

@@ -5,7 +5,7 @@
 `POST /v1/auth/login`
 
 ```json
-{ "email": "owner@example.com", "password": "owner123" }
+{ "email": "owner@example.test", "password": "<your-password>" }
 ```
 
 Response:
@@ -57,6 +57,7 @@ token is passed explicitly.
 | `GET /v1/islands*`, `/v1/places`, `/v1/search`, `/v1/field/recent` | public — listing payloads omit ownership internals; drafts excluded; listing detail never returns bookings |
 | `POST /v1/businesses/:id/reviews` | public — visitors review without an account |
 | `POST /v1/businesses/:id/bookings` | public — customers book without an account |
+| `POST /v1/auth/register` | public — owner self-signup, or invite token for invited roles. Clients cannot set `role`. |
 | `GET /v1/me` | any authenticated user |
 | `GET /v1/portal/listings` | own listings; admin sees all |
 | `POST /v1/portal/listings` | `owner`, `vendor`, `field_agent`, `admin` |

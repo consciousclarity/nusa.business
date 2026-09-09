@@ -7,6 +7,7 @@ const {
   assertBookingRequest,
   parseBookingBody,
   parseListingPatchBody,
+  parseRegisterBody,
   parseReportBody,
   parseReviewBody,
 } = await import("../apps/api/dist/validate.js");
@@ -182,7 +183,50 @@ describe("assertBookingRequest", () => {
   });
 });
 
-describe("parseReportBody", () => {
+describe("parseRegisterBody", () => {
+  it("accepts owner self-signup and rejects client-chosen roles", () => {
+    const ok = parseRegisterBody({
+      email: "new@example.test",
+      name: "Maya",
+      password: "owner-password-12",
+      returnTo: "/claim?businessId=biz-a",
+    });
+    assert.equal(ok.ok, true);
+    if (ok.ok) {
+      assert.equal(ok.value.kind, "owner");
+      if (ok.value.kind === "owner") {
+        assert.equal(ok.value.email, "new@example.test");
+      }
+    }
+    assert.equal(
+      parseRegisterBody({
+        email: "new@example.test",
+        name: "Maya",
+        password: "owner-password-12",
+        role: "admin",
+      }).ok,
+      false,
+    );
+    assert.equal(
+      parseRegisterBody({
+        email: "new@example.test",
+        name: "Maya",
+        password: "short",
+      }).ok,
+      false,
+    );
+  });
+
+  it("accepts invite redeem without an email field", () => {
+    const ok = parseRegisterBody({
+      token: "a".repeat(32),
+      name: "Maya",
+      password: "owner-password-12",
+    });
+    assert.equal(ok.ok, true);
+    if (ok.ok) assert.equal(ok.value.kind, "invite");
+  });
+});
   it("accepts correction notes and rejects short or unknown kinds", () => {
     assert.equal(
       parseReportBody({ kind: "correction", note: "Hours are wrong on Sunday." }).ok,

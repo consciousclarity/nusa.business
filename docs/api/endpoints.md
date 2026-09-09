@@ -24,6 +24,19 @@
 
 Listing writes return `409` if another listing occupies the same `(placeId, slug)`, including drafts. The JSON store enforces the check and save synchronously within the single API process.
 
+## Auth
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/v1/auth/login` | Rate-limited |
+| POST | `/v1/auth/register` | Owner self-signup (`email`, `name`, `password`) or invite `token`. Clients cannot set `role`. |
+| GET | `/v1/auth/invite/:token` | Preview a valid invite |
+| POST | `/v1/auth/recovery/request` | Always 200; no email enumeration |
+| POST | `/v1/auth/recovery/confirm` | Set a new password |
+| GET | `/v1/me` | Authenticated profile |
+
+See [auth.md](./auth.md).
+
 ## Claims & reviews
 
 | Method | Path | Notes |

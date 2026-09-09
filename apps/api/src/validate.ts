@@ -307,6 +307,66 @@ export type PublicReportInput = {
   note: string;
 };
 
+export type RegisterInviteInput = {
+  kind: "invite";
+  token: string;
+  name: string;
+  password: string;
+  returnTo?: string;
+};
+
+export type RegisterOwnerInput = {
+  kind: "owner";
+  email: string;
+  name: string;
+  password: string;
+  returnTo?: string;
+};
+
+export type RegisterInput = RegisterInviteInput | RegisterOwnerInput;
+
+/** Invite redeem (any invited role) or public owner self-signup. */
+export function parseRegisterBody(body: unknown): ValidationResult<RegisterInput> {
+  const obj = asObject(body);
+  if (!obj.ok) return obj;
+  const row = obj.value;
+  if (row.role !== undefined) {
+    return fail("role cannot be set by the client");
+  }
+  const name = requireString(row, "name", { max: 120 });
+  if (!name.ok) return name;
+  const password = requireString(row, "password", { max: 200, min: 12 });
+  if (!password.ok) return password;
+  const returnTo = optionalString(row, "returnTo", { max: 500 });
+  if (!returnTo.ok) return returnTo;
+  const token = optionalString(row, "token", { max: 200 });
+  if (!token.ok) return token;
+  if (token.value) {
+    return {
+      ok: true,
+      value: {
+        kind: "invite",
+        token: token.value,
+        name: name.value,
+        password: password.value,
+        returnTo: returnTo.value,
+      },
+    };
+  }
+  const email = requireEmail(row, "email");
+  if (!email.ok) return email;
+  return {
+    ok: true,
+    value: {
+      kind: "owner",
+      email: email.value,
+      name: name.value,
+      password: password.value,
+      returnTo: returnTo.value,
+    },
+  };
+}
+
 export function parseReportBody(body: unknown): ValidationResult<PublicReportInput> {
   const obj = asObject(body);
   if (!obj.ok) return obj;

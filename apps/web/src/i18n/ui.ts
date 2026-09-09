@@ -58,7 +58,7 @@ const ui = {
     claimExistingHelp:
       "Use this when the business is already listed. A submitted claim does not grant editing rights until an operator approves ownership.",
     addListingHelp:
-      "Use this when you cannot find the business. Registration is invite-only in this launch.",
+      "Use this when you cannot find the business. Create a free owner account, then add the listing. You will own what you add.",
     overview: "Overview",
     openingHours: "Opening hours",
     otherAtAddress: "Other businesses at this address",
@@ -100,6 +100,9 @@ const ui = {
     termsTitle: "Terms — nusa.business",
     supportTitle: "Support — nusa.business",
     listingsCount: "listings",
+    placeTypeKabupaten: "Regency",
+    placeTypeKota: "City",
+    placeTypeArea: "Area",
   },
   id: {
     navClaim: "Klaim",
@@ -150,7 +153,7 @@ const ui = {
     claimExistingHelp:
       "Gunakan ini jika bisnis sudah terdaftar. Klaim yang dikirim tidak memberi hak sunting sebelum operator menyetujui kepemilikan.",
     addListingHelp:
-      "Gunakan ini jika bisnis belum ada. Pendaftaran pada peluncuran ini hanya dengan undangan.",
+      "Gunakan ini jika bisnis belum ada. Buat akun pemilik gratis, lalu tambahkan listing. Anda memiliki listing yang Anda tambahkan.",
     overview: "Ringkasan",
     openingHours: "Jam buka",
     otherAtAddress: "Bisnis lain di alamat ini",
@@ -192,6 +195,9 @@ const ui = {
     termsTitle: "Ketentuan — nusa.business",
     supportTitle: "Dukungan — nusa.business",
     listingsCount: "listing",
+    placeTypeKabupaten: "Kabupaten",
+    placeTypeKota: "Kota",
+    placeTypeArea: "Kawasan",
   },
 } as const;
 
@@ -199,4 +205,11 @@ export type UiKey = keyof typeof ui.en;
 
 export function t(locale: Locale, key: UiKey): string {
   return ui[locale][key] ?? ui.en[key];
+}
+
+export function placeTypeLabel(locale: Locale, type: string): string {
+  if (type === "kabupaten") return t(locale, "placeTypeKabupaten");
+  if (type === "kota") return t(locale, "placeTypeKota");
+  if (type === "tourist_area") return t(locale, "placeTypeArea");
+  return type;
 }

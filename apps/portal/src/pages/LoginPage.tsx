@@ -102,7 +102,7 @@ export function LoginPage({
       </form>
       <p className="muted" style={{ marginTop: "1rem" }}>
         <Link to={`/register${params.get("returnTo") ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`}>
-          Have an invite?
+          Create an owner account
         </Link>
         {" · "}
         <Link to="/recovery">Forgot password?</Link>

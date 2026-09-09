@@ -26,8 +26,17 @@ agents must not deploy without explicit human authorization.
 | C14 | Release decision | **HOLD** | [launch-readiness.md](./launch-readiness.md) — remaining operator/Hermes gates |
 
 C01–C14 code is on `main`. Remaining launch work is operator verification plus
-the follow-up in [launch-readiness.md](./launch-readiness.md) (booking date/duplicate
-rules, visitor search, sample stamps). Do not treat merged code as a live GO.
+the follow-up in [launch-readiness.md](./launch-readiness.md) (booking
+date/duplicate rules, visitor search, Indonesian category/facet labels, sample
+stamps). Do not treat merged code as a live GO. Read-only live HTML:
+
+```bash
+bash scripts/live-public-check.sh
+```
+
+That script currently **fails** homepage visitor chrome (`class="resolver"`,
+`kind=nation`) until the follow-up is deployed. Listing API origin may already
+pass. Cursor agents must not deploy.
 
 ## Operator gates (live VPS)
 
@@ -48,6 +57,7 @@ Change the decision line at the top to **GO** only when:
 
 - Operator gates 1–6 are checked on the VPS
 - Launch-readiness follow-up (booking rules, visitor chrome, sample labels) is merged or waived
+- `bash scripts/live-public-check.sh` passes (homepage has no resolver jargon)
 - A human names the release SHA and authorizes deploy
 
 Until then: **HOLD**.

@@ -156,6 +156,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(browse, /inWhere\(locale, facetHeading, where\)/);
     assert.match(island, /islandTagline\(locale, islandData.island.slug/);
     assert.match(island, /islandName\(locale, islandData.island.slug/);
+    assert.match(island, /tenantAbsHref\(/);
     assert.match(browse, /unavailable/);
     assert.match(browse, /directoryUnavailable/);
     assert.match(search, /categoryLabel\(group\.slug, locale\)/);

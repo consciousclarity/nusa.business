@@ -16,7 +16,7 @@ Three columns. Do not treat a **code** pass as a live pass.
 | Kind | Item | Evidence / who |
 |---|---|---|
 | **Code (this PR)** | P0 booking/authz/demo + visitor `/id` chrome (F01–F26) | `npm test` + findings table below. Not on the VPS until deploy. |
-| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`, `Address`, `Status published`, and English weekdays. | `bash scripts/live-public-check.sh`. Listing API origin already ok. |
+| **Fail (live HTTPS)** | Homepage `/` and `/id` still have resolver jargon and no `name="q"`. Listing `/id` still shows English `Food & Drink`, `Address`, `Host`/`Status`/`Booking` dts, and English weekdays. | `bash scripts/live-public-check.sh` (25 fails until this PR deploys). Listing API origin already ok. |
 | **Operator only** | VPS SHA, PM2 vs Compose, `PUBLIC_BROWSER_API_URL` / `NUSA_SSR_API_URL`, `NUSA_AUTH_SECRET`, demo-store inventory, store backup + isolated restore, Search Console sitemap submit | [release-decision.md](./release-decision.md) gates 1–6. Cursor must not run these. |
 | **Not this launch** | Priced booking inventory, cookie sessions/CSRF, error tracking, RUM, WCAG AA screen-reader, Dependabot/`npm audit` CI | Security / parity backlog. Do not block GO on these unless product says so. |
 

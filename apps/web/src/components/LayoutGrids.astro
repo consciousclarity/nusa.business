@@ -1,117 +1,57 @@
 ---
 /**
- * Wide-layout grids kept off global.css so the C12 source/gzip budget
- * stays intact. Included from Base so every public page gets the same
- * hero / index / record column rules.
+ * Wide-layout grids kept off global.css (C12 source/gzip) and out of the
+ * hashed _astro CSS (C12 11 KB). is:inline emits a document <style> so
+ * Vite does not merge these rules into claim.*.css.
  */
 ---
 
-<style is:global>
-  .hero-split {
-    display: grid;
-    gap: 1.25rem;
+<style is:inline>
+  .hero-split { display: grid; gap: 1.25rem; }
+  .hero-split .filter-bar { margin: 0; }
+  .hero-split .filter-bar :is(label, input, select, button) {
+    min-width: 0; max-width: none; width: 100%;
   }
-
-  .hero-split .filter-bar {
-    margin: 0;
-  }
-
-  .hero-split .filter-bar label,
-  .hero-split .filter-bar input,
-  .hero-split .filter-bar select,
-  .hero-split .filter-bar button {
-    min-width: 0;
-    max-width: none;
-    width: 100%;
-  }
-
   .index-grid {
     display: grid;
     grid-template-columns: 1fr;
     gap: 0 1.25rem;
   }
-
   .index-grid > li {
     grid-template-columns: 2.5ch minmax(0, 1fr);
     align-content: start;
   }
-
-  .index-grid > li:first-child {
-    border-top: 0;
-  }
-
-  .index-grid .index-row .rhs {
-    grid-column: 2;
-    text-align: left;
-  }
-
-  .index-grid .index-desc {
-    grid-column: 2 / -1;
-  }
-
-  .record-layout {
-    display: grid;
-    gap: 1.5rem;
-  }
-
-  .record-layout > .record {
-    margin-bottom: 0;
-  }
-
+  .index-grid > li:first-child { border-top: 0; }
+  .index-grid .rhs { grid-column: 2; text-align: left; }
+  .index-grid .index-desc { grid-column: 2 / -1; }
+  .record-layout { display: grid; gap: 1.5rem; }
+  .record-layout > .record { margin-bottom: 0; }
   .record-aside .actions {
     flex-direction: column;
     align-items: stretch;
     margin-top: 0;
   }
-
-  .record-aside .actions .cta {
-    text-align: center;
-  }
-
+  .record-aside .cta { text-align: center; }
   @media (min-width: 40rem) {
-    .index-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    .index-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
-
   @media (min-width: 48rem) {
     .hero-split {
       grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
       align-items: start;
       column-gap: 2rem;
     }
-
     .record-layout {
       grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem);
-      grid-template-areas:
-        "head side"
-        "main side";
+      grid-template-areas: "head side" "main side";
       align-items: start;
       column-gap: 2rem;
     }
-
-    .record-layout > .record {
-      grid-area: head;
-    }
-
-    .record-layout > .record-aside {
-      grid-area: side;
-    }
-
-    .record-layout > .record-main {
-      grid-area: main;
-    }
+    .record-layout > .record { grid-area: head; }
+    .record-layout > .record-aside { grid-area: side; }
+    .record-layout > .record-main { grid-area: main; }
   }
-
   @media (min-width: 64rem) {
-    .index-grid {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-  }
-
-  @media (max-width: 40rem) {
-    .hero-split .filter-bar button {
-      min-height: 2.75rem;
-    }
+    .index-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
 </style>

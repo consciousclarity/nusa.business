@@ -101,11 +101,21 @@ systemctl reload caddy    # reload, not restart — keeps the other sites up
 
 ## Update deploy
 
+GitHub Actions does **not** ship to this box. `.github/workflows/ci.yml` is
+build + test + seed only. A push to `main` is not an authorization to deploy.
+
+After a **new explicit authorization** ([release-decision.md](./release-decision.md)):
+
 ```bash
 cd /opt/nusa.business
 git pull
 bash scripts/deploy-vps.sh
 ```
+
+That rebuilds the three Compose images (`docker-api-1`, `docker-web-1`,
+`docker-portal-1`). Do not rsync `apps/web/dist/` to `/var/www/nusa.business`
+(or any other static root): host Caddy only `reverse_proxy`s to loopback, and
+Astro SSR needs the running Node process in `docker-web-1`.
 
 ## Verify
 

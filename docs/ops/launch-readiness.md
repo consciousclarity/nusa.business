@@ -7,7 +7,8 @@ Indonesian `/id` labels including island names, HTML 404/500, portal
 demo-bundle grep, nested-host sitemap, robots search Disallow) is **live**.
 
 **Release: GO.** See [release-decision.md](./release-decision.md). Cursor
-agents must not deploy again without a new explicit authorization.
+agents must not deploy again without a new explicit authorization. GitHub
+Actions must not either — CI does not ship to the VPS.
 Long-running on-box store work still belongs to **Warden** — see
 [hermes-vps-notes-2026-09-07.md](./hermes-vps-notes-2026-09-07.md)
 (PM2 observation there is stale; live supervisor is Compose).

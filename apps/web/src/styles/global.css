@@ -279,6 +279,19 @@ textarea,
   color: var(--ink-faint);
 }
 
+.nav-lang-mark {
+  width: 0.85em;
+  height: 0.85em;
+  margin-right: 0.35em;
+  color: var(--ink-faint);
+  display: inline;
+  vertical-align: -0.12em;
+}
+
+.banner .stamp {
+  margin-right: 0.4rem;
+}
+
 .crumbs {
   font-family: var(--mono);
   font-size: var(--step--1);

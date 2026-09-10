@@ -10,12 +10,14 @@ export { alternateLocale, detectLocale, withLocale };
 
 const ui = {
   en: {
-    navClaim: "Claim",
+    navClaim: "Claim your business",
+    navAdd: "Add a business",
     navPortal: "Portal",
     navPrimary: "Primary",
     navPath: "Path",
     skipToContent: "Skip to content",
     langSwitch: "Bahasa Indonesia",
+    langSwitchAria: "Switch language to Bahasa Indonesia",
     langSwitchShort: "ID",
     footer:
       "Free local listings across the archipelago. No registration fees. No commission at launch.",
@@ -47,8 +49,10 @@ const ui = {
     partOf: "Part of",
     areasIn: "Areas in",
     comingSoon: "Coming soon",
-    comingSoonNext: "This province is not open for browsing yet. Open Bali or add a missing business.",
-    browseBali: "Browse Bali",
+    comingSoonNext:
+      "This area does not have public listings yet. Add a business, or ask to be notified when the directory opens.",
+    comingSoonUpdate: "Email for updates",
+    comingSoonSubject: "nusa.business directory updates",
     addListing: "Add a missing business",
     claimListing: "Claim an existing listing",
     claimTitle: "Claim or add a listing — nusa.business",
@@ -82,8 +86,9 @@ const ui = {
     website: "Website",
     sampleListing: "Sample listing",
     ownerVerified: "Owner verified",
-    listedUnclaimed: "Unclaimed listing",
+    listedUnclaimed: "Unclaimed — claim your business",
     lastVerified: "Last verified",
+    lastUpdated: "Updated",
     suggestCorrection: "Suggest a correction",
     reportAbuse: "Report this listing",
     reportNote: "What should we check?",
@@ -189,6 +194,9 @@ const ui = {
     supportOwnerH2: "Owner accounts",
     supportOwner:
       "Owners create a free account, then claim an existing listing or add a missing one. Editing starts only after we approve ownership. Field-agent and admin accounts still use an invite.",
+    supportUpdatesH2: "Province coverage",
+    supportUpdates:
+      "Some provinces are still coming soon. Email updates@nusa.business and we will write when that catalog opens. You can also add a missing business.",
     notFoundTitle: "Page not found — nusa.business",
     notFoundH1: "Page not found",
     notFoundLede:
@@ -198,7 +206,19 @@ const ui = {
     serverErrorLede:
       "This page could not be loaded. Search for a business, or go back to the homepage.",
     directoryUnavailable:
-      "The directory is temporarily unavailable. Try again in a moment, or browse Bali.",
+      "The directory is temporarily unavailable. Try again in a moment, or ask for an update.",
+    catShortcuts: "Browse by category",
+    catFood: "Food",
+    catStays: "Stays",
+    catExperiences: "Experiences",
+    catTransport: "Transport",
+    catWellness: "Wellness",
+    trustHeading: "How listings stay current",
+    trustListings: "Directory listings",
+    trustUpdated: "Last catalog update",
+    trustVerified: "Verified information",
+    trustHow:
+      "nusa.business is a public local directory. Field agents register businesses on the ground. Owners claim or add a listing for free. There is no commission at launch. Pages show when a listing was last updated and when an owner is verified — that is not a government certification.",
     backHome: "Back to homepage",
     bookingPastDate: "Date must be today or later.",
     bookingNeedEndDate: "Rentals need an end date.",
@@ -212,12 +232,14 @@ const ui = {
     requestFailed: "Could not send. Try again.",
   },
   id: {
-    navClaim: "Klaim",
+    navClaim: "Klaim bisnis Anda",
+    navAdd: "Tambah bisnis",
     navPortal: "Portal",
     navPrimary: "Utama",
     navPath: "Jalur",
     skipToContent: "Langsung ke konten",
     langSwitch: "English",
+    langSwitchAria: "Ganti bahasa ke English",
     langSwitchShort: "EN",
     footer:
       "Direktori bisnis lokal gratis di seluruh nusantara. Tanpa biaya daftar. Tanpa komisi saat peluncuran.",
@@ -249,8 +271,10 @@ const ui = {
     partOf: "Bagian dari",
     areasIn: "Kawasan di",
     comingSoon: "Segera hadir",
-    comingSoonNext: "Indeks provinsi ini belum dibuka. Buka Bali atau daftarkan bisnis yang belum ada.",
-    browseBali: "Buka Bali",
+    comingSoonNext:
+      "Wilayah ini belum punya listing publik. Tambah bisnis, atau minta pemberitahuan saat direktori dibuka.",
+    comingSoonUpdate: "Kirim email untuk kabar",
+    comingSoonSubject: "Pembaruan direktori nusa.business",
     addListing: "Tambah bisnis yang belum ada",
     claimListing: "Klaim listing yang sudah ada",
     claimTitle: "Klaim atau tambah listing — nusa.business",
@@ -284,8 +308,9 @@ const ui = {
     website: "Situs",
     sampleListing: "Listing contoh",
     ownerVerified: "Pemilik terverifikasi",
-    listedUnclaimed: "Belum diklaim",
+    listedUnclaimed: "Belum diklaim — klaim bisnis Anda",
     lastVerified: "Terakhir diverifikasi",
+    lastUpdated: "Diperbarui",
     suggestCorrection: "Usulkan koreksi",
     reportAbuse: "Laporkan listing ini",
     reportNote: "Apa yang perlu kami periksa?",
@@ -392,6 +417,9 @@ const ui = {
     supportOwnerH2: "Akun pemilik",
     supportOwner:
       "Pemilik membuat akun gratis, lalu klaim listing yang sudah ada atau tambah yang belum ada. Hak sunting baru aktif setelah kami menyetujui kepemilikan. Akun agen lapangan dan admin tetap memakai undangan.",
+    supportUpdatesH2: "Cakupan provinsi",
+    supportUpdates:
+      "Beberapa provinsi masih segera hadir. Kirim email ke updates@nusa.business, kami kabari saat katalog itu dibuka. Anda juga dapat menambah bisnis yang belum ada.",
     notFoundTitle: "Halaman tidak ditemukan — nusa.business",
     notFoundH1: "Halaman tidak ditemukan",
     notFoundLede:
@@ -401,7 +429,19 @@ const ui = {
     serverErrorLede:
       "Halaman ini tidak bisa dimuat sekarang. Cari bisnis, atau kembali ke beranda.",
     directoryUnavailable:
-      "Direktori sedang tidak tersedia. Coba lagi sebentar lagi, atau buka Bali.",
+      "Direktori sedang tidak tersedia. Coba lagi sebentar lagi, atau minta kabar.",
+    catShortcuts: "Jelajah kategori",
+    catFood: "Makanan",
+    catStays: "Penginapan",
+    catExperiences: "Pengalaman",
+    catTransport: "Transportasi",
+    catWellness: "Kebugaran",
+    trustHeading: "Bagaimana listing dijaga",
+    trustListings: "Listing direktori",
+    trustUpdated: "Pembaruan katalog terakhir",
+    trustVerified: "Informasi terverifikasi",
+    trustHow:
+      "nusa.business adalah direktori lokal publik. Agen lapangan mendaftarkan bisnis di lapangan. Pemilik klaim atau menambah listing secara gratis. Tidak ada komisi saat peluncuran. Halaman menampilkan kapan listing terakhir diperbarui dan kapan pemilik terverifikasi — ini bukan sertifikasi pemerintah.",
     backHome: "Kembali ke beranda",
     bookingPastDate: "Tanggal harus hari ini atau setelahnya.",
     bookingNeedEndDate: "Sewa membutuhkan tanggal selesai.",

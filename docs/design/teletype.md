@@ -8,6 +8,10 @@ marketplace skin, and not retro pastiche.
 This document is the spec. Implement from it directly — every colour, stack and
 rule needed is here.
 
+It governs the visual language across the whole public surface. For the content
+structure of the apex homepage specifically, see
+[homepage.md](homepage.md).
+
 ## The idea in one line
 
 A nested geographic directory printed on pulp, with botanical and terracotta

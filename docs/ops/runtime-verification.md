@@ -3,11 +3,11 @@
 **Cursor / agents must not deploy or change the VPS without explicit
 authorization.** This page is a read-only checklist.
 
-## Confirmed runtime (2026-09-09)
+## Confirmed runtime (2026-09-10)
 
-Authorized deploy recorded in [release-decision.md](./release-decision.md).
-Live supervisor is **Docker Compose** (`docker/compose.prod.yml`), not PM2.
-Loopback: api `4101`, web `4321`, portal `4103`. Data is volume
+Authorized deploy recorded in [release-decision.md](./release-decision.md)
+(`eaf4bc2`). Live supervisor is **Docker Compose** (`docker/compose.prod.yml`),
+not PM2. Loopback: api `4101`, web `4321`, portal `4103`. Data is volume
 `docker_api_data` → container `/data`. Hermes 2026-09-07 PM2 notes are
 historical.
 

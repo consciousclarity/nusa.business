@@ -16,10 +16,6 @@ describe("directory maps", () => {
     assert.match(src("apps/web/src/components/PlaceDirectory.astro"), /DirectoryMap/);
     assert.match(src("apps/web/src/pages/search.astro"), /DirectoryMap/);
     assert.match(src("apps/web/src/components/CategoryBrowse.astro"), /DirectoryMap/);
-    assert.match(
-      src("apps/web/src/pages/host/[label]/[...path].astro"),
-      /mapLocation/,
-    );
   });
 
   it("does not put a directory map on legal or error pages", () => {
@@ -33,5 +29,11 @@ describe("directory maps", () => {
     ]) {
       assert.doesNotMatch(src(file), /DirectoryMap/);
     }
+  });
+
+  it("keeps the listing page to a single map — the nearby-category one, not a second DirectoryMap", () => {
+    const listing = src("apps/web/src/pages/host/[label]/[...path].astro");
+    assert.doesNotMatch(listing, /<DirectoryMap/);
+    assert.match(listing, /data-nearby-map/);
   });
 });

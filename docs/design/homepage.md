@@ -354,7 +354,9 @@ C-series removed the debug resolver from public pages. It is `global.css` lines
 at lines 725–740 (≈60 bytes, leaving the `.kv` selectors they share). That lifts
 headroom to roughly **830 bytes**.
 
-Do **not** delete `.stack` or `.review-note` — each is still used once.
+`.review-note` was removed with it (dead after the listing page's reviews list
+was stripped down to just the submission form) for another ~40 bytes.
+Do **not** delete `.stack` — still used, in this file and elsewhere.
 
 ## Out of scope
 

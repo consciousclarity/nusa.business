@@ -24,8 +24,9 @@
 
   /* Fluid side gutter: tighter on phones, ~1.25rem on wide viewports */
   --page-gutter: clamp(0.85rem, 3.5vw, 1.25rem);
+  /* 70rem = 1120px at 16px root — wide index, still one measure */
   --page-measure: min(
-    78ch,
+    70rem,
     calc(100% - (2 * var(--page-gutter)) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))
   );
 }

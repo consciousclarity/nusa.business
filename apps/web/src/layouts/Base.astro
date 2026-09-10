@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import LayoutGrids from "../components/LayoutGrids.astro";
 import { nationHref } from "../lib/links";
 import { absoluteUrl, type JsonLd } from "../lib/seo";
 import {
@@ -77,6 +78,7 @@ const jsonLdBlocks = jsonLd
   </head>
   <body>
     <a class="skip-link" href="#main-content">{t(locale, "skipToContent")}</a>
+    <LayoutGrids />
     <header class="site-header">
       <a class="brand" href={homeHref}>nusa<span class="tld">.business</span></a>
       <nav aria-label={t(locale, "navPrimary")}>

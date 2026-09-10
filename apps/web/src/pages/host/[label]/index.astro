@@ -1,8 +1,11 @@
 ---
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
+import DirectoryMap from "../../../components/DirectoryMap.astro";
 import { apiOrNull } from "../../../lib/api";
 import { geoHref, tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
+import { geoView } from "../../../lib/geo-centroids";
+import { listingMarker, placeMarker, takeMarkers } from "../../../lib/map-markers";
 import {
   breadcrumbJsonLd,
   hostPath,
@@ -39,6 +42,8 @@ type IslandPayload = {
     categories: string[];
     status?: string;
     sample?: boolean;
+    lat?: number;
+    lng?: number;
   }[];
 };
 
@@ -55,6 +60,8 @@ type PlacePayload = {
     status?: string;
     sample?: boolean;
     fieldRegistered?: boolean;
+    lat?: number;
+    lng?: number;
   }[];
 };
 
@@ -178,6 +185,38 @@ const placeCanonical =
     place: placeData.place.slug,
     locale,
   });
+
+const islandFallback = islandData ? geoView(islandData.island.slug) : null;
+const islandMarkers = islandData
+  ? takeMarkers(
+      islandData.island.kind === "region"
+        ? (islandData.childProvinces ?? []).map((p) => {
+            const view = geoView(p.slug);
+            return placeMarker({
+              lat: view.lat,
+              lng: view.lng,
+              name: islandName(locale, p.slug, p.name),
+              href: tenantHref(req, { island: p.slug, locale }),
+            });
+          })
+        : islandData.businesses.map((b) => {
+            const place = placeById[b.placeId];
+            if (!place) return null;
+            return listingMarker({
+              lat: b.lat,
+              lng: b.lng,
+              name: b.name,
+              href: geoHref(req, {
+                island: islandData!.island.slug,
+                place,
+                places: islandData!.places,
+                slug: b.slug,
+                locale,
+              }),
+            });
+          }),
+    )
+  : [];
 ---
 
 {mode === "island" && islandData && (
@@ -241,6 +280,12 @@ const placeCanonical =
       </label>
       <button type="submit">{t(locale, "search")}</button>
     </form>
+
+    <DirectoryMap
+      label={t(locale, "directoryMap")}
+      markers={islandMarkers}
+      fallback={islandFallback}
+    />
 
     <section class="section">
       <h2>

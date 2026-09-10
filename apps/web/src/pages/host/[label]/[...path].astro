@@ -2,8 +2,10 @@
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import CategoryBrowse from "../../../components/CategoryBrowse.astro";
+import DirectoryMap from "../../../components/DirectoryMap.astro";
 import { api, apiOrNull, apiTry, browserApiOrigin } from "../../../lib/api";
 import { tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
+import { listingMarker, takeMarkers } from "../../../lib/map-markers";
 import { resolveFacetBrowse, searchQueryForBrowse } from "../../../lib/facet-browse";
 import {
   breadcrumbJsonLd,
@@ -369,6 +371,16 @@ const directionsLink = data
     })
   : null;
 const siteLink = data ? websiteHref(data.business.website) : null;
+const listingLocationMarkers =
+  data && "lat" in (data.business ?? {})
+    ? takeMarkers([
+        listingMarker({
+          lat: data.business.lat,
+          lng: data.business.lng,
+          name: data.business.name,
+        }),
+      ])
+    : [];
 const bookingToday = new Date().toISOString().slice(0, 10);
 const listingCopy = {
   reviewSubmitting: t(locale, "reviewSubmitting"),
@@ -825,6 +837,14 @@ if (hub && categoryParam) {
       </a>
     </p>
   </article>
+
+  {listingLocationMarkers.length > 0 && (
+    <DirectoryMap
+      label={t(locale, "mapLocation")}
+      markers={listingLocationMarkers}
+      compact
+    />
+  )}
 
   <div class="stack">
     <section class="section">

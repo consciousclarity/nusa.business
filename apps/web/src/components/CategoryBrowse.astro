@@ -1,6 +1,8 @@
 ---
 import { geoHref, tenantHref } from "../lib/links";
 import { inWhere, islandName, t, type Locale } from "../i18n/ui";
+import DirectoryMap from "./DirectoryMap.astro";
+import { listingMarker, takeMarkers } from "../lib/map-markers";
 import {
   categoryLabel,
   facetValueLabel,
@@ -20,6 +22,8 @@ export type BrowseListing = {
   categories: string[];
   status?: string;
   placeId?: string;
+  lat?: number;
+  lng?: number;
 };
 
 type Props = {
@@ -108,6 +112,17 @@ const hubHref = tenantHref(req, {
   area: area?.slug,
   locale,
 });
+
+const browseMarkers = takeMarkers(
+  listings.map((row) =>
+    listingMarker({
+      lat: row.lat,
+      lng: row.lng,
+      name: row.name,
+      href: listingHref(row),
+    }),
+  ),
+);
 ---
 
 <section class="lede">
@@ -127,6 +142,10 @@ const hubHref = tenantHref(req, {
     </p>
   )}
 </section>
+
+{!unavailable && (
+  <DirectoryMap label={t(locale, "directoryMap")} markers={browseMarkers} />
+)}
 
 <form class="section filter-bar browse-filters" method="get" action={formAction}>
   <p class="meta">{t(locale, "filters")}</p>

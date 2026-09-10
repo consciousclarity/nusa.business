@@ -233,6 +233,14 @@ describe("public performance budget (C12)", () => {
       "listing page must not import Leaflet through the bundler",
     );
     assert.match(src, /\/vendor\/leaflet\/leaflet\.js/);
+
+    const mapComponent = join(
+      root,
+      "apps/web/src/components/DirectoryMap.astro",
+    );
+    const mapSrc = readFileSync(mapComponent, "utf8");
+    assert.doesNotMatch(mapSrc, /from\s+["']leaflet|import\s+["']leaflet/);
+    assert.match(mapSrc, /\/vendor\/leaflet\/leaflet\.js/);
   });
 
   it("keeps built CSS under budget when dist is present", () => {

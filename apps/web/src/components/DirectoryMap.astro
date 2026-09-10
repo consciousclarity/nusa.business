@@ -1,0 +1,188 @@
+---
+import type { DirectoryMapMarker } from "../lib/map-markers";
+
+type Props = {
+  label: string;
+  markers: DirectoryMapMarker[];
+  fallback?: { lat: number; lng: number; zoom?: number } | null;
+  compact?: boolean;
+};
+
+const { label, markers, fallback = null, compact = false } = Astro.props as Props;
+const pins = markers.filter(
+  (m) => Number.isFinite(m.lat) && Number.isFinite(m.lng),
+);
+const show = pins.length > 0 || Boolean(fallback);
+const payload = JSON.stringify({
+  markers: pins,
+  fallback: fallback ?? null,
+});
+---
+
+{show && (
+  <section class:list={["section", "directory-map-block", { compact }]}>
+    <h2>{label}</h2>
+    <div
+      class="directory-map"
+      data-directory-map
+      data-payload={payload}
+      hidden
+      role="img"
+      aria-label={label}
+    ></div>
+  </section>
+)}
+
+<script>
+  // @ts-nocheck
+  const leafletJs = "/vendor/leaflet/leaflet.js";
+  const leafletCss = "/vendor/leaflet/leaflet.css";
+
+  function loadLeaflet() {
+    const w = window;
+    if (w.L) return Promise.resolve(w.L);
+    if (w.__nusaLeaflet) return w.__nusaLeaflet;
+    w.__nusaLeaflet = new Promise((resolve, reject) => {
+      if (!document.querySelector('link[href="' + leafletCss + '"]')) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = leafletCss;
+        document.head.appendChild(link);
+      }
+      const tag = document.createElement("script");
+      tag.src = leafletJs;
+      tag.onload = () => resolve(w.L);
+      tag.onerror = () => reject(new Error("leaflet failed to load"));
+      document.head.appendChild(tag);
+    });
+    return w.__nusaLeaflet;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function initMap(el) {
+    let payload = { markers: [], fallback: null };
+    try {
+      payload = JSON.parse(el.dataset.payload || "null") || payload;
+    } catch {
+      /* empty map */
+    }
+    const markers = Array.isArray(payload.markers) ? payload.markers : [];
+    const fallback = payload.fallback;
+
+    const io =
+      "IntersectionObserver" in window
+        ? new IntersectionObserver(
+            (entries) => {
+              if (entries.some((e) => e.isIntersecting)) {
+                io.disconnect();
+                void mount();
+              }
+            },
+            { rootMargin: "200px" },
+          )
+        : null;
+    if (io) io.observe(el);
+    else void mount();
+
+    function mount() {
+      return loadLeaflet()
+        .then((L) => {
+          el.hidden = false;
+          const map = L.map(el, {
+            scrollWheelZoom: false,
+            attributionControl: true,
+          });
+          L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution:
+              '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          }).addTo(map);
+          const bounds = [];
+          markers.forEach((m) => {
+            const listing = m.kind !== "place";
+            const marker = L.circleMarker([m.lat, m.lng], {
+              radius: listing ? 6 : 5,
+              color: listing ? "#1a29c4" : "#1a1c22",
+              fillColor: listing ? "#1a29c4" : "#1a1c22",
+              fillOpacity: listing ? 0.85 : 0.55,
+              weight: 1,
+            });
+            const title = escapeHtml(m.name);
+            const body = m.href
+              ? `<a href="${escapeHtml(m.href)}">${title}</a>`
+              : `<strong>${title}</strong>`;
+            marker.bindPopup(body);
+            marker.addTo(map);
+            bounds.push([m.lat, m.lng]);
+          });
+          if (bounds.length > 1) {
+            map.fitBounds(L.latLngBounds(bounds), {
+              padding: [24, 24],
+              maxZoom: 14,
+            });
+          } else if (bounds.length === 1) {
+            map.setView(bounds[0], fallback?.zoom || 14);
+          } else if (fallback) {
+            map.setView([fallback.lat, fallback.lng], fallback.zoom || 8);
+          } else {
+            map.setView([-2.5, 118], 5);
+          }
+          requestAnimationFrame(() => map.invalidateSize());
+        })
+        .catch(() => {
+          el.hidden = true;
+        });
+    }
+  }
+
+  function boot() {
+    document.querySelectorAll("[data-directory-map]").forEach((el) => {
+      if (el.dataset.mapReady === "1") return;
+      el.dataset.mapReady = "1";
+      initMap(el);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+</script>
+
+<style>
+  .directory-map-block.compact :global(h2) {
+    margin-bottom: 0.65rem;
+  }
+
+  .directory-map {
+    position: relative;
+    z-index: 0;
+    width: 100%;
+    height: min(22rem, 55vh);
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .directory-map-block.compact .directory-map {
+    height: min(16rem, 45vh);
+  }
+
+  .directory-map :global(.leaflet-container) {
+    width: 100%;
+    height: 100%;
+    font: inherit;
+    background: var(--paper-2);
+    position: absolute;
+    inset: 0;
+  }
+</style>

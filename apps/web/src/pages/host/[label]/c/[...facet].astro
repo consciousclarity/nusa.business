@@ -29,6 +29,8 @@ type BrowseListing = {
   summary: string;
   categories: string[];
   status?: string;
+  lat?: number;
+  lng?: number;
 };
 
 const label = Astro.params.label!;

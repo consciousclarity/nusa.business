@@ -19,6 +19,7 @@ import {
   getBusiness,
   getBusinessById,
   getBusinessDiscovery,
+  getIslandById,
   getIslandBySlug,
   getPlace,
   getStore,
@@ -193,34 +194,50 @@ app.get("/v1/tls-check", (c) => {
   return c.json({ error: "Unknown host" }, 404);
 });
 
-app.get("/v1/islands", (c) => c.json({ islands: listIslands() }));
+app.get("/v1/islands", (c) => {
+  const islands = listIslands();
+  return c.json({
+    islands,
+    provinces: islands.filter((i) => i.kind !== "region"),
+  });
+});
 
 app.get("/v1/islands/:island", (c) => {
   const island = getIslandBySlug(c.req.param("island"));
   if (!island) return c.json({ error: "Island not found" }, 404);
-  const places = listPlaces(island.slug);
+  const childProvinces =
+    island.kind === "region"
+      ? listIslands().filter(
+          (i) => i.kind !== "region" && i.region === (island.region ?? island.slug),
+        )
+      : [];
+  const places =
+    island.kind === "region"
+      ? []
+      : listPlaces(island.slug);
   const businesses = listBusinesses({ islandSlug: island.slug }).map(
     toPublicBusinessCard,
   );
-  return c.json({ island, places, businesses });
+  return c.json({ island, places, businesses, childProvinces });
 });
 
 app.get("/v1/islands/:island/places/:place", (c) => {
   const place = getPlace(c.req.param("island"), c.req.param("place"));
   if (!place) return c.json({ error: "Place not found" }, 404);
-  const island = getIslandBySlug(c.req.param("island"))!;
-  const islandPlaces = listPlaces(island.slug);
+  const home = getIslandById(place.islandId) ?? getIslandBySlug(c.req.param("island"));
+  if (!home) return c.json({ error: "Place not found" }, 404);
+  const islandPlaces = listPlaces(home.slug);
   const parent = place.parentPlaceId
     ? islandPlaces.find((p) => p.id === place.parentPlaceId)
     : undefined;
   const children = islandPlaces.filter((p) => p.parentPlaceId === place.id);
   const businesses = listBusinesses({
-    islandSlug: island.slug,
+    islandSlug: home.slug,
     placeSlug: place.slug,
     category: c.req.query("category") || undefined,
     q: c.req.query("q") || undefined,
   }).map(toPublicBusinessCard);
-  return c.json({ island, place, parent, children, businesses });
+  return c.json({ island: home, place, parent, children, businesses });
 });
 
 app.get("/v1/islands/:island/places/:place/businesses/:slug", (c) => {

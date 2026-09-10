@@ -20,8 +20,16 @@ const categoryParam = (Astro.url.searchParams.get("category") || "").trim();
 type HubPlace = NestablePlace & { name: string; summary: string };
 
 type IslandPayload = {
-  island: { slug: string; name: string; tagline: string; status?: string };
+  island: {
+    slug: string;
+    name: string;
+    tagline: string;
+    status?: string;
+    kind?: string;
+    region?: string;
+  };
   places: HubPlace[];
+  childProvinces?: { slug: string; name: string; tagline: string }[];
   businesses: {
     id: string;
     placeId: string;
@@ -68,6 +76,26 @@ if (parts.length === 1) {
 
 if ((mode === "island" && !islandData) || (mode === "place" && !placeData)) {
   return Astro.rewrite(withLocale("/404", locale));
+}
+
+if (mode === "island" && islandData && parts[0] !== islandData.island.slug) {
+  return Astro.redirect(
+    withLocale(hostPath({ island: islandData.island.slug }), locale),
+    301,
+  );
+}
+
+if (mode === "place" && placeData && parts[1] !== placeData.island.slug) {
+  return Astro.redirect(
+    withLocale(
+      hostPath({
+        island: placeData.island.slug,
+        place: placeData.place.slug,
+      }),
+      locale,
+    ),
+    301,
+  );
 }
 
 const islandHubLabel = islandData
@@ -215,29 +243,48 @@ const placeCanonical =
     </form>
 
     <section class="section">
-      <h2>{t(locale, "places")}</h2>
+      <h2>
+        {islandData.island.kind === "region"
+          ? t(locale, "provinces")
+          : t(locale, "regenciesCities")}
+      </h2>
       <ol class="index-list">
-        {islandData.places.map((place, i) => {
-          const parent = place.parentPlaceId
-            ? placeById[place.parentPlaceId]
-            : undefined;
+        {(islandData.island.kind === "region"
+          ? (islandData.childProvinces ?? []).map((p) => ({
+              slug: p.slug,
+              name: p.name,
+              summary: p.tagline,
+              type: "province",
+              id: p.slug,
+            }))
+          : islandData.places.filter(
+              (p) => p.type === "kabupaten" || p.type === "kota",
+            )
+        ).map((place, i) => {
+          const parent =
+            "parentPlaceId" in place && place.parentPlaceId
+              ? placeById[place.parentPlaceId as string]
+              : undefined;
+          const href =
+            islandData!.island.kind === "region"
+              ? tenantHref(req, { island: place.slug, locale })
+              : geoHref(req, {
+                  island: islandData!.island.slug,
+                  place: place as HubPlace,
+                  places: islandData!.places,
+                  locale,
+                });
           return (
             <li>
               <div class="index-row">
                 <span class="n">{String(i + 1).padStart(2, "0")}</span>
-                <a
-                  class="name"
-                  href={geoHref(req, {
-                    island: islandData!.island.slug,
-                    place,
-                    places: islandData!.places,
-                    locale,
-                  })}
-                >
+                <a class="name" href={href}>
                   {place.name}
                 </a>
                 <span class="rhs">
-                  {placeTypeLabel(locale, place.type)}
+                  {islandData!.island.kind === "region"
+                    ? t(locale, "province")
+                    : placeTypeLabel(locale, (place as HubPlace).type)}
                   {parent ? ` · ${parent.name}` : ""}
                 </span>
               </div>
@@ -247,6 +294,45 @@ const placeCanonical =
         })}
       </ol>
     </section>
+
+    {islandData.island.kind !== "region" &&
+      islandData.places.some((p) => p.type === "tourist_area") && (
+        <section class="section">
+          <h2>{t(locale, "areasIn")}</h2>
+          <ol class="index-list">
+            {islandData.places
+              .filter((p) => p.type === "tourist_area")
+              .map((place, i) => {
+                const parent = place.parentPlaceId
+                  ? placeById[place.parentPlaceId]
+                  : undefined;
+                return (
+                  <li>
+                    <div class="index-row">
+                      <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                      <a
+                        class="name"
+                        href={geoHref(req, {
+                          island: islandData!.island.slug,
+                          place,
+                          places: islandData!.places,
+                          locale,
+                        })}
+                      >
+                        {place.name}
+                      </a>
+                      <span class="rhs">
+                        {placeTypeLabel(locale, place.type)}
+                        {parent ? ` · ${parent.name}` : ""}
+                      </span>
+                    </div>
+                    <p class="index-desc">{place.summary}</p>
+                  </li>
+                );
+              })}
+          </ol>
+        </section>
+      )}
 
     <section class="section">
       <h2>{t(locale, "featured")}</h2>

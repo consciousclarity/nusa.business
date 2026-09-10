@@ -1,4 +1,5 @@
 import { canonicalizeCategory } from "@nusa/shared";
+import { buildGeography } from "./geo-seed.js";
 import { backfillListingCoords } from "./listing-coords.js";
 import type { DataStore } from "./types.js";
 
@@ -252,6 +253,120 @@ const MIGRATIONS: Migration[] = [
   {
     id: "2026-09-listing-coords",
     apply: (store) => backfillListingCoords(store),
+  },
+  {
+    id: "2026-09-indonesia-provinces",
+    apply: (store) => {
+      const { islands, places } = buildGeography();
+      let changed = false;
+      const staleIslandIds = new Set([
+        "isl-lombok",
+        "isl-java",
+        "isl-sumatra",
+        "isl-sulawesi",
+        "isl-kalimantan",
+      ]);
+
+      for (const row of islands) {
+        const existing = store.islands.find(
+          (i) => i.id === row.id || i.slug === row.slug,
+        );
+        if (!existing) {
+          store.islands.push({ ...row });
+          changed = true;
+          continue;
+        }
+        if (existing.id !== row.id) {
+          for (const place of store.places) {
+            if (place.islandId === existing.id) place.islandId = row.id;
+          }
+          existing.id = row.id;
+          changed = true;
+        }
+        if (existing.slug !== row.slug) {
+          existing.slug = row.slug;
+          changed = true;
+        }
+        if (existing.name !== row.name) {
+          existing.name = row.name;
+          changed = true;
+        }
+        if (existing.tagline !== row.tagline) {
+          existing.tagline = row.tagline;
+          changed = true;
+        }
+        if (existing.status !== row.status) {
+          existing.status = row.status;
+          changed = true;
+        }
+        if (existing.kind !== row.kind) {
+          existing.kind = row.kind;
+          changed = true;
+        }
+        if (existing.region !== row.region) {
+          existing.region = row.region;
+          changed = true;
+        }
+      }
+
+      for (const row of places) {
+        const existing =
+          store.places.find((p) => p.id === row.id) ||
+          store.places.find(
+            (p) => p.slug === row.slug && p.islandId === row.islandId,
+          ) ||
+          store.places.find(
+            (p) => p.slug === row.slug && staleIslandIds.has(p.islandId),
+          );
+        if (!existing) {
+          store.places.push({ ...row });
+          changed = true;
+          continue;
+        }
+        if (existing.id !== row.id) {
+          existing.id = row.id;
+          changed = true;
+        }
+        if (existing.islandId !== row.islandId) {
+          existing.islandId = row.islandId;
+          changed = true;
+        }
+        if (existing.slug !== row.slug) {
+          existing.slug = row.slug;
+          changed = true;
+        }
+        if (existing.name !== row.name) {
+          existing.name = row.name;
+          changed = true;
+        }
+        if (existing.type !== row.type) {
+          existing.type = row.type;
+          changed = true;
+        }
+        if (existing.parentPlaceId !== row.parentPlaceId) {
+          existing.parentPlaceId = row.parentPlaceId;
+          changed = true;
+        }
+        if (row.summary && existing.summary !== row.summary) {
+          existing.summary = row.summary;
+          changed = true;
+        }
+      }
+
+      const keepIslandIds = new Set(islands.map((i) => i.id));
+      const leftover = store.islands.filter(
+        (i) => i.slug === "lombok" && i.id === "isl-lombok",
+      );
+      for (const island of leftover) {
+        const remaining = store.places.some((p) => p.islandId === island.id);
+        if (!remaining && !keepIslandIds.has(island.id)) {
+          store.islands = store.islands.filter((i) => i.id !== island.id);
+          changed = true;
+        }
+      }
+
+      return changed;
+    },
   },
 ];
 

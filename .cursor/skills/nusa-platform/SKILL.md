@@ -13,8 +13,8 @@ description: >-
 Nusa.Business is an Indonesia-wide **local business directory** with nested hosts:
 
 - `nusa.business` — nation
-- `{island}.nusa.business` — island hub (e.g. `bali`)
-- `{kabupaten|kota}.{island}.nusa.business` — administrative place hub (e.g. `gianyar.bali`)
+- `{province}.nusa.business` — province hub (e.g. `bali`, `jawa-timur`)
+- `{kabupaten|kota}.{province}.nusa.business` — administrative place hub (e.g. `gianyar.bali`)
 - `/{area}/{slug}` — listing in a nested tourist area (e.g. `/ubud/warung-babi-guling-ibu-oka`)
 - `/{slug}` — listing attached directly to the kabupaten/kota
 

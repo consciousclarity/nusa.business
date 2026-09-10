@@ -23,7 +23,13 @@ export function FieldPage({ user }: { user: User }) {
   });
 
   useEffect(() => {
-    api<{ islands: Island[] }>("/v1/islands").then((d) => setIslands(d.islands));
+    api<{ islands: (Island & { kind?: string })[]; provinces?: Island[] }>(
+      "/v1/islands",
+    ).then((d) =>
+      setIslands(
+        (d.provinces ?? d.islands.filter((i) => i.kind !== "region")) as Island[],
+      ),
+    );
   }, []);
 
   useEffect(() => {

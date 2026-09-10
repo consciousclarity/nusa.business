@@ -22,6 +22,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Category taxonomy | `tests/shared.taxonomy.test.mjs` | Two-level Indonesia catalog: unique slugs, Events related pointers (no duplicate leaves), legacy label canonicalization, group filter expansion, Indonesian public labels. |
 | Directory facets | `tests/shared.facets.test.mjs`, `tests/db.facets.test.mjs`, `tests/api.search-facets.test.mjs`, `tests/web.facet-browse.test.mjs` | Allowlisted `/c/{category}/{facet}/{value}` index policy; listing match; seed filters; search query params; robots/canonical wiring; Indonesian public labels. |
 | Geo nesting | `tests/shared.geo-nesting.test.mjs`, `tests/db.geo-nesting.test.mjs` | Tourist areas nest under kabupaten/kota hosts (`gianyar.bali/ubud/{slug}`). Pins `geoNesting` + seed `parentPlaceId`. |
+| Provinces / kabupaten | `tests/db.provinces.test.mjs` | 38 provinces and 514 kabupaten/kota; Bali URLs unchanged; Java/Lombok aliases. |
 | Slugs | `tests/shared.host.test.mjs` | Slugs are URLs, and URLs are permanent once indexed. |
 | Auth tokens | `tests/api.auth.test.mjs` | Pins the properties that replaced the forgeable `dev.${id}` scheme: tamper rejection, expiry, and that the old format no longer verifies. |
 | Password hashing | `tests/db.password.test.mjs` | Salting, verification, malformed-hash safety, and the legacy-plaintext path that lets an old store still authenticate. |

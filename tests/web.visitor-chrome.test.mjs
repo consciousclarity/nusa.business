@@ -80,7 +80,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(listing, /Vendor store · 0% commission/);
     assert.doesNotMatch(listing, /data\.booking\.id/);
     assert.match(listing, /weekdayLabel\(locale, h\.day\)/);
-    assert.match(listing, /islandName\(locale, islandSlug/);
+    assert.match(listing, /islandName\(locale,/);
     assert.match(listing, /tenantAbsHref\(/);
     assert.match(listing, /nationAbsHref\(/);
     assert.match(listing, /const listingUrl = tenantAbsHref/);

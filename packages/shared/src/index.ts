@@ -28,6 +28,7 @@ const ROOT_SUFFIXES = ["nusa.business", "localhost", "127.0.0.1"];
 const ISLAND_SLUG_ALIASES: Record<string, string> = {
   jawa: "java",
   sumatera: "sumatra",
+  lombok: "nusa-tenggara-barat",
 };
 
 /** Map legacy island slugs to the canonical store/routing slug. */

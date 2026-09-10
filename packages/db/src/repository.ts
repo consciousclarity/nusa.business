@@ -174,9 +174,38 @@ export function listIslands() {
   return getStore().islands;
 }
 
+export function listProvinces() {
+  return getStore().islands.filter((i) => i.kind !== "region");
+}
+
+export function listRegionHubs() {
+  return getStore().islands.filter((i) => i.kind === "region");
+}
+
 export function getIslandBySlug(slug: string) {
   const canonical = canonicalizeIslandSlug(slug);
   return getStore().islands.find((i) => i.slug === canonical);
+}
+
+export function getIslandById(id: string) {
+  return getStore().islands.find((i) => i.id === id);
+}
+
+export function listChildProvinces(regionSlug: string) {
+  const canonical = canonicalizeIslandSlug(regionSlug);
+  const hub = getIslandBySlug(canonical);
+  const region = hub?.kind === "region" ? hub.region ?? hub.slug : canonical;
+  return listProvinces().filter((i) => i.region === region);
+}
+
+function childProvinceIds(island: ReturnType<typeof getIslandBySlug>) {
+  if (!island || island.kind !== "region") return null;
+  const region = island.region ?? island.slug;
+  return new Set(
+    getStore()
+      .islands.filter((i) => i.kind !== "region" && i.region === region)
+      .map((i) => i.id),
+  );
 }
 
 export function listPlaces(islandSlug?: string) {
@@ -184,15 +213,22 @@ export function listPlaces(islandSlug?: string) {
   if (!islandSlug) return store.places;
   const island = getIslandBySlug(islandSlug);
   if (!island) return [];
+  const children = childProvinceIds(island);
+  if (children) return store.places.filter((p) => children.has(p.islandId));
   return store.places.filter((p) => p.islandId === island.id);
 }
 
 export function getPlace(islandSlug: string, placeSlug: string) {
   const island = getIslandBySlug(islandSlug);
   if (!island) return undefined;
-  return getStore().places.find(
+  const store = getStore();
+  const direct = store.places.find(
     (p) => p.islandId === island.id && p.slug === placeSlug,
   );
+  if (direct) return direct;
+  const children = childProvinceIds(island);
+  if (!children) return undefined;
+  return store.places.find((p) => children.has(p.islandId) && p.slug === placeSlug);
 }
 
 function reviewAverageByBusiness(store: ReturnType<typeof getStore>) {

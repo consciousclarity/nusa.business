@@ -5,27 +5,64 @@ import { tenantHref } from "../lib/links";
 import { TAXONOMY, categoryLabel } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
 import { absoluteUrl, websiteJsonLd } from "../lib/seo";
-import { islandName, islandTagline, t, withLocale, type Locale } from "../i18n/ui";
+import {
+  islandName,
+  islandTagline,
+  regionName,
+  t,
+  withLocale,
+  type Locale,
+} from "../i18n/ui";
 
 const locale: Locale = Astro.locals.locale ?? "en";
 const req = Astro.request;
 const { context } = resolveRequestContext(req, Astro.url);
 
-// Island/place hosts are rewritten to /host/... by middleware — nation only here.
 if (context.kind !== "nation") {
   return Astro.redirect(withLocale("/", locale));
 }
 
+type Hub = {
+  slug: string;
+  name: string;
+  tagline: string;
+  status: string;
+  kind?: string;
+  region?: string;
+};
+
 const data = await apiTry<{
-  islands: { slug: string; name: string; tagline: string; status: string }[];
+  islands: Hub[];
+  provinces?: Hub[];
 }>("/v1/islands");
-const islands = data?.islands ?? [];
+const provinces = (data?.provinces ?? (data?.islands ?? []).filter((i) => i.kind !== "region")).filter(
+  (i) => i.status === "active",
+);
 const directoryUp = data !== null;
-const active = islands.filter((i) => i.status === "active");
 const baliHref = tenantHref(req, { island: "bali", locale });
 const nationUrl = absoluteUrl(req, withLocale("/", locale));
 const nationDescription = t(locale, "nationLede");
 const searchAction = withLocale("/search", locale);
+
+const regionOrder = [
+  "sumatra",
+  "java",
+  "bali",
+  "nusa-tenggara",
+  "kalimantan",
+  "sulawesi",
+  "maluku",
+  "papua",
+];
+const grouped = regionOrder
+  .map((region) => ({
+    region,
+    hubs: provinces.filter((p) => (p.region ?? p.slug) === region),
+  }))
+  .filter((g) => g.hubs.length > 0);
+const leftover = provinces.filter(
+  (p) => !regionOrder.includes(p.region ?? p.slug),
+);
 ---
 <Base
   title={t(locale, "nationTitle")}
@@ -58,7 +95,7 @@ const searchAction = withLocale("/search", locale);
       {t(locale, "island")}
       <select name="island">
         <option value="">{t(locale, "allIslands")}</option>
-        {active.map((island) => (
+        {provinces.map((island) => (
           <option value={island.slug}>{islandName(locale, island.slug, island.name)}</option>
         ))}
       </select>
@@ -76,42 +113,51 @@ const searchAction = withLocale("/search", locale);
   </form>
 
   <section class="section">
-    <h2>{t(locale, "islands")}</h2>
+    <h2>{t(locale, "provinces")}</h2>
+    <p class="prose">
+      {provinces.length} {t(locale, "provinces").toLowerCase()} · {t(locale, "regenciesCities")}
+    </p>
     {directoryUp ? (
-    <ol class="index-list">
-      {islands.map((island, i) => (
-        <li>
-          <div class="index-row">
-            <span class="n">{String(i + 1).padStart(2, "0")}</span>
-            {island.status === "active" ? (
-              <a class="name" href={tenantHref(req, { island: island.slug, locale })}>{islandName(locale, island.slug, island.name)}</a>
-            ) : (
-              <span class="name">{islandName(locale, island.slug, island.name)}</span>
-            )}
-            <span class="rhs">
-              {island.status === "active" ? (
-                <span>{island.slug}.nusa.business</span>
-              ) : (
-                <span class="stamp">{t(locale, "comingSoon")}</span>
-              )}
-            </span>
-          </div>
-          <p class="index-desc">
-            {island.status === "active"
-              ? islandTagline(locale, island.slug, island.tagline)
-              : t(locale, "comingSoonNext")}
-            {island.status !== "active" && (
-              <>
-                {" "}
-                <a href={baliHref}>{t(locale, "browseBali")}</a>
-              </>
-            )}
-          </p>
-        </li>
-      ))}
-    </ol>
+      grouped.map((group) => (
+        <section class="section">
+          <h3>{regionName(locale, group.region)}</h3>
+          <ol class="index-list">
+            {group.hubs.map((island, i) => (
+              <li>
+                <div class="index-row">
+                  <span class="n">{String(i + 1).padStart(2, "0")}</span>
+                  <a class="name" href={tenantHref(req, { island: island.slug, locale })}>
+                    {islandName(locale, island.slug, island.name)}
+                  </a>
+                  <span class="rhs">
+                    <span>{island.slug}.nusa.business</span>
+                  </span>
+                </div>
+                <p class="index-desc">
+                  {islandTagline(locale, island.slug, island.tagline)}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))
     ) : (
       <p class="prose">{t(locale, "directoryUnavailable")}</p>
+    )}
+    {leftover.length > 0 && (
+      <ol class="index-list">
+        {leftover.map((island, i) => (
+          <li>
+            <div class="index-row">
+              <span class="n">{String(i + 1).padStart(2, "0")}</span>
+              <a class="name" href={tenantHref(req, { island: island.slug, locale })}>
+                {islandName(locale, island.slug, island.name)}
+              </a>
+              <span class="rhs"><span>{island.slug}.nusa.business</span></span>
+            </div>
+          </li>
+        ))}
+      </ol>
     )}
     <p class="actions">
       <a class="cta" href={baliHref}>{t(locale, "openBali")}</a>

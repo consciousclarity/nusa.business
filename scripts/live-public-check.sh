@@ -4,10 +4,9 @@
 #
 #   bash scripts/live-public-check.sh
 #
-# Until the launch-readiness follow-up is deployed, homepage, listing /id,
-# sitemap, and robots.txt checks are expected to FAIL (old resolver chrome;
-# listing /id still English labels; sitemap still /host/; robots allows /search).
-# Listing API-origin checks may already pass.
+# After the 2026-09-09 GO deploy these checks are expected to pass.
+# Homepage visitor chrome, listing /id Indonesian labels, nested-host sitemap,
+# and robots Disallow /search are live gates — 0 fails means GO still holds.
 
 set -uo pipefail
 

@@ -3,6 +3,10 @@
 Captured 2026-09-07 from Hermes operator report. **No production changes
 performed from this note.** Paths and process managers only — no secrets.
 
+**Superseded 2026-09-09:** an authorized deploy confirmed **Compose** (not PM2)
+on loopback `4101` / `4321` / `4103`. See [release-decision.md](./release-decision.md).
+Leave the 2026-09-07 table below as historical.
+
 **Warden** is the Hermes agent that runs **on this VPS**. Coordinate backfill
 and other on-box store edits go to Warden — see
 [backfill-listing-coords.md](./backfill-listing-coords.md). Cursor agents must

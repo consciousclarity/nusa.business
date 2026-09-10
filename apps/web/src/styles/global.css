@@ -10,26 +10,22 @@
   --rule: #c9c6bc;
   --link: #9a3d18;
   --link-visited: #1a3d32;
-  --pine: #1a3d32;
+  --pine: var(--link-visited);
   --stamp: #9a3d18;
   --radius: 6px;
 
-  --sans: ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
+  --sans: ui-sans-serif, system-ui, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --serif: "Iowan Old Style", Palatino, Georgia, ui-serif, serif;
 
   --step--1: 0.81rem;
-  --step-0: 1.0625rem;
-  --step-1: 1.0625rem;
+  --step-0: 17px;
+  --step-1: 17px;
   --step-2: 1.31rem;
   --step-3: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
 
   --page-gutter: clamp(0.85rem, 3.5vw, 1.25rem);
-  --page-measure: min(
-    78ch,
-    calc(100% - (2 * var(--page-gutter)) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))
-  );
+  --page-measure: min(78ch, calc(100% - (2 * var(--page-gutter)) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -42,7 +38,6 @@
     --rule: #34363c;
     --link: #e08a62;
     --link-visited: #8fbfa8;
-    --pine: #8fbfa8;
     --stamp: #e08a62;
   }
 }
@@ -56,7 +51,6 @@
   --rule: #34363c;
   --link: #e08a62;
   --link-visited: #8fbfa8;
-  --pine: #8fbfa8;
   --stamp: #e08a62;
 }
 
@@ -610,13 +604,6 @@ button {
 button:hover {
   background: var(--link);
   border-color: var(--link);
-}
-
-.chip.is-active,
-.chip[aria-pressed="true"] {
-  background: var(--pine);
-  border-color: var(--pine);
-  color: var(--paper);
 }
 
 label {

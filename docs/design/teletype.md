@@ -51,7 +51,7 @@ hex `#1a3d32` so pins stay readable on OSM’s light tiles in both themes.
   --rule:         #c9c6bc;  /* hairlines */
   --link:         #9a3d18;  /* terracotta — unvisited links */
   --link-visited: #1a3d32;  /* botanical green */
-  --pine:         #1a3d32;  /* botanical — CTA, focus, map, active chips */
+  --pine:         var(--link-visited); /* botanical — CTA, focus, map, chips */
   --stamp:        #9a3d18;  /* terracotta — status flags */
   --radius:      6px;      /* 4–8px corners; never pills */
 }
@@ -81,8 +81,8 @@ in the latter two.
 ```
 --paper #17181c   --paper-2 #1f2126   --ink #e4e2da
 --ink-soft #b4b3ab   --ink-faint #9c9a92   --rule #34363c
---link #e08a62   --link-visited #8fbfa8   --pine #8fbfa8
---stamp #e08a62
+--link #e08a62   --link-visited #8fbfa8   --stamp #e08a62
+/* --pine follows --link-visited from :root */
 ```
 
 `body` must set `background: var(--paper)` explicitly.
@@ -98,9 +98,8 @@ at metadata size.
 performance budget forbids them. Use a high-quality **system stack**.
 
 ```css
---sans: ui-sans-serif, system-ui, "Segoe UI", Arial, sans-serif;
---mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-        "Liberation Mono", monospace;
+  --sans: ui-sans-serif, system-ui, sans-serif;
+--mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 --serif: "Iowan Old Style", Palatino, Georgia, ui-serif, serif;
 ```
 
@@ -120,8 +119,8 @@ Scale (only these steps):
 
 ```
 --step--1: 0.81rem     labels, metadata, table text
---step-0:  1.0625rem   body default (~17px)
---step-1:  1.0625rem   prose, h3
+--step-0:  17px        body default
+--step-1:  17px        prose, h3
 --step-2:  1.31rem     wordmark
 --step-3:  clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem)   reserved, use sparingly
 ```

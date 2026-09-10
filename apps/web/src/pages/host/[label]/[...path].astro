@@ -1416,8 +1416,8 @@ if (hub && categoryParam) {
         layer.addLayer(
           L.circleMarker([n.business.lat, n.business.lng], {
             radius: 6,
-            color: "#1a29c4",
-            fillColor: "#1a29c4",
+            color: "#1a3d32",
+            fillColor: "#1a3d32",
             fillOpacity: 0.85,
             weight: 1,
           }).bindPopup(
@@ -1558,8 +1558,8 @@ if (hub && categoryParam) {
 
   .chip.is-active,
   .chip[aria-pressed="true"] {
-    background: var(--ink);
-    border-color: var(--ink);
+    background: var(--pine);
+    border-color: var(--pine);
     color: var(--paper);
   }
 
@@ -1573,6 +1573,7 @@ if (hub && categoryParam) {
     width: 100%;
     height: min(22rem, 55vh);
     border: 1px solid var(--rule);
+    border-radius: var(--radius);
     background: var(--paper-2);
     overflow: hidden;
     isolation: isolate;

@@ -107,8 +107,8 @@ const payload = JSON.stringify({
             const listing = m.kind !== "place";
             const marker = L.circleMarker([m.lat, m.lng], {
               radius: listing ? 6 : 5,
-              color: listing ? "#1a29c4" : "#1a1c22",
-              fillColor: listing ? "#1a29c4" : "#1a1c22",
+              color: listing ? "#1a3d32" : "#1a1c22",
+              fillColor: listing ? "#1a3d32" : "#1a1c22",
               fillOpacity: listing ? 0.85 : 0.55,
               weight: 1,
             });
@@ -167,6 +167,7 @@ const payload = JSON.stringify({
     height: min(22rem, 55vh);
     min-height: 16rem;
     border: 1px solid var(--rule);
+    border-radius: var(--radius);
     background: var(--paper-2);
     overflow: hidden;
     isolation: isolate;

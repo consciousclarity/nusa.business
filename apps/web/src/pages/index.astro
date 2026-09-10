@@ -39,7 +39,6 @@ const provinces = (data?.provinces ?? (data?.islands ?? []).filter((i) => i.kind
   (i) => i.status === "active",
 );
 const directoryUp = data !== null;
-const baliHref = tenantHref(req, { island: "bali", locale });
 const nationUrl = absoluteUrl(req, withLocale("/", locale));
 const nationDescription = t(locale, "nationLede");
 const searchAction = withLocale("/search", locale);
@@ -160,8 +159,7 @@ const leftover = provinces.filter(
       </ol>
     )}
     <p class="actions">
-      <a class="cta" href={baliHref}>{t(locale, "openBali")}</a>
-      <a class="cta secondary" href={withLocale("/claim", locale)}>
+      <a class="cta" href={withLocale("/claim", locale)}>
         {t(locale, "addListing")}
       </a>
     </p>

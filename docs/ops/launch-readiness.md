@@ -1,7 +1,8 @@
 # Launch readiness
 
-Inspected against `main` at `bfd899c` (2026-09-09), then deployed as
-`e3cb8c53bef6a8061088e9c3cc56761aab0d77dd` after human authorization.
+Inspected against `main` at `bfd899c` (2026-09-09), deployed as
+`e3cb8c53bef6a8061088e9c3cc56761aab0d77dd`, then promoted 2026-09-10 to
+`eaf4bc219d614033127d9b6af00c7dade1caab86` after human authorization.
 C01–C14 landed in PRs #23–#39; this follow-up (booking rules, visitor chrome,
 Indonesian `/id` labels including island names, HTML 404/500, portal
 demo-bundle grep, nested-host sitemap, robots search Disallow) is **live**.

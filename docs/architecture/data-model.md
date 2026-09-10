@@ -8,7 +8,9 @@ Production target: PostgreSQL + PostGIS (`packages/db/src/schema.sql.ts`).
 
 ### Island
 
-`id`, `slug`, `name`, `tagline`, `status` (`active` | `coming_soon`)
+`id`, `slug`, `name`, `tagline`, `status` (`active` | `coming_soon`), optional `kind` (`province` | `region`), optional `region` (java / sumatra / …)
+
+The Island row is the **province hub** (`aceh.nusa.business`, `jawa-timur.nusa.business`). Geographic island groups (`java.nusa.business`) are `kind: region` and list child provinces.
 
 ### Place
 
@@ -42,5 +44,6 @@ multi-vendor shop linked to a business; `commissionPercent` default `0`; `produc
 ## Invariants
 
 - `(islandId, place.slug)` unique  
+- 38 provinces and 514 kabupaten/kota in seed + production bootstrap geography  
 - `(placeId, business.slug)` unique  
 - Approving a claim sets business `status=claimed` and `ownerUserId`  

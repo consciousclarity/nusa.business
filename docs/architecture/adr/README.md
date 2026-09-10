@@ -8,5 +8,6 @@
 | [004](./004-admin-host-nested-path.md) | Administrative host + nested area path | Accepted |
 | [005](./005-category-taxonomy.md) | Two-level Indonesia category taxonomy | Accepted |
 | [006](./006-indexable-facet-urls.md) | Indexable category facet URLs | Accepted |
+| [007](./007-province-hosts.md) | Province hosts + 38/514 geography | Accepted |
 
 Add new ADRs as `00N-slug.md` with Status: Proposed | Accepted | Superseded.

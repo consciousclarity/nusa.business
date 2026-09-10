@@ -8,26 +8,28 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  LEGACY_REGION_HOST_SLUGS,
   OBSOLETE_PLACE_WILDCARD_ISLANDS,
   PLACE_WILDCARD_ISLANDS,
+  PROVINCE_HOST_SLUGS,
   placeWildcardName,
 } from "../scripts/lib/place-wildcard-islands.mjs";
 
 describe("place wildcard islands", () => {
-  it("covers every current seed island slug (java/sumatra, not jawa/sumatera)", () => {
-    assert.deepEqual(
-      [...PLACE_WILDCARD_ISLANDS].sort(),
-      [
-        "bali",
-        "java",
-        "kalimantan",
-        "lombok",
-        "maluku",
-        "papua",
-        "sulawesi",
-        "sumatra",
-      ],
-    );
+  it("covers every province slug plus legacy region hubs", () => {
+    assert.equal(PROVINCE_HOST_SLUGS.length, 38);
+    for (const slug of PROVINCE_HOST_SLUGS) {
+      assert.ok(
+        PLACE_WILDCARD_ISLANDS.includes(slug),
+        `missing province wildcard ${slug}`,
+      );
+    }
+    for (const slug of LEGACY_REGION_HOST_SLUGS) {
+      assert.ok(
+        PLACE_WILDCARD_ISLANDS.includes(slug),
+        `missing legacy hub wildcard ${slug}`,
+      );
+    }
     assert.ok(!PLACE_WILDCARD_ISLANDS.includes("jawa"));
     assert.ok(!PLACE_WILDCARD_ISLANDS.includes("sumatera"));
   });

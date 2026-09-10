@@ -36,7 +36,7 @@ describe("parseHost", () => {
     });
   });
 
-  it("canonicalizes legacy island slugs (jawa→java, sumatera→sumatra)", () => {
+  it("canonicalizes legacy island slugs (jawa→java, sumatera→sumatra, lombok→ntb)", () => {
     assert.deepEqual(parseHost("java.nusa.business"), {
       kind: "island",
       island: "java",
@@ -54,6 +54,15 @@ describe("parseHost", () => {
       kind: "place",
       place: "medan",
       island: "sumatra",
+    });
+    assert.deepEqual(parseHost("lombok.nusa.business"), {
+      kind: "island",
+      island: "nusa-tenggara-barat",
+    });
+    assert.deepEqual(parseHost("lombok-utara.lombok.nusa.business"), {
+      kind: "place",
+      place: "lombok-utara",
+      island: "nusa-tenggara-barat",
     });
   });
 

@@ -31,7 +31,7 @@ You do not need to remember to file things. When you brainstorm with Cursor (“
 | Idea | Status | Updated |
 |---|---|---|
 | [Listing discovery: same address, similar, nearby map](./2026-09-08-listing-nearby-discovery.md) | `exploring` | 2026-09-09 |
-| [Going deeper than place.island hosts](./2026-09-08-geo-deeper-than-host.md) | `done` | 2026-09-09 |
+| [Complete 38 provinces and 514 kabupaten/kota](./2026-09-10-complete-provinces.md) | `done` | 2026-09-10 |
 | [Monetization & advertising (Nusa-adapted)](./2026-09-07-monetization-passive-income.md) | `exploring` | 2026-09-07 |
 | [Shared brainstorm memory (multi-tool)](./2026-09-07-shared-brainstorm-memory.md) | `decided` | 2026-09-07 |
 | [Complete listing profile](./2026-09-07-complete-listing-profile.md) | `exploring` | 2026-09-07 |

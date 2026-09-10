@@ -6,7 +6,7 @@ Read this before changing code. Detailed docs live in [`docs/`](docs/README.md).
 
 Indonesia-wide local business directory with nested geo hosts:
 
-`nusa.business` → `{island}.nusa.business` → `{kabupaten}.{island}.nusa.business` → `/{area}/{business-slug}`
+`nusa.business` → `{province}.nusa.business` → `{kabupaten}.{province}.nusa.business` → `/{area}/{business-slug}`
 
 Prototype product: [bali.business](https://bali.business) (WordPress). This repo is a greenfield OSS rebuild — the same **capabilities**, none of the WordPress.
 

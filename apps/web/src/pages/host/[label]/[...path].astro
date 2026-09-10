@@ -55,10 +55,48 @@ const islandDetail = await apiOrNull<{
   places: HubPlace[];
 }>(`/v1/islands/${islandSlug}`);
 if (!islandDetail) return Astro.rewrite(withLocale("/404", locale));
-const islandLabel = islandName(locale, islandSlug!, islandDetail.island.name);
 
-const hostPlace = islandDetail.places.find((p) => p.slug === hostPlaceSlug);
-if (!hostPlace) return Astro.rewrite(withLocale("/404", locale));
+let hostPlace = islandDetail.places.find((p) => p.slug === hostPlaceSlug);
+const canonicalIsland = islandDetail.island;
+
+if (!hostPlace) {
+  const resolved = await apiOrNull<{
+    island: { slug: string; name: string };
+    place: HubPlace;
+    parent?: HubPlace | null;
+    children?: HubPlace[];
+  }>(`/v1/islands/${islandSlug}/places/${hostPlaceSlug}`);
+  if (!resolved) return Astro.rewrite(withLocale("/404", locale));
+  const rest = pathParts.join("/");
+  return Astro.redirect(
+    withLocale(
+      seoHostPath({
+        island: resolved.island.slug,
+        place: resolved.place.slug,
+        slug: rest || undefined,
+      }),
+      locale,
+    ),
+    301,
+  );
+}
+
+if (canonicalIsland.slug !== islandSlug) {
+  const rest = pathParts.join("/");
+  return Astro.redirect(
+    withLocale(
+      seoHostPath({
+        island: canonicalIsland.slug,
+        place: hostPlaceSlug,
+        slug: rest || undefined,
+      }),
+      locale,
+    ),
+    301,
+  );
+}
+
+const islandLabel = islandName(locale, canonicalIsland.slug, canonicalIsland.name);
 
 const placesById = Object.fromEntries(
   islandDetail.places.map((p) => [p.id, p]),

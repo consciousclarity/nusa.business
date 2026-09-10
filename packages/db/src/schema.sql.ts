@@ -10,7 +10,9 @@ CREATE TABLE islands (
   slug TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   tagline TEXT NOT NULL,
-  status TEXT NOT NULL
+  status TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'province', -- province | region
+  region TEXT
 );
 
 CREATE TABLE places (

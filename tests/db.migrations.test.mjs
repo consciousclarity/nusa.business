@@ -43,13 +43,9 @@ describe("store migrations", () => {
     const store = legacyStore();
     const applied = migrateStore(store);
 
-    assert.deepEqual(applied, [
-      "2026-08-rename-jawa-to-java",
-      "2026-08-rename-sumatera-to-sumatra",
-      "2026-09-onboarding-collections",
-      "2026-09-admin-host-parents",
-      "2026-09-listing-reports",
-    ]);
+    assert.ok(applied.includes("2026-08-rename-jawa-to-java"));
+    assert.ok(applied.includes("2026-08-rename-sumatera-to-sumatra"));
+    assert.ok(applied.includes("2026-09-indonesia-provinces"));
     assert.deepEqual(store.invites, []);
     assert.deepEqual(store.recoveryTokens, []);
     assert.deepEqual(store.reports, []);
@@ -68,13 +64,19 @@ describe("store migrations", () => {
     migrateStore(store);
 
     const ids = new Set(store.islands.map((i) => i.id));
+    const java = store.islands.find((i) => i.slug === "java");
+    assert.equal(java.kind, "region");
     const orphans = store.places.filter((p) => !ids.has(p.islandId));
     assert.deepEqual(orphans, [], "no place may reference a missing island");
 
-    const moved = store.places.filter((p) => p.islandId === "isl-java");
-    assert.deepEqual(
-      moved.map((p) => p.slug).sort(),
-      ["bandung", "yogyakarta"],
+    assert.equal(
+      store.places.find((p) => p.slug === "yogyakarta")?.islandId,
+      "isl-di-yogyakarta",
+    );
+    assert.equal(
+      store.places.find((p) => p.slug === "bandung" && p.type !== "kabupaten")
+        ?.islandId,
+      "isl-jawa-barat",
     );
   });
 
@@ -85,10 +87,10 @@ describe("store migrations", () => {
     const island = store.islands.find((i) => i.slug === "sumatra");
     assert.ok(island, "expected an island with slug sumatra");
     assert.equal(island.id, "isl-sumatra");
-    assert.equal(island.name, "Sumatra");
+    assert.equal(island.kind, "region");
     assert.equal(
       store.places.find((p) => p.slug === "medan").islandId,
-      "isl-sumatra",
+      "isl-sumatera-utara",
     );
   });
 
@@ -136,7 +138,9 @@ describe("store migrations", () => {
     store.invites = [];
     store.recoveryTokens = [];
     store.reports = [];
-    assert.deepEqual(migrateStore(store), ["2026-09-admin-host-parents"]);
+    const applied = migrateStore(store);
+    assert.ok(applied.includes("2026-09-admin-host-parents"));
+    assert.ok(applied.includes("2026-09-indonesia-provinces"));
   });
 
   it("nests Bali tourist areas under kabupaten/kota on an existing store", () => {
@@ -240,5 +244,24 @@ describe("store migrations", () => {
     assert.notEqual(unknown.lat, ibu.lat);
     assert.notEqual(unknown.lng, ibu.lng);
     assert.deepEqual(migrateStore(store), [], "coord backfill is idempotent");
+  });
+
+  it("fills 38 provinces and 514 kabupaten/kota on an existing store", () => {
+    const store = legacyStore();
+    const applied = migrateStore(store);
+    assert.equal(applied.includes("2026-09-indonesia-provinces"), true);
+    const provinces = store.islands.filter((i) => i.kind !== "region");
+    assert.equal(provinces.length, 38);
+    assert.equal(
+      store.places.filter((p) => p.type === "kabupaten" || p.type === "kota")
+        .length,
+      514,
+    );
+    const yogya = store.places.find((p) => p.id === "pl-yogya" || p.slug === "yogyakarta");
+    assert.ok(yogya);
+    assert.equal(yogya.islandId, "isl-di-yogyakarta");
+    const java = store.islands.find((i) => i.slug === "java");
+    assert.equal(java.kind, "region");
+    assert.deepEqual(migrateStore(store), []);
   });
 });

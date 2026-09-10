@@ -13,12 +13,16 @@ description: >-
 
 ```
 nation:  nusa.business | localhost
-island:  {island}.nusa.business
-admin:   {kabupaten|kota}.{island}.nusa.business
-area:    {kabupaten|kota}.{island}.nusa.business/{area}
-biz:     {kabupaten|kota}.{island}.nusa.business/{area}/{slug}
-         or {kabupaten|kota}.{island}.nusa.business/{slug}
+island:  {province}.nusa.business
+admin:   {kabupaten|kota}.{province}.nusa.business
+area:    {kabupaten|kota}.{province}.nusa.business/{area}
+biz:     {kabupaten|kota}.{province}.nusa.business/{area}/{slug}
+         or {kabupaten|kota}.{province}.nusa.business/{slug}
 ```
+
+The `Island` row is a **province** (38) or a **region hub** (Java, Sumatra, …).
+See [ADR-007](../../docs/architecture/adr/007-province-hosts.md). `lombok`
+aliases to `nusa-tenggara-barat`. `{place}.java` 301s to the owning province.
 
 `parseHost()` still accepts at most two labels. Nested tourist areas are
 **path**, not a third DNS label. `geoNesting()` in `packages/shared/src/geo-urls.ts`

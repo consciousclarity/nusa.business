@@ -6,12 +6,18 @@ import type {
   UserRole,
 } from "@nusa/shared";
 
+export type IslandKind = "province" | "region";
+
 export type Island = {
   id: string;
   slug: string;
   name: string;
   tagline: string;
   status: "active" | "coming_soon";
+  /** province = host parent; region = Java/Sumatra-style grouping hub */
+  kind?: IslandKind;
+  /** Geographic group: java, sumatra, bali, nusa-tenggara, … */
+  region?: string;
 };
 
 export type Place = {

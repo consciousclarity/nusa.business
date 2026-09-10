@@ -7,8 +7,10 @@ Parsed by `parseHost(hostHeader)`:
 | Host | Context |
 |---|---|
 | `nusa.business` | nation |
-| `bali.nusa.business` | island=`bali` |
+| `bali.nusa.business` | island=`bali` (Bali province) |
 | `gianyar.bali.nusa.business` | place=`gianyar`, island=`bali` |
+| `jawa-timur.nusa.business` | island=`jawa-timur` (province) |
+| `java.nusa.business` | island=`java` (region hub) |
 | `gianyar.bali.nusa.business/ubud` | same host; path is nested tourist area |
 | other | unknown |
 

@@ -20,16 +20,13 @@ const payload = JSON.stringify({
 ---
 
 {show && (
-  <section class:list={["section", "directory-map-block", { compact }]}>
+  <section
+    class:list={["section", "directory-map-block", { compact }]}
+    data-directory-map
+    data-payload={payload}
+  >
     <h2>{label}</h2>
-    <div
-      class="directory-map"
-      data-directory-map
-      data-payload={payload}
-      hidden
-      role="img"
-      aria-label={label}
-    ></div>
+    <div class="directory-map" data-map-pane role="img" aria-label={label}></div>
   </section>
 )}
 
@@ -66,10 +63,12 @@ const payload = JSON.stringify({
       .replace(/"/g, "&quot;");
   }
 
-  function initMap(el) {
+  function initMap(root) {
+    const el = root.querySelector("[data-map-pane]");
+    if (!el) return;
     let payload = { markers: [], fallback: null };
     try {
-      payload = JSON.parse(el.dataset.payload || "null") || payload;
+      payload = JSON.parse(root.dataset.payload || "null") || payload;
     } catch {
       /* empty map */
     }
@@ -88,13 +87,12 @@ const payload = JSON.stringify({
             { rootMargin: "200px" },
           )
         : null;
-    if (io) io.observe(el);
+    if (io) io.observe(root);
     else void mount();
 
     function mount() {
       return loadLeaflet()
         .then((L) => {
-          el.hidden = false;
           const map = L.map(el, {
             scrollWheelZoom: false,
             attributionControl: true,
@@ -137,7 +135,7 @@ const payload = JSON.stringify({
           requestAnimationFrame(() => map.invalidateSize());
         })
         .catch(() => {
-          el.hidden = true;
+          el.replaceChildren();
         });
     }
   }
@@ -162,22 +160,24 @@ const payload = JSON.stringify({
     margin-bottom: 0.65rem;
   }
 
-  .directory-map {
+  .directory-map-block :global(.directory-map) {
     position: relative;
     z-index: 0;
     width: 100%;
     height: min(22rem, 55vh);
+    min-height: 16rem;
     border: 1px solid var(--rule);
     background: var(--paper-2);
     overflow: hidden;
     isolation: isolate;
   }
 
-  .directory-map-block.compact .directory-map {
+  .directory-map-block.compact :global(.directory-map) {
     height: min(16rem, 45vh);
+    min-height: 12rem;
   }
 
-  .directory-map :global(.leaflet-container) {
+  .directory-map-block :global(.leaflet-container) {
     width: 100%;
     height: 100%;
     font: inherit;

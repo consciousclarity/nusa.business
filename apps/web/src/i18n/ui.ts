@@ -46,6 +46,9 @@ const ui = {
     businessesIn: "Businesses in",
     partOf: "Part of",
     areasIn: "Areas in",
+    comingSoon: "Coming soon",
+    comingSoonNext: "This province is not open for browsing yet. Open Bali or add a missing business.",
+    browseBali: "Browse Bali",
     addListing: "Add a missing business",
     claimListing: "Claim an existing listing",
     claimTitle: "Claim or add a listing — nusa.business",
@@ -193,7 +196,7 @@ const ui = {
     serverErrorLede:
       "This page could not be loaded. Search for a business, or go back to the homepage.",
     directoryUnavailable:
-      "The directory is temporarily unavailable. Try again in a moment.",
+      "The directory is temporarily unavailable. Try again in a moment, or browse Bali.",
     backHome: "Back to homepage",
     bookingPastDate: "Date must be today or later.",
     bookingNeedEndDate: "Rentals need an end date.",
@@ -243,6 +246,9 @@ const ui = {
     businessesIn: "Bisnis di",
     partOf: "Bagian dari",
     areasIn: "Kawasan di",
+    comingSoon: "Segera hadir",
+    comingSoonNext: "Indeks provinsi ini belum dibuka. Buka Bali atau daftarkan bisnis yang belum ada.",
+    browseBali: "Buka Bali",
     addListing: "Tambah bisnis yang belum ada",
     claimListing: "Klaim listing yang sudah ada",
     claimTitle: "Klaim atau tambah listing — nusa.business",
@@ -391,7 +397,7 @@ const ui = {
     serverErrorLede:
       "Halaman ini tidak bisa dimuat sekarang. Cari bisnis, atau kembali ke beranda.",
     directoryUnavailable:
-      "Direktori sedang tidak tersedia. Coba lagi sebentar lagi.",
+      "Direktori sedang tidak tersedia. Coba lagi sebentar lagi, atau buka Bali.",
     backHome: "Kembali ke beranda",
     bookingPastDate: "Tanggal harus hari ini atau setelahnya.",
     bookingNeedEndDate: "Sewa membutuhkan tanggal selesai.",

@@ -205,6 +205,15 @@ const placeCanonical =
       <p class="prose">{islandTagline(locale, islandData.island.slug, islandData.island.tagline)}</p>
     </section>
 
+    {islandData.island.status === "coming_soon" && (
+      <p class="banner">
+        {t(locale, "comingSoonNext")}{" "}
+        <a href={tenantHref(req, { island: "bali", locale })}>
+          {t(locale, "browseBali")}
+        </a>
+      </p>
+    )}
+
     <form
       class="section filter-bar"
       method="get"

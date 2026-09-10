@@ -26,7 +26,15 @@ const payload = JSON.stringify({
     data-payload={payload}
   >
     <h2>{label}</h2>
-    <div class="directory-map" data-map-pane role="img" aria-label={label}></div>
+    <div
+      class="directory-map"
+      data-map-pane
+      role="img"
+      aria-label={label}
+      style={compact
+        ? "position:relative;width:100%;height:16rem;max-height:45vh;border:1px solid var(--rule);background:var(--paper-2);overflow:hidden"
+        : "position:relative;width:100%;height:22rem;max-height:55vh;border:1px solid var(--rule);background:var(--paper-2);overflow:hidden"}
+    ></div>
   </section>
 )}
 
@@ -154,35 +162,3 @@ const payload = JSON.stringify({
     boot();
   }
 </script>
-
-<style>
-  .directory-map-block.compact :global(h2) {
-    margin-bottom: 0.65rem;
-  }
-
-  .directory-map-block :global(.directory-map) {
-    position: relative;
-    z-index: 0;
-    width: 100%;
-    height: min(22rem, 55vh);
-    min-height: 16rem;
-    border: 1px solid var(--rule);
-    background: var(--paper-2);
-    overflow: hidden;
-    isolation: isolate;
-  }
-
-  .directory-map-block.compact :global(.directory-map) {
-    height: min(16rem, 45vh);
-    min-height: 12rem;
-  }
-
-  .directory-map-block :global(.leaflet-container) {
-    width: 100%;
-    height: 100%;
-    font: inherit;
-    background: var(--paper-2);
-    position: absolute;
-    inset: 0;
-  }
-</style>

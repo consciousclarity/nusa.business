@@ -47,7 +47,12 @@ Cursor chat is **not** project memory. When brainstorming product or platform id
 
 ## Skills
 
-Project skills in [`.cursor/skills/`](.cursor/skills/) — use them for domain workflows (geo tenancy, field ops, capability map, ideas inbox, release).
+Project skills — use them for domain workflows (geo tenancy, field ops, capability map, ideas inbox, release):
+
+- Cursor reads [`.cursor/skills/`](.cursor/skills/) and [`.cursor/rules/`](.cursor/rules/).
+- Claude Code reads [`.claude/skills/`](.claude/skills/) and [`.claude/rules/`](.claude/rules/), plus `CLAUDE.md` (which imports this file). It does **not** read `.cursor/`.
+
+The two skill trees hold the same content today. Keep them in sync, or drop one once the toolchain settles.
 
 ## Commands
 

@@ -5,8 +5,11 @@ Hostinger box) pastes the command below.
 
 Live discovery (`GET .../businesses/:slug/discovery`) returns `origin: null`
 and an empty `similar` list when a listing has no `lat`/`lng`. Production
-`store.json` is never re-seeded; only migrations run. This script fills
-**missing** coordinates in place (`0,0` counts as missing).
+`store.json` is never re-seeded; only migrations run. API boot now applies
+`2026-09-listing-coords` (same fill-missing rules as this script) so a
+redeploy restores listing maps without a Hermes one-off. This script remains
+for emergency use when the API cannot restart. It fills **missing**
+coordinates in place (`0,0` counts as missing).
 
 ## What it does
 

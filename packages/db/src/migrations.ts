@@ -1,4 +1,5 @@
 import { canonicalizeCategory } from "@nusa/shared";
+import { backfillListingCoords } from "./listing-coords.js";
 import type { DataStore } from "./types.js";
 
 /**
@@ -247,6 +248,10 @@ const MIGRATIONS: Migration[] = [
       s.reports = [];
       return true;
     },
+  },
+  {
+    id: "2026-09-listing-coords",
+    apply: (store) => backfillListingCoords(store),
   },
 ];
 

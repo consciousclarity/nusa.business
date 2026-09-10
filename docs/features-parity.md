@@ -11,7 +11,7 @@ Status key: **done** in this greenfield MVP · **partial** · **planned**
 | Nested hosts `place.island.nusa.business` | done | `@nusa/shared` `parseHost` + `/host/` dev routes; tourist areas nest as `/{area}/{slug}` under the kabupaten/kota host ([ADR-004](architecture/adr/004-admin-host-nested-path.md)) |
 | Search / filters | partial | API `/v1/search` + public `/search?q=` + `/c/{category}` browse; allowlisted `/c/{category}/{facet}/{value}` index ([ADR-006](architecture/adr/006-indexable-facet-urls.md)) |
 | Map search | planned | MapLibre + PostGIS (schema outlined); listing nearby uses Leaflet + haversine MVP |
-| Opening hours / gallery / FAQ fields | partial | Hours seeded; gallery/FAQ schema present; lat/lng seeded for discovery |
+| Opening hours / gallery / FAQ fields | partial | Hours seeded; gallery/FAQ schema present; lat/lng seeded for discovery; existing stores backfill missing pins on API boot (`2026-09-listing-coords`) |
 | Claim listing | done | Portal `/claim` + API `/v1/claims` (owner self-register or invite, returnTo, pending until admin approve) |
 | Multi-criteria reviews | done | service/value/location/cleanliness on listing + API |
 | Owner dashboard | done | Portal listings CRUD |

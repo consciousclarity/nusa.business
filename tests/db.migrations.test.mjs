@@ -185,4 +185,60 @@ describe("store migrations", () => {
     assert.deepEqual(store.businesses[0].facets, {});
     assert.deepEqual(migrateStore(store), []);
   });
+
+  it("backfills missing listing coordinates from seed so discovery has an origin", () => {
+    const store = legacyStore();
+    store.places.push({
+      id: "pl-ubud",
+      islandId: "isl-bali",
+      slug: "ubud",
+      name: "Ubud",
+      type: "tourist_area",
+    });
+    store.businesses = [
+      {
+        id: "biz-ibu-oka",
+        placeId: "pl-ubud",
+        slug: "warung-babi-guling-ibu-oka",
+        name: "Warung Babi Guling Ibu Oka",
+        status: "published",
+        categories: ["warungs-local-food"],
+        summary: "Famous Ubud babi guling warung.",
+        description: "",
+        gallery: [],
+        openingHours: [],
+        faq: [],
+        bookingMode: "none",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: "biz-unknown-ubud",
+        placeId: "pl-ubud",
+        slug: "new-ubud-warung",
+        name: "New Ubud Warung",
+        status: "published",
+        categories: ["warungs-local-food"],
+        summary: "Later listing without pins.",
+        description: "",
+        gallery: [],
+        openingHours: [],
+        faq: [],
+        bookingMode: "none",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+    ];
+    const applied = migrateStore(store);
+    assert.equal(applied.includes("2026-09-listing-coords"), true);
+    const ibu = store.businesses[0];
+    assert.equal(ibu.lat, -8.5069);
+    assert.equal(ibu.lng, 115.2625);
+    const unknown = store.businesses[1];
+    assert.equal(typeof unknown.lat, "number");
+    assert.equal(typeof unknown.lng, "number");
+    assert.notEqual(unknown.lat, ibu.lat);
+    assert.notEqual(unknown.lng, ibu.lng);
+    assert.deepEqual(migrateStore(store), [], "coord backfill is idempotent");
+  });
 });

@@ -1,7 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
+import DirectoryMap from "../components/DirectoryMap.astro";
 import { apiTry } from "../lib/api";
 import { tenantHref } from "../lib/links";
+import { listingMarker, takeMarkers } from "../lib/map-markers";
 import { absoluteUrl } from "../lib/seo";
 import { islandName, t, withLocale, type Locale } from "../i18n/ui";
 import { categoryLabel, TAXONOMY } from "@nusa/shared";
@@ -28,6 +30,8 @@ type Hit = {
     summary: string;
     categories: string[];
     sample?: boolean;
+    lat?: number;
+    lng?: number;
   };
   place?: { name: string };
   island?: { slug: string; name: string };
@@ -52,6 +56,29 @@ const canonical = absoluteUrl(Astro.request, searchPath);
 const title = q
   ? `${t(locale, "searchH1")}: ${q}`
   : t(locale, "searchTitle");
+
+function hitHref(hit: Hit): string {
+  return hit.island && hit.geo
+    ? tenantHref(Astro.request, {
+        island: hit.island.slug,
+        place: hit.geo.hostPlace,
+        area: hit.geo.area,
+        slug: hit.business.slug,
+        locale,
+      })
+    : "#";
+}
+
+const searchMarkers = takeMarkers(
+  hits.map((hit) =>
+    listingMarker({
+      lat: hit.business.lat,
+      lng: hit.business.lng,
+      name: hit.business.name,
+      href: hitHref(hit),
+    }),
+  ),
+);
 ---
 <Base
   title={title}
@@ -126,18 +153,11 @@ const title = q
         </a>
       </p>
     ) : (
+      <>
+      <DirectoryMap label={t(locale, "directoryMap")} markers={searchMarkers} />
       <ol class="index-list">
         {hits.map((hit, i) => {
-          const href =
-            hit.island && hit.geo
-              ? tenantHref(Astro.request, {
-                  island: hit.island.slug,
-                  place: hit.geo.hostPlace,
-                  area: hit.geo.area,
-                  slug: hit.business.slug,
-                  locale,
-                })
-              : "#";
+          const href = hitHref(hit);
           return (
             <li>
               <div class="index-row">
@@ -161,6 +181,7 @@ const title = q
           );
         })}
       </ol>
+      </>
     )}
       </>
     )}

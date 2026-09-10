@@ -1,6 +1,9 @@
 ---
 import { geoHref, tenantHref } from "../lib/links";
 import { t, placeTypeLabel, type Locale } from "../i18n/ui";
+import DirectoryMap from "./DirectoryMap.astro";
+import { geoView } from "../lib/geo-centroids";
+import { listingMarker, takeMarkers } from "../lib/map-markers";
 import {
   canonicalizeCategory,
   categoryFilterOptions,
@@ -27,6 +30,8 @@ export type PlaceHubBusiness = {
   status?: string;
   sample?: boolean;
   fieldRegistered?: boolean;
+  lat?: number;
+  lng?: number;
 };
 
 type Props = {
@@ -80,6 +85,24 @@ const hubHref = geoHref(req, {
   places: graph,
   locale,
 });
+
+const placeMarkers = takeMarkers(
+  placeBusinesses.map((b) =>
+    listingMarker({
+      lat: b.lat,
+      lng: b.lng,
+      name: b.name,
+      href: geoHref(req, {
+        island: island.slug,
+        place,
+        places: graph,
+        slug: b.slug,
+        locale,
+      }),
+    }),
+  ),
+);
+const placeFallback = geoView(island.slug);
 ---
 
 <section class="lede">
@@ -102,6 +125,12 @@ const hubHref = geoHref(req, {
     ? ` · ${businesses.length}`
     : ""}
 </aside>
+
+<DirectoryMap
+  label={t(locale, "directoryMap")}
+  markers={placeMarkers}
+  fallback={placeFallback}
+/>
 
 {recent.length > 0 && (
   <div class="banner">

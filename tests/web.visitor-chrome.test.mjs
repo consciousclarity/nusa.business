@@ -148,7 +148,9 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.ok(searchIdx >= 0 && addIdx > searchIdx && claimIdx > addIdx);
     assert.match(header, /nav-owner/);
     assert.match(header, /langSwitch/);
+    assert.match(header, /langSwitchAria/);
     assert.doesNotMatch(header, /langSwitchShort/);
+    assert.doesNotMatch(header, />ID</);
     assert.doesNotMatch(header, /portalUrl/);
     assert.match(base, /href=\{portalUrl\}/);
   });
@@ -230,7 +232,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(heroCats, /hotels-accommodation/);
     assert.match(heroCats, /travel-experiences/);
     assert.match(heroCats, /transport-automotive/);
-    assert.match(heroCats, /health-medical/);
+    assert.match(heroCats, /beauty-spa-fitness/);
     assert.match(heroCats, /catFood/);
   });
 

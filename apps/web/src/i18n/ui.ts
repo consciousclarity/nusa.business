@@ -17,6 +17,7 @@ const ui = {
     navPath: "Path",
     skipToContent: "Skip to content",
     langSwitch: "Bahasa Indonesia",
+    langSwitchAria: "Switch language to Bahasa Indonesia",
     langSwitchShort: "ID",
     footer:
       "Free local listings across the archipelago. No registration fees. No commission at launch.",
@@ -238,6 +239,7 @@ const ui = {
     navPath: "Jalur",
     skipToContent: "Langsung ke konten",
     langSwitch: "English",
+    langSwitchAria: "Ganti bahasa ke English",
     langSwitchShort: "EN",
     footer:
       "Direktori bisnis lokal gratis di seluruh nusantara. Tanpa biaya daftar. Tanpa komisi saat peluncuran.",
@@ -433,7 +435,7 @@ const ui = {
     catStays: "Penginapan",
     catExperiences: "Pengalaman",
     catTransport: "Transportasi",
-    catWellness: "Kesehatan",
+    catWellness: "Kebugaran",
     trustHeading: "Bagaimana listing dijaga",
     trustListings: "Listing direktori",
     trustUpdated: "Pembaruan katalog terakhir",

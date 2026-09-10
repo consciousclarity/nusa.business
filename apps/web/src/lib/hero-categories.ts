@@ -10,7 +10,7 @@ export const HERO_CATEGORIES: readonly {
   { key: "catStays", slug: "hotels-accommodation" },
   { key: "catExperiences", slug: "travel-experiences" },
   { key: "catTransport", slug: "transport-automotive" },
-  { key: "catWellness", slug: "health-medical" },
+  { key: "catWellness", slug: "beauty-spa-fitness" },
 ];
 
 export function heroCategoryHref(

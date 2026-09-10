@@ -50,13 +50,22 @@ const claim = readFileSync(
   new URL("../apps/web/src/pages/claim.astro", import.meta.url),
   "utf8",
 );
+const links = readFileSync(
+  new URL("../apps/web/src/lib/links.ts", import.meta.url),
+  "utf8",
+);
 
 describe("nav, trust, category shortcuts, coming soon", () => {
   it("uses Bahasa Indonesia (not cryptic ID) for the language control", () => {
     const header = base.slice(base.indexOf("<header"), base.indexOf("</header>"));
     assert.match(header, /t\(locale, "langSwitch"\)/);
+    assert.match(header, /langSwitchAria/);
+    assert.match(header, /class="nav-lang-mark"/);
+    assert.match(header, /<svg/);
     assert.doesNotMatch(header, /langSwitchShort/);
+    assert.doesNotMatch(header, />ID</);
     assert.match(i18n, /langSwitch: "Bahasa Indonesia"/);
+    assert.match(i18n, /langSwitchAria: "Switch language to Bahasa Indonesia"/);
   });
 
   it("makes Search and Add a business the primary header actions", () => {
@@ -68,6 +77,7 @@ describe("nav, trust, category shortcuts, coming soon", () => {
     assert.ok(searchIdx >= 0 && addIdx > searchIdx);
     assert.ok(claimIdx > addIdx && langIdx > claimIdx);
     assert.match(header, /class="nav-search"/);
+    assert.equal((header.match(/class="nav-search"/g) || []).length, 2);
     assert.match(i18n, /navAdd: "Add a business"/);
     assert.match(i18n, /navClaim: "Claim your business"/);
   });
@@ -76,6 +86,7 @@ describe("nav, trust, category shortcuts, coming soon", () => {
     assert.match(home, /t\(locale, "navClaim"\)/);
     assert.match(claim, /id="claim"/);
     assert.match(claim, /id="add"/);
+    assert.match(claim, /t\(locale, "navClaim"\)/);
     assert.match(i18n, /Unclaimed — claim your business/);
     assert.match(i18n, /Belum diklaim — klaim bisnis Anda/);
     assert.match(listing, /listedUnclaimed/);
@@ -87,11 +98,20 @@ describe("nav, trust, category shortcuts, coming soon", () => {
     assert.match(hero, /slug: "hotels-accommodation"/);
     assert.match(hero, /slug: "travel-experiences"/);
     assert.match(hero, /slug: "transport-automotive"/);
-    assert.match(hero, /slug: "health-medical"/);
+    assert.match(hero, /slug: "beauty-spa-fitness"/);
+    assert.match(hero, /tenantHref/);
     assert.match(shortcuts, /heroCategoryHref/);
     assert.match(home, /CategoryShortcuts locale=\{locale\}/);
     assert.match(island, /CategoryShortcuts locale=\{locale\} island=/);
     assert.match(place, /CategoryShortcuts/);
+    assert.match(search, /CategoryShortcuts locale=\{locale\} island=/);
+    assert.match(links, /\/host\/\$\{label\}/);
+    assert.doesNotMatch(links, /\/_host\//);
+    assert.match(i18n, /catFood: "Food"/);
+    assert.match(i18n, /catStays: "Stays"/);
+    assert.match(i18n, /catExperiences: "Experiences"/);
+    assert.match(i18n, /catTransport: "Transport"/);
+    assert.match(i18n, /catWellness: "Wellness"/);
   });
 
   it("shows trust signals from real listing counts and dates", () => {
@@ -100,6 +120,7 @@ describe("nav, trust, category shortcuts, coming soon", () => {
     assert.match(home, /catalogUpdatedDay/);
     assert.match(home, /trustHow/);
     assert.match(i18n, /Field agents register/);
+    assert.match(i18n, /Owners claim or add a listing for free/);
     assert.match(i18n, /not a government certification/);
     assert.match(listing, /lastUpdated/);
     assert.match(listing, /updatedAt/);

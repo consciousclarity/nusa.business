@@ -13,7 +13,7 @@ const { locale, island, place, area } = Astro.props as Props;
 const req = Astro.request;
 ---
 
-<nav class="section" aria-label={t(locale, "catShortcuts")}>
+<nav class="section cat-shortcuts" aria-label={t(locale, "catShortcuts")}>
   <p class="meta">{t(locale, "catShortcuts")}</p>
   <p class="actions">
     {HERO_CATEGORIES.map((cat) => (
@@ -31,3 +31,12 @@ const req = Astro.request;
     ))}
   </p>
 </nav>
+<style>
+  .cat-shortcuts .actions a {
+    font-family: var(--mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+</style>

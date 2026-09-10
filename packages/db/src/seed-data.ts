@@ -70,6 +70,7 @@ export function createSeed(): DataStore {
     > & {
       status?: DataStore["businesses"][number]["status"];
       openingHours?: DataStore["businesses"][number]["openingHours"];
+      gallery?: DataStore["businesses"][number]["gallery"];
     },
   ) => ({
     gallery: [],

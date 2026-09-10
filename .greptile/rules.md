@@ -61,6 +61,11 @@ that erodes them, even subtly.
 - `deploy/caddy/nusa.business.caddy` is the source of truth for the host Caddy.
   A second Caddy/nginx config describing a different topology is a trap, not a
   fallback.
+- **CI must not auto-deploy.** Production is Compose via `scripts/deploy-vps.sh`
+  under `/opt/nusa.business` after explicit authorization
+  (`docs/ops/release-decision.md`). Flag any GitHub Actions job that rsyncs to
+  `/var/www/...`, SSHs on every push to `main`, or otherwise ships without a
+  human gate. Static webroots are not how the site runs.
 
 ## Docs
 

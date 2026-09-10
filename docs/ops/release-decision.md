@@ -6,7 +6,9 @@ Authorized by the repository owner (“i authorize”). Cursor deployed `main` �
 the [launch-readiness.md](./launch-readiness.md) follow-up (PR #48) — to the
 VPS after the operator gates below were verified live.
 `bash scripts/live-public-check.sh` is **0 fails**. Cursor agents must not
-deploy again without a new explicit authorization.
+deploy again without a new explicit authorization. GitHub Actions must not
+either: `.github/workflows/ci.yml` is build + test + seed only (see
+[vps-deploy.md](./vps-deploy.md)). A push to `main` is not a deploy.
 
 ## Release record
 

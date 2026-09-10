@@ -77,7 +77,9 @@ not re-seed production.
 
 ## CI (repo)
 
-GitHub Actions (`.github/workflows/ci.yml`) already gates every PR:
+GitHub Actions (`.github/workflows/ci.yml`) gates every PR. It does **not**
+deploy. Production updates are Compose on the VPS after explicit authorization
+([release-decision.md](./release-decision.md), [vps-deploy.md](./vps-deploy.md)).
 
 1. `npm install --ignore-scripts`
 2. Build packages + api + portal + web
@@ -85,6 +87,12 @@ GitHub Actions (`.github/workflows/ci.yml`) already gates every PR:
 4. `npm run seed` smoke
 
 Local analogue before asking for merge: `npm run build && npm test && npm run seed`.
+
+`tests/ci.workflow.test.mjs` pins that the workflow has no `deploy` job, no
+`rsync` to `/var/www/nusa.business`, and no `VPS_*` secrets. A job that SSHs
+or rsyncs on every push to `main` would skip the authorization gate and would
+not restart `docker-web-1` anyway (Astro SSR is the Compose web container,
+not a static webroot).
 
 ## Local smoke (dev VM)
 

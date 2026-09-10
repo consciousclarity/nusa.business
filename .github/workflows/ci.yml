@@ -6,10 +6,21 @@ on:
   pull_request:
     branches: [main]
 
+# CI is build + test + seed only. Production deploy is Docker Compose on the
+# VPS (`docker/compose.prod.yml` via `scripts/deploy-vps.sh` under
+# `/opt/nusa.business`) and requires explicit human authorization
+# (`docs/ops/release-decision.md`). Do not add a job that rsyncs
+# `apps/web/dist/` to a static webroot or SSHs on every push to main —
+# host Caddy reverse-proxies to the web container, and Astro SSR needs that
+# Node process. See `tests/ci.workflow.test.mjs`.
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      # v5 of both actions runs on Node 24. v4 targets Node 20, which is
+      # deprecated on GitHub-hosted runners and is currently force-upgraded
+      # with a warning.
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
@@ -26,38 +37,8 @@ jobs:
       - name: Build web
         run: npm run build -w @nusa/web
       - name: Test
+        # Packages and the API are already built above; pretest is a no-op
+        # rebuild that keeps `npm test` self-sufficient for humans too.
         run: npm test
       - name: Seed smoke check
         run: npm run seed
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-          cache: npm
-      - name: Install
-        run: npm install --ignore-scripts
-      - name: Build packages
-        run: npm run build:packages
-      - name: Build web
-        run: npm run build -w @nusa/web
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
-      - name: Deploy web to VPS
-        run: |
-          rsync -avz --delete \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-            apps/web/dist/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/nusa.business/
-      - name: Cleanup SSH key
-        if: always()
-        run: rm -f ~/.ssh/deploy_key

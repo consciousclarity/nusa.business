@@ -10,10 +10,15 @@ const css = readFileSync(
   new URL("../apps/web/src/styles/global.css", import.meta.url),
   "utf8",
 );
-const listing = readFileSync(
+const listingPage = readFileSync(
   new URL("../apps/web/src/pages/host/[label]/[...path].astro", import.meta.url),
   "utf8",
 );
+const listingRecord = readFileSync(
+  new URL("../apps/web/src/components/ListingRecord.astro", import.meta.url),
+  "utf8",
+);
+const listing = listingPage + listingRecord;
 
 describe("public a11y chrome (C10)", () => {
   it("exposes a skip link to main content", () => {

@@ -211,6 +211,11 @@ export function createSeed(): DataStore {
         "Local favourite for Balinese roast pork — a must when visiting Gianyar.",
       address: "Jl. Ngurah Rai 12, Gianyar",
       whatsapp: "+62 812 0000001",
+      gallery: [
+        "/listings/pande-egi-1.svg",
+        "/listings/pande-egi-2.svg",
+        "/listings/pande-egi-3.svg",
+      ],
       bookingMode: "none",
       registeredByAgentId: "usr-agent",
       lat: -8.5439,

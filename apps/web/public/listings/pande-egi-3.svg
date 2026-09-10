@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="Dining room at Pande Egi">
+  <rect width="800" height="600" fill="#eeece6"/>
+  <rect x="80" y="80" width="640" height="440" fill="none" stroke="#1a1c22" stroke-dasharray="6 4"/>
+  <text x="80" y="56" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="16" letter-spacing="3" fill="#8a8b91">PHOTO 03</text>
+  <text x="80" y="560" font-family="ui-serif, Georgia, serif" font-size="20" fill="#1a1c22">Warung · local food</text>
+</svg>

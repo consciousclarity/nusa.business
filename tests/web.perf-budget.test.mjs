@@ -7,9 +7,13 @@ import { gzipSync } from "node:zlib";
 const root = new URL("..", import.meta.url).pathname;
 const cssPath = join(root, "apps/web/src/styles/global.css");
 const pagesDir = join(root, "apps/web/src/pages");
-const listingPath = join(
+const listingPagePath = join(
   root,
   "apps/web/src/pages/host/[label]/[...path].astro",
+);
+const listingPath = join(
+  root,
+  "apps/web/src/components/ListingRecord.astro",
 );
 const middlewarePath = join(root, "apps/web/src/middleware.ts");
 
@@ -103,6 +107,8 @@ describe("public performance budget (C12)", () => {
     const scripts = src.match(/<script\b/g) || [];
     assert.equal(scripts.length, 1);
     assert.match(src, /define:vars=\{\{\s*apiBase:/);
+    const page = readFileSync(listingPagePath, "utf8");
+    assert.equal((page.match(/<script\b/g) || []).length, 0);
   });
 
   it("routes every middleware response through the header wrapper", () => {

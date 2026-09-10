@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="Counter at Pande Egi">
+  <rect width="800" height="600" fill="#e6e3db"/>
+  <rect x="40" y="40" width="720" height="520" fill="#eeece6" stroke="#1a1c22" stroke-width="1"/>
+  <line x1="40" y1="300" x2="760" y2="300" stroke="#c9c6bc"/>
+  <text x="64" y="96" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="18" letter-spacing="3" fill="#1a1c22">PHOTO 02</text>
+  <text x="64" y="540" font-family="ui-serif, Georgia, serif" font-size="20" fill="#55575f">Jl. Ngurah Rai 12</text>
+</svg>

@@ -10,14 +10,20 @@ import { describe, it } from "node:test";
  * cheap tripwires that catch the specific shapes that regressed, not a
  * substitute for that.
  */
-const listing = new URL(
+const listingPage = new URL(
   "../apps/web/src/pages/host/[label]/[...path].astro",
+  import.meta.url,
+);
+const listingRecord = new URL(
+  "../apps/web/src/components/ListingRecord.astro",
   import.meta.url,
 );
 
 describe("listing discovery wiring", () => {
-  const src = readFileSync(listing, "utf8");
-  const script = src.match(/<script define:vars=[^>]*>([\s\S]*?)<\/script>/)[1];
+  const page = readFileSync(listingPage, "utf8");
+  const record = readFileSync(listingRecord, "utf8");
+  const src = page + record;
+  const script = record.match(/<script define:vars=[^>]*>([\s\S]*?)<\/script>/)[1];
 
   it("builds neighbour links from the server template, not a fixed path", () => {
     // A hardcoded `/host/...` drops the /id prefix and bypasses the

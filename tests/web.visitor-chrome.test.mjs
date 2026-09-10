@@ -6,10 +6,15 @@ const home = readFileSync(
   new URL("../apps/web/src/pages/index.astro", import.meta.url),
   "utf8",
 );
-const listing = readFileSync(
+const listingPage = readFileSync(
   new URL("../apps/web/src/pages/host/[label]/[...path].astro", import.meta.url),
   "utf8",
 );
+const listingRecord = readFileSync(
+  new URL("../apps/web/src/components/ListingRecord.astro", import.meta.url),
+  "utf8",
+);
+const listing = listingPage + listingRecord;
 const place = readFileSync(
   new URL("../apps/web/src/components/PlaceDirectory.astro", import.meta.url),
   "utf8",

@@ -280,3 +280,12 @@ export {
 } from "./locale.js";
 
 export { normalizeAddress, haversineKm } from "./geo.js";
+
+export {
+  hourMinutes,
+  listingHoursStatus,
+  zonedWeekdayMinutes,
+  LISTING_HOURS_TIMEZONE,
+  type ListingHoursStatus,
+  type OpeningHoursRow,
+} from "./opening-hours.js";

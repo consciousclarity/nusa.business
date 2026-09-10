@@ -34,6 +34,7 @@ Files are `.mjs` and import the **built** packages (`@nusa/shared`, `@nusa/db`,
 | Contact links | `tests/shared.contact-links.test.mjs` | WhatsApp `wa.me` and `tel:` normalisation for Indonesian numbers. |
 | Geo helpers | `tests/shared.geo.test.mjs` | Address normalisation + haversine for listing discovery. |
 | Listing discovery | `tests/db.discovery.test.mjs` | Same-address peers, similar ≤2 km, category nearby filter. |
+| Listing record page | `tests/web.listing-record.test.mjs`, `tests/shared.opening-hours.test.mjs` | Identity block, gallery/copy split, WhatsApp-first contact dock, review cards, WITA `Open now`. |
 | Listing coord backfill | `tests/scripts.backfill-listing-coords.test.mjs`, `tests/db.migrations.test.mjs` | Standalone ops script and store migration `2026-09-listing-coords` fill missing lat/lng from seed + place centroids so listing nearby maps have a non-null origin. |
 | Live public check | `tests/scripts.live-public-check.test.mjs` | Source pins that `scripts/live-public-check.sh` is read-only and asserts live resolver chrome, `/id` island names, listing `/id` category/address/weekday chrome, nested-host sitemap locs, and browser API origin. |
 | CI workflow | `tests/ci.workflow.test.mjs` | GitHub Actions is build + test + seed only. Pins that `.github/workflows/ci.yml` has no auto-deploy job, no rsync to `/var/www/nusa.business`, and no `VPS_*` secrets. |

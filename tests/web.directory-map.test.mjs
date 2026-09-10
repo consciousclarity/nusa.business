@@ -30,4 +30,10 @@ describe("directory maps", () => {
       assert.doesNotMatch(src(file), /DirectoryMap/);
     }
   });
+
+  it("keeps the listing page to a single map — the nearby-category one, not a second DirectoryMap", () => {
+    const listing = src("apps/web/src/pages/host/[label]/[...path].astro");
+    assert.doesNotMatch(listing, /<DirectoryMap/);
+    assert.match(listing, /data-nearby-map/);
+  });
 });

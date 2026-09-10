@@ -148,9 +148,9 @@ compile-time constant, so this section costs nothing and can never fail.
 Two problems worth being explicit about:
 
 **There is no popularity signal.** No listing counts, no click data, no
-`popular` field anywhere in `packages/db/src/types.ts`. Ordering 16 groups by an
+`popular` field anywhere in `packages/db/src/types.ts`. Ordering 17 groups by an
 invented rank would break teletype's rule that *"every rule, label and marker
-must encode something true about the content."* So: render **all 16 groups,
+must encode something true about the content."* So: render **all 17 groups,
 unranked**, headed "Browse by category" (new key `browseCategories`), and omit
 the `<span class="n">` numbering — numbering here would imply a rank that does
 not exist.
@@ -164,7 +164,7 @@ it keeps this change to the homepage.
 
 But note what that costs: with 39 listings live, a nation-level `/c/{category}`
 page would satisfy ADR-006 rule 2 (≥1 result) for the categories that have
-listings, so it would be **indexable today**. Sixteen homepage links into a
+listings, so it would be **indexable today**. Seventeen homepage links into a
 robots-disallowed path is real crawl equity left on the floor. Building that
 route is the better answer and it is worth doing soon — it is kept out of this
 change to avoid widening it, not because it would not pay.

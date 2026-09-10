@@ -748,6 +748,7 @@ if (hub && categoryParam) {
     ]),
   ]}
 >
+  <div class="record-layout">
   <article class="record">
     <h1>{data.business.name}</h1>
     <p class="prose">{data.business.summary}</p>
@@ -800,7 +801,9 @@ if (hub && categoryParam) {
         </>
       )}
     </dl>
+  </article>
 
+  <aside class="record-aside" aria-label={t(locale, "listingActions")}>
     <p class="actions">
       {directionsLink && (
         <a class="cta" href={directionsLink} rel="noopener noreferrer">
@@ -836,17 +839,16 @@ if (hub && categoryParam) {
         {t(locale, "claimThis")}
       </a>
     </p>
-  </article>
+    {listingLocationMarkers.length > 0 && (
+      <DirectoryMap
+        label={t(locale, "mapLocation")}
+        markers={listingLocationMarkers}
+        compact
+      />
+    )}
+  </aside>
 
-  {listingLocationMarkers.length > 0 && (
-    <DirectoryMap
-      label={t(locale, "mapLocation")}
-      markers={listingLocationMarkers}
-      compact
-    />
-  )}
-
-  <div class="stack">
+  <div class="record-main stack">
     <section class="section">
       <h2>{t(locale, "overview")}</h2>
       <p class="prose">{data.business.description}</p>
@@ -1099,6 +1101,7 @@ if (hub && categoryParam) {
         </form>
       </section>
     )}
+  </div>
   </div>
 </Base>
 

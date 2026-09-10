@@ -113,42 +113,44 @@ const nationMarkers = takeMarkers([
     locale,
   })}
 >
-  <section class="lede">
-    <h1>{t(locale, "nationH1")}</h1>
-    <p class="prose">{t(locale, "nationLede")}</p>
-  </section>
+  <section class="lede hero-split">
+    <div class="hero-copy">
+      <h1>{t(locale, "nationH1")}</h1>
+      <p class="prose">{t(locale, "nationLede")}</p>
+    </div>
 
-  <form class="section filter-bar" method="get" action={searchAction}>
-    <label>
-      {t(locale, "findBusiness")}
-      <input
-        type="search"
-        name="q"
-        placeholder={t(locale, "searchPlaceholder")}
-        autocomplete="off"
-        maxlength="120"
-      />
-    </label>
-    <label>
-      {t(locale, "island")}
-      <select name="island">
-        <option value="">{t(locale, "allIslands")}</option>
-        {provinces.map((island) => (
-          <option value={island.slug}>{islandName(locale, island.slug, island.name)}</option>
-        ))}
-      </select>
-    </label>
-    <label>
-      {t(locale, "category")}
-      <select name="category">
-        <option value="">{t(locale, "allCategories")}</option>
-        {TAXONOMY.map((group) => (
-          <option value={group.slug}>{categoryLabel(group.slug, locale)}</option>
-        ))}
-      </select>
-    </label>
-    <button type="submit">{t(locale, "search")}</button>
-  </form>
+    <form class="filter-bar" method="get" action={searchAction}>
+      <label>
+        {t(locale, "findBusiness")}
+        <input
+          type="search"
+          name="q"
+          placeholder={t(locale, "searchPlaceholder")}
+          autocomplete="off"
+          maxlength="120"
+        />
+      </label>
+      <label>
+        {t(locale, "island")}
+        <select name="island">
+          <option value="">{t(locale, "allIslands")}</option>
+          {provinces.map((island) => (
+            <option value={island.slug}>{islandName(locale, island.slug, island.name)}</option>
+          ))}
+        </select>
+      </label>
+      <label>
+        {t(locale, "category")}
+        <select name="category">
+          <option value="">{t(locale, "allCategories")}</option>
+          {TAXONOMY.map((group) => (
+            <option value={group.slug}>{categoryLabel(group.slug, locale)}</option>
+          ))}
+        </select>
+      </label>
+      <button type="submit">{t(locale, "search")}</button>
+    </form>
+  </section>
 
   {directoryUp && (
     <DirectoryMap
@@ -167,7 +169,7 @@ const nationMarkers = takeMarkers([
       grouped.map((group) => (
         <section class="section">
           <h3>{regionName(locale, group.region)}</h3>
-          <ol class="index-list">
+          <ol class="index-list index-grid">
             {group.hubs.map((island, i) => (
               <li>
                 <div class="index-row">
@@ -191,7 +193,7 @@ const nationMarkers = takeMarkers([
       <p class="prose">{t(locale, "directoryUnavailable")}</p>
     )}
     {leftover.length > 0 && (
-      <ol class="index-list">
+      <ol class="index-list index-grid">
         {leftover.map((island, i) => (
           <li>
             <div class="index-row">

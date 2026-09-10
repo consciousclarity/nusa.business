@@ -293,7 +293,7 @@ const islandMarkers = islandData
           ? t(locale, "provinces")
           : t(locale, "regenciesCities")}
       </h2>
-      <ol class="index-list">
+      <ol class="index-list index-grid">
         {(islandData.island.kind === "region"
           ? (islandData.childProvinces ?? []).map((p) => ({
               slug: p.slug,
@@ -344,7 +344,7 @@ const islandMarkers = islandData
       islandData.places.some((p) => p.type === "tourist_area") && (
         <section class="section">
           <h2>{t(locale, "areasIn")}</h2>
-          <ol class="index-list">
+          <ol class="index-list index-grid">
             {islandData.places
               .filter((p) => p.type === "tourist_area")
               .map((place, i) => {
@@ -381,7 +381,7 @@ const islandMarkers = islandData
 
     <section class="section">
       <h2>{t(locale, "featured")}</h2>
-      <ol class="index-list">
+      <ol class="index-list index-grid">
         {islandData.businesses.slice(0, 9).map((b, i) => {
           const place = placeById[b.placeId];
           return (

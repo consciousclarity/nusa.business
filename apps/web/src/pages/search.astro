@@ -155,7 +155,7 @@ const searchMarkers = takeMarkers(
     ) : (
       <>
       <DirectoryMap label={t(locale, "directoryMap")} markers={searchMarkers} />
-      <ol class="index-list">
+      <ol class="index-list index-grid">
         {hits.map((hit, i) => {
           const href = hitHref(hit);
           return (

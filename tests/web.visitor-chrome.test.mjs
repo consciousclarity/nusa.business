@@ -50,6 +50,14 @@ const apiHelper = readFileSync(
   new URL("../apps/web/src/lib/api.ts", import.meta.url),
   "utf8",
 );
+const css = readFileSync(
+  new URL("../apps/web/src/styles/global.css", import.meta.url),
+  "utf8",
+);
+const grids = readFileSync(
+  new URL("../apps/web/src/components/LayoutGrids.astro", import.meta.url),
+  "utf8",
+);
 
 describe("visitor chrome (no debug resolver)", () => {
   it("homepage is search-first and omits host-resolver jargon", () => {
@@ -67,6 +75,26 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(home, /directoryUnavailable/);
     assert.match(apiHelper, /export async function apiTry/);
     assert.match(apiHelper, /AbortSignal\.timeout/);
+  });
+
+  it("uses a 1120px page measure with hero, index, and record grids", () => {
+    assert.match(css, /70rem/);
+    assert.doesNotMatch(css, /78ch/);
+    assert.match(base, /LayoutGrids/);
+    assert.match(grids, /\.hero-split/);
+    assert.match(grids, /\.index-grid/);
+    assert.match(grids, /repeat\(3,/);
+    assert.match(grids, /\.record-layout/);
+    assert.match(home, /hero-split/);
+    assert.match(home, /index-grid/);
+    assert.match(island, /index-grid/);
+    assert.match(place, /index-grid/);
+    assert.match(browse, /index-grid/);
+    assert.match(search, /index-grid/);
+    assert.match(listing, /record-layout/);
+    assert.match(listing, /record-aside/);
+    assert.match(listing, /record-main/);
+    assert.match(listing, /listingActions/);
   });
 
   it("listing chrome uses i18n keys for reviews, booking, shop, and address", () => {

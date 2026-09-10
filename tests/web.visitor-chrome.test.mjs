@@ -50,13 +50,15 @@ const apiHelper = readFileSync(
   new URL("../apps/web/src/lib/api.ts", import.meta.url),
   "utf8",
 );
+const directorySearch = readFileSync(
+  new URL("../apps/web/src/components/DirectorySearch.astro", import.meta.url),
+  "utf8",
+);
 
 describe("visitor chrome (no debug resolver)", () => {
   it("homepage is search-first and omits host-resolver jargon", () => {
-    assert.match(home, /name="q"/);
-    assert.match(home, /name="category"/);
-    assert.match(home, /action=\{searchAction\}/);
-    assert.match(home, /categoryLabel\(group.slug, locale\)/);
+    assert.match(home, /<DirectorySearch/);
+    assert.match(home, /provinces=\{provinces\}/);
     assert.doesNotMatch(home, /kind=nation/);
     assert.doesNotMatch(home, /class="resolver"/);
     assert.match(home, /tenantHref\(/);
@@ -149,7 +151,7 @@ describe("visitor chrome (no debug resolver)", () => {
   });
 
   it("public category chrome passes locale into taxonomy labels", () => {
-    assert.match(place, /categoryFilterOptions\(/);
+    assert.match(place, /<DirectorySearch/);
     assert.match(place, /categoryLabel\(activeCategory, locale\)/);
     assert.match(place, /categoryLabel\(b\.categories\[0\] \?\? "", locale\)/);
     assert.match(browse, /categoryLabel\(browse\.category, locale\)/);
@@ -159,13 +161,17 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(island, /tenantAbsHref\(/);
     assert.match(browse, /unavailable/);
     assert.match(browse, /directoryUnavailable/);
-    assert.match(search, /categoryLabel\(group\.slug, locale\)/);
+    assert.match(directorySearch, /categoryLabel\(group\.slug, locale\)/);
   });
 
   it("search results are shareable query URLs and noindex", () => {
-    assert.match(search, /name="q"/);
-    assert.match(search, /name="island"/);
-    assert.match(search, /name="category"/);
+    assert.match(search, /<DirectorySearch/);
+    assert.match(search, /q=\{q\}/);
+    assert.match(search, /island=\{island\}/);
+    assert.match(search, /category=\{category\}/);
+    assert.match(directorySearch, /name="q"/);
+    assert.match(directorySearch, /name="island"/);
+    assert.match(directorySearch, /name="category"/);
     assert.match(search, /robots="noindex,follow"/);
     assert.match(search, /islandName\(locale/);
   });

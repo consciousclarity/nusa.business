@@ -1,12 +1,13 @@
 ---
 import Base from "../layouts/Base.astro";
 import DirectoryMap from "../components/DirectoryMap.astro";
+import DirectorySearch from "../components/DirectorySearch.astro";
 import { apiTry } from "../lib/api";
 import { tenantHref } from "../lib/links";
 import { listingMarker, takeMarkers } from "../lib/map-markers";
 import { absoluteUrl } from "../lib/seo";
 import { islandName, t, withLocale, type Locale } from "../i18n/ui";
-import { categoryLabel, TAXONOMY } from "@nusa/shared";
+import { categoryLabel } from "@nusa/shared";
 
 const locale: Locale = Astro.locals.locale ?? "en";
 const q = (Astro.url.searchParams.get("q") || "").trim();
@@ -14,9 +15,12 @@ const island = (Astro.url.searchParams.get("island") || "").trim();
 const category = (Astro.url.searchParams.get("category") || "").trim();
 
 const islands = await apiTry<{
-  islands: { slug: string; name: string; status: string }[];
+  islands: { slug: string; name: string; status: string; kind?: string }[];
+  provinces?: { slug: string; name: string; status: string; kind?: string }[];
 }>("/v1/islands");
-const active = (islands?.islands ?? []).filter((i) => i.status === "active");
+const provinces = (
+  islands?.provinces ?? (islands?.islands ?? []).filter((i) => i.kind !== "region")
+).filter((i) => i.status === "active");
 
 const params = new URLSearchParams();
 if (q) params.set("q", q);
@@ -48,7 +52,7 @@ const selectedIslandName = island
   ? islandName(
       locale,
       island,
-      active.find((row) => row.slug === island)?.name ?? island,
+      provinces.find((row) => row.slug === island)?.name ?? island,
     )
   : "";
 const searchPath = withLocale("/search", locale) + (params.toString() ? `?${params}` : "");
@@ -92,42 +96,13 @@ const searchMarkers = takeMarkers(
     <p class="prose">{t(locale, "searchLede")}</p>
   </section>
 
-  <form class="section filter-bar" method="get" action={withLocale("/search", locale)}>
-    <label>
-      {t(locale, "findBusiness")}
-      <input
-        type="search"
-        name="q"
-        value={q}
-        placeholder={t(locale, "searchPlaceholder")}
-        autocomplete="off"
-        maxlength="120"
-      />
-    </label>
-    <label>
-      {t(locale, "island")}
-      <select name="island">
-        <option value="">{t(locale, "allIslands")}</option>
-        {active.map((row) => (
-          <option value={row.slug} selected={row.slug === island}>
-            {islandName(locale, row.slug, row.name)}
-          </option>
-        ))}
-      </select>
-    </label>
-    <label>
-      {t(locale, "category")}
-      <select name="category">
-        <option value="">{t(locale, "allCategories")}</option>
-        {TAXONOMY.map((group) => (
-          <option value={group.slug} selected={group.slug === category}>
-            {categoryLabel(group.slug, locale)}
-          </option>
-        ))}
-      </select>
-    </label>
-    <button type="submit">{t(locale, "search")}</button>
-  </form>
+  <DirectorySearch
+    locale={locale}
+    q={q}
+    island={island}
+    category={category}
+    provinces={provinces}
+  />
 
   <section class="section">
     {searchFailed ? (

@@ -3,6 +3,7 @@ import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import CategoryBrowse from "../../../components/CategoryBrowse.astro";
 import DirectoryMap from "../../../components/DirectoryMap.astro";
+import DirectorySearch from "../../../components/DirectorySearch.astro";
 import { api, apiOrNull, apiTry, browserApiOrigin } from "../../../lib/api";
 import { tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
 import { listingMarker, takeMarkers } from "../../../lib/map-markers";
@@ -748,6 +749,11 @@ if (hub && categoryParam) {
     ]),
   ]}
 >
+  <DirectorySearch
+    locale={locale}
+    island={islandSlug!}
+    lockIsland
+  />
   <article class="record">
     <h1>{data.business.name}</h1>
     <p class="prose">{data.business.summary}</p>

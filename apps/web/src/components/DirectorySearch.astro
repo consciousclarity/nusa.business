@@ -1,0 +1,108 @@
+---
+import { TAXONOMY, categoryLabel } from "@nusa/shared";
+import { apiTry } from "../lib/api";
+import { islandName, t, withLocale, type Locale } from "../i18n/ui";
+
+export type DirectorySearchProvince = {
+  slug: string;
+  name: string;
+  status?: string;
+  kind?: string;
+};
+
+type Props = {
+  locale: Locale;
+  island?: string;
+  category?: string;
+  q?: string;
+  /** Preselect the current province and keep it in the submitted query. */
+  lockIsland?: boolean;
+  /** Skip the islands fetch when the page already loaded provinces. */
+  provinces?: DirectorySearchProvince[];
+};
+
+type IslandsResponse = {
+  islands?: DirectorySearchProvince[];
+  provinces?: DirectorySearchProvince[];
+};
+
+const {
+  locale,
+  island = "",
+  category = "",
+  q = "",
+  lockIsland = false,
+  provinces: provincesProp,
+} = Astro.props as Props;
+
+function activeProvinces(rows: DirectorySearchProvince[]): DirectorySearchProvince[] {
+  return rows.filter(
+    (row) => row.kind !== "region" && (row.status === "active" || !row.status),
+  );
+}
+
+let provinces = provincesProp ? activeProvinces(provincesProp) : [];
+if (!provincesProp) {
+  const data = await apiTry<IslandsResponse>("/v1/islands");
+  provinces = activeProvinces(data?.provinces ?? data?.islands ?? []);
+}
+
+const knownProvince = provinces.some((row) => row.slug === island);
+const locked = Boolean(lockIsland && island && (knownProvince || provinces.length === 0));
+const lockedLabel = islandName(
+  locale,
+  island,
+  provinces.find((row) => row.slug === island)?.name ?? island,
+);
+const lookingFor = t(locale, "searchLookingFor");
+const action = withLocale("/search", locale);
+---
+
+<form
+  class="section filter-bar"
+  method="get"
+  action={action}
+  role="search"
+>
+  {locked && <input type="hidden" name="island" value={island} />}
+  <label class="search-query">
+    {lookingFor}
+    <input
+      type="search"
+      name="q"
+      value={q}
+      placeholder={lookingFor}
+      autocomplete="off"
+      maxlength="120"
+    />
+  </label>
+  <label>
+    {t(locale, "island")}
+    {locked ? (
+      <select disabled>
+        <option value={island} selected>{lockedLabel}</option>
+      </select>
+    ) : (
+      <select name="island">
+        <option value="">{t(locale, "allIslands")}</option>
+        {provinces.map((row) => (
+          <option value={row.slug} selected={row.slug === island}>
+            {islandName(locale, row.slug, row.name)}
+          </option>
+        ))}
+      </select>
+    )}
+  </label>
+  <label>
+    {t(locale, "category")}
+    <select name="category">
+      <option value="">{t(locale, "allCategories")}</option>
+      {TAXONOMY.map((group) => (
+        <option value={group.slug} selected={group.slug === category}>
+          {categoryLabel(group.slug, locale)}
+        </option>
+      ))}
+    </select>
+  </label>
+  <button type="submit">{t(locale, "search")}</button>
+</form>

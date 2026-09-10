@@ -2,6 +2,7 @@
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import DirectoryMap from "../../../components/DirectoryMap.astro";
+import DirectorySearch from "../../../components/DirectorySearch.astro";
 import { apiOrNull } from "../../../lib/api";
 import { geoHref, tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
 import { geoView } from "../../../lib/geo-centroids";
@@ -12,7 +13,7 @@ import {
   websiteJsonLd,
 } from "../../../lib/seo";
 import { islandName, islandTagline, t, withLocale, placeTypeLabel, type Locale } from "../../../i18n/ui";
-import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory, TAXONOMY, categoryLabel } from "@nusa/shared";
+import { geoNesting, publicHostLine, type NestablePlace, canonicalizeCategory } from "@nusa/shared";
 
 const label = Astro.params.label!;
 const parts = label.split(".");
@@ -253,33 +254,11 @@ const islandMarkers = islandData
       </p>
     )}
 
-    <form
-      class="section filter-bar"
-      method="get"
-      action={withLocale("/search", locale)}
-    >
-      <input type="hidden" name="island" value={islandData.island.slug} />
-      <label>
-        {t(locale, "findBusiness")}
-        <input
-          type="search"
-          name="q"
-          placeholder={t(locale, "searchPlaceholder")}
-          autocomplete="off"
-          maxlength="120"
-        />
-      </label>
-      <label>
-        {t(locale, "category")}
-        <select name="category">
-          <option value="">{t(locale, "allCategories")}</option>
-          {TAXONOMY.map((group) => (
-            <option value={group.slug}>{categoryLabel(group.slug, locale)}</option>
-          ))}
-        </select>
-      </label>
-      <button type="submit">{t(locale, "search")}</button>
-    </form>
+    <DirectorySearch
+      locale={locale}
+      island={islandData.island.kind === "region" ? "" : islandData.island.slug}
+      lockIsland={islandData.island.kind !== "region"}
+    />
 
     <DirectoryMap
       label={t(locale, "directoryMap")}

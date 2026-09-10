@@ -1,12 +1,12 @@
 ---
-import { geoHref, tenantHref } from "../lib/links";
+import { geoHref } from "../lib/links";
 import { t, placeTypeLabel, type Locale } from "../i18n/ui";
 import DirectoryMap from "./DirectoryMap.astro";
+import DirectorySearch from "./DirectorySearch.astro";
 import { geoView } from "../lib/geo-centroids";
 import { listingMarker, takeMarkers } from "../lib/map-markers";
 import {
   canonicalizeCategory,
-  categoryFilterOptions,
   categoryLabel,
   listingMatchesCategory,
   relatedAsLabel,
@@ -65,11 +65,6 @@ const graph: PlaceHubPlace[] = [
 
 const recent = businesses.filter((b) => b.fieldRegistered).slice(0, 5);
 
-const placeCategoryOptions = categoryFilterOptions(
-  businesses.flatMap((b) => b.categories),
-  locale,
-);
-
 const activeCategory = canonicalizeCategory(categoryParam) ?? "";
 
 const placeBusinesses = activeCategory
@@ -78,13 +73,6 @@ const placeBusinesses = activeCategory
 
 const relatedShown = activeCategory ? relatedForCategory(activeCategory) : [];
 const activeCategoryLabel = activeCategory ? categoryLabel(activeCategory, locale) : "";
-
-const hubHref = geoHref(req, {
-  island: island.slug,
-  place,
-  places: graph,
-  locale,
-});
 
 const placeMarkers = takeMarkers(
   placeBusinesses.map((b) =>
@@ -117,6 +105,13 @@ const placeFallback = geoView(island.slug);
     </p>
   )}
 </section>
+
+<DirectorySearch
+  locale={locale}
+  island={island.slug}
+  category={activeCategory}
+  lockIsland
+/>
 
 <aside class="banner" aria-label={t(locale, "listingsCount")}>
   {placeBusinesses.length} {t(locale, "listingsCount")}
@@ -182,34 +177,6 @@ const placeFallback = geoView(island.slug);
   </section>
 )}
 
-{placeCategoryOptions.length > 1 && (
-  <form class="section filter-bar" method="get">
-    <label>
-      {t(locale, "category")}
-      <select
-        name="category"
-        onchange="if (this.value) location = this.dataset.browse + this.value; else location = this.dataset.hub;"
-        data-hub={hubHref}
-        data-browse={tenantHref(req, {
-          island: island.slug,
-          place: parent && place.type === "tourist_area" ? parent.slug : place.slug,
-          area: place.type === "tourist_area" ? place.slug : undefined,
-          category: "x-cat-x",
-          locale,
-        }).replace("x-cat-x", "")}
-      >
-        <option value="">{t(locale, "allCategories")}</option>
-        {placeCategoryOptions.map((cat) => (
-          <option value={cat.slug} selected={cat.slug === activeCategory}>
-            {cat.kind === "group" ? cat.label : `— ${cat.label}`}
-          </option>
-        ))}
-      </select>
-    </label>
-    <noscript>
-      <button type="submit">{t(locale, "apply")}</button>
-    </noscript>
-  </form>
 )}
 
 {relatedShown.length > 0 && (

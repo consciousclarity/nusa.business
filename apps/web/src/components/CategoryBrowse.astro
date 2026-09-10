@@ -2,6 +2,7 @@
 import { geoHref, tenantHref } from "../lib/links";
 import { inWhere, islandName, t, type Locale } from "../i18n/ui";
 import DirectoryMap from "./DirectoryMap.astro";
+import DirectorySearch from "./DirectorySearch.astro";
 import { listingMarker, takeMarkers } from "../lib/map-markers";
 import {
   categoryLabel,
@@ -142,6 +143,13 @@ const browseMarkers = takeMarkers(
     </p>
   )}
 </section>
+
+<DirectorySearch
+  locale={locale}
+  island={island.slug}
+  category={browse.category}
+  lockIsland
+/>
 
 {!unavailable && (
   <DirectoryMap label={t(locale, "directoryMap")} markers={browseMarkers} />

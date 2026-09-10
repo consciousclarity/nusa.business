@@ -1,11 +1,11 @@
 ---
 import Base from "../layouts/Base.astro";
 import DirectoryMap from "../components/DirectoryMap.astro";
+import DirectorySearch from "../components/DirectorySearch.astro";
 import { apiTry } from "../lib/api";
 import { tenantHref } from "../lib/links";
 import { INDONESIA_VIEW, geoView } from "../lib/geo-centroids";
 import { listingMarker, placeMarker, takeMarkers } from "../lib/map-markers";
-import { TAXONOMY, categoryLabel } from "@nusa/shared";
 import { resolveRequestContext } from "../lib/tenant";
 import { absoluteUrl, websiteJsonLd } from "../lib/seo";
 import {
@@ -53,7 +53,6 @@ const provinces = (data?.provinces ?? (data?.islands ?? []).filter((i) => i.kind
 const directoryUp = data !== null;
 const nationUrl = absoluteUrl(req, withLocale("/", locale));
 const nationDescription = t(locale, "nationLede");
-const searchAction = withLocale("/search", locale);
 
 const regionOrder = [
   "sumatra",
@@ -118,37 +117,7 @@ const nationMarkers = takeMarkers([
     <p class="prose">{t(locale, "nationLede")}</p>
   </section>
 
-  <form class="section filter-bar" method="get" action={searchAction}>
-    <label>
-      {t(locale, "findBusiness")}
-      <input
-        type="search"
-        name="q"
-        placeholder={t(locale, "searchPlaceholder")}
-        autocomplete="off"
-        maxlength="120"
-      />
-    </label>
-    <label>
-      {t(locale, "island")}
-      <select name="island">
-        <option value="">{t(locale, "allIslands")}</option>
-        {provinces.map((island) => (
-          <option value={island.slug}>{islandName(locale, island.slug, island.name)}</option>
-        ))}
-      </select>
-    </label>
-    <label>
-      {t(locale, "category")}
-      <select name="category">
-        <option value="">{t(locale, "allCategories")}</option>
-        {TAXONOMY.map((group) => (
-          <option value={group.slug}>{categoryLabel(group.slug, locale)}</option>
-        ))}
-      </select>
-    </label>
-    <button type="submit">{t(locale, "search")}</button>
-  </form>
+  <DirectorySearch locale={locale} provinces={provinces} />
 
   {directoryUp && (
     <DirectoryMap

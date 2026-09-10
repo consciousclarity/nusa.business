@@ -27,7 +27,8 @@ const ui = {
     nationLede:
       "Search by name or browse a province. Free listings, no commission at launch. WhatsApp and phone when the business published them.",
     findBusiness: "Find a business",
-    searchPlaceholder: "Warung, workshop, clinic…",
+    searchLookingFor: "What are you looking for?",
+    searchPlaceholder: "What are you looking for?",
     island: "Province",
     allIslands: "All provinces",
     search: "Search",
@@ -229,7 +230,8 @@ const ui = {
     nationLede:
       "Cari nama atau pilih provinsi. Listing gratis, tanpa komisi saat peluncuran. WhatsApp dan telepon jika bisnis memublikasikannya.",
     findBusiness: "Cari bisnis",
-    searchPlaceholder: "Warung, bengkel, klinik…",
+    searchLookingFor: "Apa yang Anda cari?",
+    searchPlaceholder: "Apa yang Anda cari?",
     island: "Provinsi",
     allIslands: "Semua provinsi",
     search: "Cari",

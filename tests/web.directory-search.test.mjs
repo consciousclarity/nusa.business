@@ -74,4 +74,29 @@ describe("unified directory search bar", () => {
     assert.match(browse, /<DirectorySearch/);
     assert.match(browse, /class="section filter-bar browse-filters"/);
   });
+
+  it("gives every control the same 44px height, padding, and visible focus", () => {
+    const styles = directorySearch.slice(directorySearch.indexOf("<style>"));
+    assert.match(styles, /height:\s*2\.75rem/);
+    assert.match(styles, /min-height:\s*2\.75rem/);
+    assert.match(styles, /padding:\s*0 0\.85rem/);
+    assert.match(styles, /appearance:\s*none/);
+    assert.match(styles, /:focus-visible/);
+    assert.match(
+      styles,
+      /outline:\s*2px solid var\(--link\);\s*outline-offset:\s*2px/,
+    );
+    assert.doesNotMatch(styles, /outline:\s*none/);
+  });
+
+  it("uses one responsive wrap at the teletype 40rem breakpoint", () => {
+    const styles = directorySearch.slice(directorySearch.indexOf("<style>"));
+    assert.match(
+      styles,
+      /grid-template-columns:\s*minmax\(0, 1fr\) minmax\(9\.5rem, 12\.5rem\) minmax\(9\.5rem, 12\.5rem\) auto/,
+    );
+    assert.match(styles, /@media \(max-width: 40rem\)/);
+    assert.match(styles, /\.query,\s*button\s*\{[\s\S]*grid-column:\s*1 \/ -1/);
+    assert.doesNotMatch(directorySearch, /class="section filter-bar"/);
+  });
 });

@@ -369,11 +369,6 @@ ol {
   color: var(--ink-soft);
 }
 
-.filter-bar .search-query {
-  letter-spacing: 0;
-  text-transform: none;
-}
-
 .filter-bar select,
 .filter-bar input[type="search"] {
   min-width: min(100%, 16rem);

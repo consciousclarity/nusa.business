@@ -20,8 +20,10 @@ Hermes reconnaissance (2026-09-07) observed **PM2** processes for `web` /
 `api` / `portal` under `/opt/nusa.business`, with a stale deploy signal vs
 `main`. See [hermes-vps-notes-2026-09-07.md](./hermes-vps-notes-2026-09-07.md).
 
-The 2026-09-09 authorized deploy confirmed **Compose**. Keep the table as a
-rollback/history aid if a box is ever found on PM2:
+**Confirmed live 2026-09-09:** Compose only under `/opt/nusa.business`
+(`docker/compose.prod.yml`); PM2 not installed. Hermes PM2 observation is
+historical. Keep the dual-track table below as a rollback/history aid if a box
+is ever found on PM2; do not assume PM2 without re-checking.
 
 | Concern | Compose (`compose.prod.yml`) | PM2 |
 |---|---|---|
@@ -29,7 +31,7 @@ rollback/history aid if a box is ever found on PM2:
 | Loopback ports | `4101` api · `4321` web · `4103` portal | Confirm with `ss` / `pm2 show` |
 | SSR API URL | Often `http://127.0.0.1:4101` or Compose DNS | Often `http://127.0.0.1:8787` or `4101` |
 | Browser API | `https://api.nusa.business` (C03) | same |
-| Data dir | Volume or bind for `.data/` | Host path under `/opt/nusa.business/.data` |
+| Data dir | Named volume `docker_api_data` → `/data` | Host path under `/opt/nusa.business/.data` |
 
 ## Operator verification (on the VPS)
 

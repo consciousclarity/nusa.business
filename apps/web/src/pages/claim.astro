@@ -20,26 +20,26 @@ const addReturn = encodeURIComponent("/listings");
     <p class="prose">{t(locale, "claimLede")}</p>
   </section>
 
-  <section class="section">
-    <h2>{t(locale, "claimListing")}</h2>
+  <section class="section" id="add">
+    <h2>{t(locale, "navAdd")}</h2>
+    <p class="prose">{t(locale, "addListingHelp")}</p>
+    <p class="actions">
+      <a class="cta" href={`${portal}/register?returnTo=${addReturn}`}>
+        {t(locale, "addListingOpen")}
+      </a>
+    </p>
+  </section>
+
+  <section class="section" id="claim">
+    <h2>{t(locale, "navClaim")}</h2>
     <p class="prose">{t(locale, "claimExistingHelp")}</p>
     <p class="actions">
-      <a class="cta" href={`${portal}/claim`}>{t(locale, "claimOpen")}</a>
+      <a class="cta secondary" href={`${portal}/claim`}>{t(locale, "claimOpen")}</a>
       <a
         class="cta secondary"
         href={`${portal}/login?returnTo=${claimReturn}`}
       >
         {t(locale, "claimLogin")}
-      </a>
-    </p>
-  </section>
-
-  <section class="section">
-    <h2>{t(locale, "addListing")}</h2>
-    <p class="prose">{t(locale, "addListingHelp")}</p>
-    <p class="actions">
-      <a class="cta secondary" href={`${portal}/register?returnTo=${addReturn}`}>
-        {t(locale, "addListingOpen")}
       </a>
     </p>
   </section>

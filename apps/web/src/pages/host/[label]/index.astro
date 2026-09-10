@@ -2,6 +2,7 @@
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import DirectoryMap from "../../../components/DirectoryMap.astro";
+import DirectoryNotice from "../../../components/DirectoryNotice.astro";
 import { apiOrNull } from "../../../lib/api";
 import { geoHref, tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
 import { geoView } from "../../../lib/geo-centroids";
@@ -245,12 +246,7 @@ const islandMarkers = islandData
     </section>
 
     {islandData.island.status === "coming_soon" && (
-      <p class="banner">
-        {t(locale, "comingSoonNext")}{" "}
-        <a href={tenantHref(req, { island: "bali", locale })}>
-          {t(locale, "browseBali")}
-        </a>
-      </p>
+      <DirectoryNotice locale={locale} variant="coming_soon" />
     )}
 
     <form

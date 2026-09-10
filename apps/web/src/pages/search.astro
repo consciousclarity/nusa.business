@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import DirectoryMap from "../components/DirectoryMap.astro";
+import DirectoryNotice from "../components/DirectoryNotice.astro";
 import { apiTry } from "../lib/api";
 import { tenantHref } from "../lib/links";
 import { listingMarker, takeMarkers } from "../lib/map-markers";
@@ -131,12 +132,7 @@ const searchMarkers = takeMarkers(
 
   <section class="section">
     {searchFailed ? (
-      <p class="prose">
-        {t(locale, "directoryUnavailable")}{" "}
-        <a href={tenantHref(Astro.request, { island: "bali", locale })}>
-          {t(locale, "browseBali")}
-        </a>
-      </p>
+      <DirectoryNotice locale={locale} variant="unavailable" />
     ) : (
       <>
     <h2>
@@ -146,12 +142,7 @@ const searchMarkers = takeMarkers(
       {category ? ` · ${categoryLabel(category, locale)}` : ""}
     </h2>
     {hits.length === 0 ? (
-      <p class="prose">
-        {t(locale, "noSearchMatches")}{" "}
-        <a href={tenantHref(Astro.request, { island: "bali", locale })}>
-          {t(locale, "browseBali")}
-        </a>
-      </p>
+      <DirectoryNotice locale={locale} variant="empty" />
     ) : (
       <>
       <DirectoryMap label={t(locale, "directoryMap")} markers={searchMarkers} />

@@ -258,6 +258,15 @@ ol {
   color: var(--ink-faint);
 }
 
+.nav-lang-mark {
+  margin-right: 0.35em;
+  color: var(--ink-faint);
+}
+
+.banner .stamp {
+  margin-right: 0.4rem;
+}
+
 /* —— Path —— */
 .crumbs {
   font-family: var(--mono);

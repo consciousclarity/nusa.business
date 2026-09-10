@@ -10,7 +10,8 @@ export { alternateLocale, detectLocale, withLocale };
 
 const ui = {
   en: {
-    navClaim: "Claim",
+    navClaim: "Claim your business",
+    navAdd: "Add a business",
     navPortal: "Portal",
     navPrimary: "Primary",
     navPath: "Path",
@@ -47,8 +48,9 @@ const ui = {
     partOf: "Part of",
     areasIn: "Areas in",
     comingSoon: "Coming soon",
-    comingSoonNext: "This province is not open for browsing yet. Open Bali or add a missing business.",
-    browseBali: "Browse Bali",
+    comingSoonNext:
+      "This province is not open for browsing yet. Listings will appear when the catalog is ready.",
+    comingSoonUpdate: "Email for updates",
     addListing: "Add a missing business",
     claimListing: "Claim an existing listing",
     claimTitle: "Claim or add a listing — nusa.business",
@@ -189,6 +191,9 @@ const ui = {
     supportOwnerH2: "Owner accounts",
     supportOwner:
       "Owners create a free account, then claim an existing listing or add a missing one. Editing starts only after we approve ownership. Field-agent and admin accounts still use an invite.",
+    supportUpdatesH2: "Province coverage",
+    supportUpdates:
+      "Some provinces are still coming soon. Email updates@nusa.business and we will write when that catalog opens. You can also add a missing business.",
     notFoundTitle: "Page not found — nusa.business",
     notFoundH1: "Page not found",
     notFoundLede:
@@ -198,7 +203,19 @@ const ui = {
     serverErrorLede:
       "This page could not be loaded. Search for a business, or go back to the homepage.",
     directoryUnavailable:
-      "The directory is temporarily unavailable. Try again in a moment, or browse Bali.",
+      "The directory is temporarily unavailable. Try again in a moment, or ask for an update.",
+    catShortcuts: "Browse by category",
+    catFood: "Food",
+    catStays: "Stays",
+    catExperiences: "Experiences",
+    catTransport: "Transport",
+    catWellness: "Wellness",
+    trustHeading: "How listings stay current",
+    trustListings: "Directory listings",
+    trustUpdated: "Last catalog update",
+    trustVerified: "Verified information",
+    trustHow:
+      "Listings are free. Owners claim their page. Operators review claims and corrections before editing goes live.",
     backHome: "Back to homepage",
     bookingPastDate: "Date must be today or later.",
     bookingNeedEndDate: "Rentals need an end date.",
@@ -212,7 +229,8 @@ const ui = {
     requestFailed: "Could not send. Try again.",
   },
   id: {
-    navClaim: "Klaim",
+    navClaim: "Klaim bisnis Anda",
+    navAdd: "Tambah bisnis",
     navPortal: "Portal",
     navPrimary: "Utama",
     navPath: "Jalur",
@@ -249,8 +267,9 @@ const ui = {
     partOf: "Bagian dari",
     areasIn: "Kawasan di",
     comingSoon: "Segera hadir",
-    comingSoonNext: "Indeks provinsi ini belum dibuka. Buka Bali atau daftarkan bisnis yang belum ada.",
-    browseBali: "Buka Bali",
+    comingSoonNext:
+      "Indeks provinsi ini belum dibuka. Listing akan tampil setelah katalog siap.",
+    comingSoonUpdate: "Kirim email untuk kabar",
     addListing: "Tambah bisnis yang belum ada",
     claimListing: "Klaim listing yang sudah ada",
     claimTitle: "Klaim atau tambah listing — nusa.business",
@@ -392,6 +411,9 @@ const ui = {
     supportOwnerH2: "Akun pemilik",
     supportOwner:
       "Pemilik membuat akun gratis, lalu klaim listing yang sudah ada atau tambah yang belum ada. Hak sunting baru aktif setelah kami menyetujui kepemilikan. Akun agen lapangan dan admin tetap memakai undangan.",
+    supportUpdatesH2: "Cakupan provinsi",
+    supportUpdates:
+      "Beberapa provinsi masih segera hadir. Kirim email ke updates@nusa.business, kami kabari saat katalog itu dibuka. Anda juga dapat menambah bisnis yang belum ada.",
     notFoundTitle: "Halaman tidak ditemukan — nusa.business",
     notFoundH1: "Halaman tidak ditemukan",
     notFoundLede:
@@ -401,7 +423,19 @@ const ui = {
     serverErrorLede:
       "Halaman ini tidak bisa dimuat sekarang. Cari bisnis, atau kembali ke beranda.",
     directoryUnavailable:
-      "Direktori sedang tidak tersedia. Coba lagi sebentar lagi, atau buka Bali.",
+      "Direktori sedang tidak tersedia. Coba lagi sebentar lagi, atau minta kabar.",
+    catShortcuts: "Jelajah kategori",
+    catFood: "Makanan",
+    catStays: "Penginapan",
+    catExperiences: "Pengalaman",
+    catTransport: "Transportasi",
+    catWellness: "Kesehatan",
+    trustHeading: "Bagaimana listing dijaga",
+    trustListings: "Listing direktori",
+    trustUpdated: "Pembaruan katalog terakhir",
+    trustVerified: "Informasi terverifikasi",
+    trustHow:
+      "Listing gratis. Pemilik klaim halamannya. Operator meninjau klaim dan koreksi sebelum suntingan tayang.",
     backHome: "Kembali ke beranda",
     bookingPastDate: "Tanggal harus hari ini atau setelahnya.",
     bookingNeedEndDate: "Sewa membutuhkan tanggal selesai.",

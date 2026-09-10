@@ -81,10 +81,12 @@ const jsonLdBlocks = jsonLd
       <a class="brand" href={homeHref}>nusa<span class="tld">.business</span></a>
       <nav aria-label={t(locale, "navPrimary")}>
         <a class="nav-search" href={withLocale("/search", locale)}>{t(locale, "search")}</a>
-        <a href={switchHref} lang={other} hreflang={other}>
-          {t(locale, "langSwitchShort")}
+        <a class="nav-search" href={`${withLocale("/claim", locale)}#add`}>{t(locale, "navAdd")}</a>
+        <a class="nav-owner" href={`${withLocale("/claim", locale)}#claim`}>{t(locale, "navClaim")}</a>
+        <a class="nav-lang" href={switchHref} lang={other} hreflang={other}>
+          <span class="nav-lang-mark" aria-hidden="true">Aa</span>
+          {t(locale, "langSwitch")}
         </a>
-        <a class="nav-owner" href={withLocale("/claim", locale)}>{t(locale, "navClaim")}</a>
       </nav>
     </header>
     <nav class="crumbs" aria-label={t(locale, "navPath")}>

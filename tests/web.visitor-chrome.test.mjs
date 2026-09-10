@@ -38,6 +38,14 @@ const browse = readFileSync(
   new URL("../apps/web/src/components/CategoryBrowse.astro", import.meta.url),
   "utf8",
 );
+const notice = readFileSync(
+  new URL("../apps/web/src/components/DirectoryNotice.astro", import.meta.url),
+  "utf8",
+);
+const i18n = readFileSync(
+  new URL("../apps/web/src/i18n/ui.ts", import.meta.url),
+  "utf8",
+);
 const notFound = readFileSync(
   new URL("../apps/web/src/pages/404.astro", import.meta.url),
   "utf8",
@@ -64,7 +72,11 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(home, /islandTagline\(locale, island.slug, island.tagline\)/);
     assert.match(home, /islandName\(locale, island.slug, island.name\)/);
     assert.match(home, /apiTry</);
-    assert.match(home, /directoryUnavailable/);
+    assert.match(home, /DirectoryNotice/);
+    assert.match(home, /catFood/);
+    assert.match(home, /food-drink/);
+    assert.match(home, /trustHow/);
+    assert.match(home, /navAdd/);
     assert.match(apiHelper, /export async function apiTry/);
     assert.match(apiHelper, /AbortSignal\.timeout/);
   });
@@ -128,9 +140,12 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(header, /nav-search/);
     assert.match(header, /withLocale\("\/search"/);
     const searchIdx = header.indexOf('withLocale("/search"');
-    const claimIdx = header.indexOf('withLocale("/claim"');
-    assert.ok(searchIdx >= 0 && claimIdx > searchIdx);
+    const addIdx = header.indexOf('t(locale, "navAdd")');
+    const claimIdx = header.indexOf('t(locale, "navClaim")');
+    assert.ok(searchIdx >= 0 && addIdx > searchIdx && claimIdx > addIdx);
     assert.match(header, /nav-owner/);
+    assert.match(header, /langSwitch/);
+    assert.doesNotMatch(header, /langSwitchShort/);
     assert.doesNotMatch(header, /portalUrl/);
     assert.match(base, /href=\{portalUrl\}/);
   });
@@ -158,7 +173,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(island, /islandName\(locale, islandData.island.slug/);
     assert.match(island, /tenantAbsHref\(/);
     assert.match(browse, /unavailable/);
-    assert.match(browse, /directoryUnavailable/);
+    assert.match(browse, /DirectoryNotice/);
     assert.match(search, /categoryLabel\(group\.slug, locale\)/);
   });
 
@@ -193,8 +208,21 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(search, /apiTry</);
     assert.match(search, /searchFailed/);
     assert.match(search, /islands === null/);
-    assert.match(search, /directoryUnavailable/);
+    assert.match(search, /DirectoryNotice/);
     assert.doesNotMatch(search, /await api</);
+    assert.doesNotMatch(search, /browseBali/);
+    assert.doesNotMatch(search, /island: "bali"/);
+  });
+
+  it("coming-soon and empty states offer updates instead of Browse Bali", () => {
+    assert.match(notice, /comingSoonUpdate/);
+    assert.match(notice, /mailto:updates@nusa.business/);
+    assert.doesNotMatch(notice, /browseBali/);
+    assert.doesNotMatch(island, /browseBali/);
+    assert.doesNotMatch(browse, /browseBali/);
+    assert.doesNotMatch(i18n, /Browse Bali/);
+    assert.doesNotMatch(i18n, /Buka Bali/);
+    assert.match(island, /variant="coming_soon"/);
   });
 
   it("SSR errors render a localized 500 with search, not a blank body", () => {

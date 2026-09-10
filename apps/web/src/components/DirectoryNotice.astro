@@ -1,0 +1,37 @@
+---
+import { t, withLocale, type Locale } from "../i18n/ui";
+
+type Variant = "coming_soon" | "unavailable" | "empty";
+
+type Props = {
+  locale: Locale;
+  variant: Variant;
+};
+
+const { locale, variant } = Astro.props as Props;
+const supportHref = withLocale("/support", locale);
+const addHref = `${withLocale("/claim", locale)}#add`;
+const mailHref =
+  "mailto:updates@nusa.business?subject=" +
+  encodeURIComponent("nusa.business directory updates");
+const copyKey =
+  variant === "coming_soon"
+    ? "comingSoonNext"
+    : variant === "empty"
+      ? "noSearchMatches"
+      : "directoryUnavailable";
+---
+
+<p class={variant === "empty" ? "prose" : "banner"}>
+  {variant === "coming_soon" && (
+    <>
+      <span class="stamp">{t(locale, "comingSoon")}</span>{" "}
+    </>
+  )}
+  {t(locale, copyKey)}{" "}
+  <a href={mailHref}>{t(locale, "comingSoonUpdate")}</a>
+  <span aria-hidden="true"> · </span>
+  <a href={supportHref}>{t(locale, "support")}</a>
+  <span aria-hidden="true"> · </span>
+  <a href={addHref}>{t(locale, "addListing")}</a>
+</p>

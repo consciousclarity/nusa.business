@@ -59,4 +59,19 @@ describe("listing discovery wiring", () => {
     // `api()` throws on non-2xx and on network errors.
     assert.match(src, /\/discovery`,\s*\)\.catch\(\(\) => emptyDiscovery\)/);
   });
+
+  it("renders the nearby map whenever the listing has an origin", () => {
+    // Neighbours are optional; a lone pin still needs the map. Gating on
+    // nearbyCategories omitted the panel on production listings that had
+    // coords but no in-radius peers (and on origin-null stores, the whole
+    // map disappeared).
+    assert.match(
+      src,
+      /discovery\.origin && \(/,
+    );
+    assert.doesNotMatch(
+      src,
+      /discovery\.origin && discovery\.nearbyCategories\.length > 0/,
+    );
+  });
 });

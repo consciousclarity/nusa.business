@@ -46,6 +46,10 @@ const i18n = readFileSync(
   new URL("../apps/web/src/i18n/ui.ts", import.meta.url),
   "utf8",
 );
+const heroCats = readFileSync(
+  new URL("../apps/web/src/lib/hero-categories.ts", import.meta.url),
+  "utf8",
+);
 const notFound = readFileSync(
   new URL("../apps/web/src/pages/404.astro", import.meta.url),
   "utf8",
@@ -73,8 +77,7 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.match(home, /islandName\(locale, island.slug, island.name\)/);
     assert.match(home, /apiTry</);
     assert.match(home, /DirectoryNotice/);
-    assert.match(home, /catFood/);
-    assert.match(home, /food-drink/);
+    assert.match(home, /CategoryShortcuts/);
     assert.match(home, /trustHow/);
     assert.match(home, /navAdd/);
     assert.match(apiHelper, /export async function apiTry/);
@@ -223,6 +226,12 @@ describe("visitor chrome (no debug resolver)", () => {
     assert.doesNotMatch(i18n, /Browse Bali/);
     assert.doesNotMatch(i18n, /Buka Bali/);
     assert.match(island, /variant="coming_soon"/);
+    assert.match(heroCats, /food-drink/);
+    assert.match(heroCats, /hotels-accommodation/);
+    assert.match(heroCats, /travel-experiences/);
+    assert.match(heroCats, /transport-automotive/);
+    assert.match(heroCats, /health-medical/);
+    assert.match(heroCats, /catFood/);
   });
 
   it("SSR errors render a localized 500 with search, not a blank body", () => {

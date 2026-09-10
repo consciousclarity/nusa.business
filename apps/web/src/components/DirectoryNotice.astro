@@ -6,14 +6,17 @@ type Variant = "coming_soon" | "unavailable" | "empty";
 type Props = {
   locale: Locale;
   variant: Variant;
+  where?: string;
 };
 
-const { locale, variant } = Astro.props as Props;
+const { locale, variant, where } = Astro.props as Props;
 const supportHref = withLocale("/support", locale);
 const addHref = `${withLocale("/claim", locale)}#add`;
+const subject = where
+  ? `${t(locale, "comingSoonSubject")}: ${where}`
+  : t(locale, "comingSoonSubject");
 const mailHref =
-  "mailto:updates@nusa.business?subject=" +
-  encodeURIComponent("nusa.business directory updates");
+  "mailto:updates@nusa.business?subject=" + encodeURIComponent(subject);
 const copyKey =
   variant === "coming_soon"
     ? "comingSoonNext"

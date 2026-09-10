@@ -3,6 +3,7 @@ import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import DirectoryMap from "../../../components/DirectoryMap.astro";
 import DirectoryNotice from "../../../components/DirectoryNotice.astro";
+import CategoryShortcuts from "../../../components/CategoryShortcuts.astro";
 import { apiOrNull } from "../../../lib/api";
 import { geoHref, tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
 import { geoView } from "../../../lib/geo-centroids";
@@ -45,6 +46,8 @@ type IslandPayload = {
     sample?: boolean;
     lat?: number;
     lng?: number;
+    verifiedAt?: string;
+    updatedAt?: string;
   }[];
 };
 
@@ -218,6 +221,21 @@ const islandMarkers = islandData
           }),
     )
   : [];
+
+const islandComingSoon = Boolean(
+  islandData &&
+    (islandData.island.status === "coming_soon" ||
+      (islandData.island.kind !== "region" && islandData.businesses.length === 0)),
+);
+const islandVerifiedCount = islandData
+  ? islandData.businesses.filter((b) => b.verifiedAt).length
+  : 0;
+const islandUpdatedAt = islandData
+  ? islandData.businesses.reduce((latest, b) => {
+      const updated = b.updatedAt;
+      return updated && updated > latest ? updated : latest;
+    }, "")
+  : "";
 ---
 
 {mode === "island" && islandData && (
@@ -245,8 +263,10 @@ const islandMarkers = islandData
       <p class="prose">{islandTagline(locale, islandData.island.slug, islandData.island.tagline)}</p>
     </section>
 
-    {islandData.island.status === "coming_soon" && (
-      <DirectoryNotice locale={locale} variant="coming_soon" />
+    <CategoryShortcuts locale={locale} island={islandData.island.slug} />
+
+    {islandComingSoon && (
+      <DirectoryNotice locale={locale} variant="coming_soon" where={islandHubLabel} />
     )}
 
     <form
@@ -375,6 +395,20 @@ const islandMarkers = islandData
         </section>
       )}
 
+    {islandData.businesses.length > 0 && (
+    <section class="section">
+      <h2>{t(locale, "trustHeading")}</h2>
+      <p class="meta">
+        {islandData.businesses.length} {t(locale, "listingsCount")}
+        {" · "}
+        {islandVerifiedCount} {t(locale, "trustVerified")}
+        {islandUpdatedAt ? ` · ${t(locale, "trustUpdated")} ${islandUpdatedAt.slice(0, 10)}` : ""}
+      </p>
+      <p class="prose">{t(locale, "trustHow")}</p>
+    </section>
+    )}
+
+    {islandData.businesses.length > 0 && (
     <section class="section">
       <h2>{t(locale, "featured")}</h2>
       <ol class="index-list">
@@ -414,6 +448,7 @@ const islandMarkers = islandData
         })}
       </ol>
     </section>
+    )}
   </Base>
 )}
 

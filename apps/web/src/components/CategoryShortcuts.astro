@@ -1,0 +1,33 @@
+---
+import { t, type Locale } from "../i18n/ui";
+import { HERO_CATEGORIES, heroCategoryHref } from "../lib/hero-categories";
+
+type Props = {
+  locale: Locale;
+  island?: string;
+  place?: string;
+  area?: string;
+};
+
+const { locale, island, place, area } = Astro.props as Props;
+const req = Astro.request;
+---
+
+<nav class="section" aria-label={t(locale, "catShortcuts")}>
+  <p class="meta">{t(locale, "catShortcuts")}</p>
+  <p class="actions">
+    {HERO_CATEGORIES.map((cat) => (
+      <a
+        href={heroCategoryHref(req, {
+          locale,
+          slug: cat.slug,
+          island,
+          place,
+          area,
+        })}
+      >
+        {t(locale, cat.key)}
+      </a>
+    ))}
+  </p>
+</nav>

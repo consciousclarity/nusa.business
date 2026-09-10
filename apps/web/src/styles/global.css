@@ -1,33 +1,31 @@
-/* Teletype — docs/design/teletype.md
-   System fonts only. No @import. No radius, shadow, or gradient. */
+/* Tropical modernist editorial — docs/design/teletype.md
+   System fonts only. No @import, shadow, or gradient. */
 
 :root {
   --paper: #eeece6;
   --paper-2: #e6e3db;
   --ink: #1a1c22;
-  --ink-soft: #55575f;
-  --ink-faint: #8a8b91;
+  --ink-soft: #45474e;
+  --ink-faint: #5c5e66;
   --rule: #c9c6bc;
-  --link: #1a29c4;
-  --link-visited: #5b2382;
-  --stamp: #9e2b1f;
+  --link: #9a3d18;
+  --link-visited: #1a3d32;
+  --pine: var(--link-visited);
+  --stamp: #9a3d18;
+  --radius: 6px;
 
-  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
-    "Liberation Mono", monospace;
-  --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --sans: ui-sans-serif, system-ui, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --serif: "Iowan Old Style", Palatino, Georgia, ui-serif, serif;
 
-  --step--1: 0.78rem;
-  --step-0: 0.875rem;
-  --step-1: 1rem;
-  --step-2: 1.25rem;
+  --step--1: 0.81rem;
+  --step-0: 17px;
+  --step-1: 17px;
+  --step-2: 1.31rem;
   --step-3: clamp(1.5rem, 1.1rem + 1.6vw, 2.1rem);
 
-  /* Fluid side gutter: tighter on phones, ~1.25rem on wide viewports */
   --page-gutter: clamp(0.85rem, 3.5vw, 1.25rem);
-  --page-measure: min(
-    78ch,
-    calc(100% - (2 * var(--page-gutter)) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))
-  );
+  --page-measure: min(78ch, calc(100% - (2 * var(--page-gutter)) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
 }
 
 @media (prefers-color-scheme: dark) {
@@ -35,12 +33,12 @@
     --paper: #17181c;
     --paper-2: #1f2126;
     --ink: #e4e2da;
-    --ink-soft: #a3a29b;
-    --ink-faint: #74736d;
+    --ink-soft: #b4b3ab;
+    --ink-faint: #9c9a92;
     --rule: #34363c;
-    --link: #8fa4ff;
-    --link-visited: #c0a0e0;
-    --stamp: #e0705f;
+    --link: #e08a62;
+    --link-visited: #8fbfa8;
+    --stamp: #e08a62;
   }
 }
 
@@ -48,12 +46,12 @@
   --paper: #17181c;
   --paper-2: #1f2126;
   --ink: #e4e2da;
-  --ink-soft: #a3a29b;
-  --ink-faint: #74736d;
+  --ink-soft: #b4b3ab;
+  --ink-faint: #9c9a92;
   --rule: #34363c;
-  --link: #8fa4ff;
-  --link-visited: #c0a0e0;
-  --stamp: #e0705f;
+  --link: #e08a62;
+  --link-visited: #8fbfa8;
+  --stamp: #e08a62;
 }
 
 *,
@@ -71,9 +69,9 @@ body {
   min-height: 100vh;
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--mono);
+  font-family: var(--sans);
   font-size: var(--step-0);
-  line-height: 1.55;
+  line-height: 1.7;
   font-variant-numeric: tabular-nums;
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
@@ -113,11 +111,10 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 .skip-link:focus {
-  outline: 2px solid var(--link);
+  outline: 2px solid var(--pine);
   outline-offset: 2px;
 }
 
-/* First tab stop: jump past chrome into the page body */
 .skip-link {
   position: absolute;
   inset-inline-start: var(--page-gutter);
@@ -128,6 +125,7 @@ textarea:focus-visible,
   color: var(--paper);
   text-decoration: underline;
   transform: translateY(-120%);
+  border-radius: var(--radius);
 }
 
 .skip-link:focus {
@@ -139,7 +137,7 @@ main:focus {
 }
 
 main:focus-visible {
-  outline: 2px solid var(--link);
+  outline: 2px solid var(--pine);
   outline-offset: 4px;
 }
 
@@ -166,7 +164,7 @@ h1 {
 .prose {
   font-family: var(--serif);
   font-size: var(--step-1);
-  line-height: 1.65;
+  line-height: 1.7;
   max-width: 66ch;
   color: var(--ink);
 }
@@ -185,7 +183,30 @@ ol {
   padding-left: 1.25rem;
 }
 
-/* —— Masthead —— */
+.meta,
+.banner,
+.resolver,
+.kv,
+.index-row .n,
+.index-row .rhs,
+table.data,
+.site-footer,
+.site-header nav {
+  font-family: var(--mono);
+}
+
+.banner,
+.resolver,
+.stamp,
+.cta,
+button,
+input,
+select,
+textarea,
+.chip {
+  border-radius: var(--radius);
+}
+
 .site-header {
   display: flex;
   flex-wrap: wrap;
@@ -244,7 +265,6 @@ ol {
 
 .site-header nav a.nav-search {
   color: var(--ink);
-  font-weight: 600;
 }
 
 .site-header nav a.nav-search:visited {
@@ -272,7 +292,6 @@ ol {
   margin-right: 0.4rem;
 }
 
-/* —— Path —— */
 .crumbs {
   font-family: var(--mono);
   font-size: var(--step--1);
@@ -305,7 +324,6 @@ ol {
   font-weight: 700;
 }
 
-/* —— Lede / sections —— */
 .lede {
   margin-bottom: 1.5rem;
 }
@@ -391,7 +409,6 @@ ol {
   color: var(--ink);
   background: var(--paper);
   border: 1px solid var(--ink);
-  border-radius: 0;
   padding: 0.55rem 0.65rem;
   min-height: 2.75rem;
 }
@@ -400,7 +417,6 @@ ol {
   min-height: 2.75rem;
 }
 
-/* —— Resolver —— */
 .resolver {
   background: var(--paper-2);
   border: 1px solid var(--rule);
@@ -429,7 +445,6 @@ ol {
   word-break: break-word;
 }
 
-/* —— Index list —— */
 .index-list {
   list-style: none;
   padding: 0;
@@ -451,7 +466,6 @@ ol {
   border-top: 1px dotted var(--rule);
 }
 
-/* Children participate in the li grid so desc aligns to the name column */
 .index-row {
   display: contents;
 }
@@ -485,17 +499,17 @@ ol {
 
 .index-desc {
   font-family: var(--serif);
-  font-size: 0.95rem;
-  line-height: 1.55;
+  font-size: var(--step-0);
+  line-height: 1.7;
   color: var(--ink-soft);
   margin: 0;
   max-width: 66ch;
   grid-column: 2 / -1;
 }
 
-/* —— Status stamp —— */
 .stamp {
   display: inline-block;
+  font-family: var(--mono);
   color: var(--stamp);
   border: 1px solid currentColor;
   font-size: 0.7rem;
@@ -505,7 +519,6 @@ ol {
   line-height: 1.3;
 }
 
-/* —— Record —— */
 .record {
   border-top: 2px solid var(--ink);
   border-bottom: 1px solid var(--rule);
@@ -541,7 +554,6 @@ ol {
   color: var(--ink);
 }
 
-/* —— Actions / CTA —— */
 .actions {
   display: flex;
   flex-wrap: wrap;
@@ -557,8 +569,8 @@ ol {
   text-transform: uppercase;
   text-decoration: none;
   color: var(--paper);
-  background: var(--ink);
-  border: 1px solid var(--ink);
+  background: var(--pine);
+  border: 1px solid var(--pine);
   padding: 0.55em 0.9em;
   cursor: pointer;
 }
@@ -577,6 +589,7 @@ ol {
 .cta.secondary {
   background: transparent;
   color: var(--ink);
+  border-color: var(--ink);
 }
 
 .cta.secondary:visited {
@@ -584,7 +597,8 @@ ol {
 }
 
 .cta.secondary:hover {
-  background: var(--ink);
+  background: var(--pine);
+  border-color: var(--pine);
   color: var(--paper);
 }
 
@@ -594,8 +608,8 @@ button {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--paper);
-  background: var(--ink);
-  border: 1px solid var(--ink);
+  background: var(--pine);
+  border: 1px solid var(--pine);
   padding: 0.55em 0.9em;
   cursor: pointer;
 }
@@ -605,15 +619,14 @@ button:hover {
   border-color: var(--link);
 }
 
-/* —— Forms —— */
 label {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  font-family: var(--mono);
   font-size: var(--step--1);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  /* ink-soft (not faint) so labels meet WCAG AA against --paper */
   color: var(--ink-soft);
 }
 
@@ -628,6 +641,7 @@ fieldset.scores {
 }
 
 fieldset.scores legend {
+  font-family: var(--mono);
   font-size: var(--step--1);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -655,7 +669,7 @@ input:focus,
 select:focus,
 textarea:focus {
   border-color: var(--ink);
-  outline: 2px solid var(--link);
+  outline: 2px solid var(--pine);
   outline-offset: 0;
 }
 
@@ -664,7 +678,6 @@ textarea {
   resize: vertical;
 }
 
-/* —— Tables —— */
 .table-wrap {
   overflow-x: auto;
   margin: 0 0 1rem;
@@ -695,7 +708,7 @@ table.data caption {
   caption-side: top;
   text-align: left;
   font-family: var(--mono);
-  font-size: var(--step-0);
+  font-size: var(--step--1);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink);
@@ -704,7 +717,6 @@ table.data caption {
   border-bottom: 1px solid var(--rule);
 }
 
-/* —— Footer —— */
 .site-footer {
   border-top: 1px solid var(--rule);
   margin-top: 3rem;
@@ -722,7 +734,6 @@ table.data caption {
   color: var(--link);
 }
 
-/* Narrow / phone — Indonesia mobile-first browsing */
 @media (max-width: 40rem) {
   .site-header {
     flex-direction: column;
@@ -782,7 +793,6 @@ table.data caption {
     padding-inline: 1rem;
   }
 
-  /* ≥16px prevents iOS focus-zoom on form fields */
   input,
   select,
   textarea {

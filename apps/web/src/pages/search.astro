@@ -106,9 +106,7 @@ const title = q
     {searchFailed ? (
       <p class="prose">
         {t(locale, "directoryUnavailable")}{" "}
-        <a href={tenantHref(Astro.request, { island: "bali", locale })}>
-          {t(locale, "browseBali")}
-        </a>
+        <a href={withLocale("/", locale)}>{t(locale, "backHome")}</a>
       </p>
     ) : (
       <>
@@ -119,12 +117,7 @@ const title = q
       {category ? ` · ${categoryLabel(category, locale)}` : ""}
     </h2>
     {hits.length === 0 ? (
-      <p class="prose">
-        {t(locale, "noSearchMatches")}{" "}
-        <a href={tenantHref(Astro.request, { island: "bali", locale })}>
-          {t(locale, "browseBali")}
-        </a>
-      </p>
+      <p class="prose">{t(locale, "noSearchMatches")}</p>
     ) : (
       <ol class="index-list">
         {hits.map((hit, i) => {

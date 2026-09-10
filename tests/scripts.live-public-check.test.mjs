@@ -14,6 +14,11 @@ describe("live public check script", () => {
     assert.doesNotMatch(script, /\bpm2 (restart|reload)\b/);
   });
 
+  it("does not grep -q a piped sitemap under pipefail", () => {
+    assert.match(script, /\nhas\(\) \{/);
+    assert.doesNotMatch(script, /printf '%s' "\$sitemap" \| grep -q/);
+  });
+
   it("asserts visitor chrome and browser API origin on live HTML", () => {
     assert.match(script, /class="resolver"/);
     assert.match(script, /kind=nation/);

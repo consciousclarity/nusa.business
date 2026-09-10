@@ -42,6 +42,7 @@ Indonesia’s nested local-business platform — greenfield OSS rebuild of the b
 ### Design
 
 - [Teletype — visual design spec](./design/teletype.md)
+- [Nation homepage — structure spec](./design/homepage.md)
 
 ### Engineering
 

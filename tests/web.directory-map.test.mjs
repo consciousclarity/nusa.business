@@ -16,10 +16,6 @@ describe("directory maps", () => {
     assert.match(src("apps/web/src/components/PlaceDirectory.astro"), /DirectoryMap/);
     assert.match(src("apps/web/src/pages/search.astro"), /DirectoryMap/);
     assert.match(src("apps/web/src/components/CategoryBrowse.astro"), /DirectoryMap/);
-    assert.match(
-      src("apps/web/src/pages/host/[label]/[...path].astro"),
-      /mapLocation/,
-    );
   });
 
   it("does not put a directory map on legal or error pages", () => {

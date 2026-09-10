@@ -2,10 +2,8 @@
 import Base from "../../../layouts/Base.astro";
 import PlaceDirectory from "../../../components/PlaceDirectory.astro";
 import CategoryBrowse from "../../../components/CategoryBrowse.astro";
-import DirectoryMap from "../../../components/DirectoryMap.astro";
 import { api, apiOrNull, apiTry, browserApiOrigin } from "../../../lib/api";
 import { tenantHref, tenantAbsHref, nationAbsHref } from "../../../lib/links";
-import { listingMarker, takeMarkers } from "../../../lib/map-markers";
 import { resolveFacetBrowse, searchQueryForBrowse } from "../../../lib/facet-browse";
 import {
   breadcrumbJsonLd,
@@ -372,16 +370,6 @@ const directionsLink = data
     })
   : null;
 const siteLink = data ? websiteHref(data.business.website) : null;
-const listingLocationMarkers =
-  data && "lat" in (data.business ?? {})
-    ? takeMarkers([
-        listingMarker({
-          lat: data.business.lat,
-          lng: data.business.lng,
-          name: data.business.name,
-        }),
-      ])
-    : [];
 const bookingToday = new Date().toISOString().slice(0, 10);
 const listingCopy = {
   reviewSubmitting: t(locale, "reviewSubmitting"),
@@ -850,20 +838,7 @@ if (hub && categoryParam) {
     </p>
   </article>
 
-  {listingLocationMarkers.length > 0 && (
-    <DirectoryMap
-      label={t(locale, "mapLocation")}
-      markers={listingLocationMarkers}
-      compact
-    />
-  )}
-
   <div class="stack">
-    <section class="section">
-      <h2>{t(locale, "overview")}</h2>
-      <p class="prose">{data.business.description}</p>
-    </section>
-
     {discovery.sameAddress.length > 0 && (
       <section class="section" aria-labelledby="same-address-heading">
         <h2 id="same-address-heading">{t(locale, "otherAtAddress")}</h2>
@@ -1011,39 +986,6 @@ if (hub && categoryParam) {
 
     <section class="section" id="reviews">
       <h2>{t(locale, "reviews")}</h2>
-      {data.reviews.length === 0 && <p class="meta">{t(locale, "noReviews")}</p>}
-      {data.reviews.length > 0 && (
-        <div class="table-wrap">
-          <table class="data">
-            <caption>{t(locale, "reviewScores")}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{t(locale, "author")}</th>
-                <th scope="col">{t(locale, "scoreService")}</th>
-                <th scope="col">{t(locale, "scoreValue")}</th>
-                <th scope="col">{t(locale, "scoreLocation")}</th>
-                <th scope="col">{t(locale, "scoreCleanliness")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.reviews.map((r) => (
-                <tr>
-                  <th scope="row">{r.authorName}</th>
-                  <td>{r.service}/5</td>
-                  <td>{r.value}/5</td>
-                  <td>{r.location}/5</td>
-                  <td>{r.cleanliness}/5</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {data.reviews.map((r) => (
-        <p class="prose review-note">
-          <strong>{r.authorName}:</strong> {r.comment}
-        </p>
-      ))}
 
       <form class="stack" method="POST" id="review-form">
         <h3>{t(locale, "addReview")}</h3>

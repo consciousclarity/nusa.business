@@ -81,11 +81,21 @@ file escapes the source check but still counts toward the built one.
 
 Every section below reuses existing classes. **Target zero new CSS.**
 
-**Production has no businesses.** `packages/db/src/repository.ts` seeds demo data
-only outside production; the live store is geography-only (`businesses: []`).
-Locally there are 29 demo listings, all `sample: true`, 24 of them in Bali. So
-any listing-backed section must render correctly as *empty* — that is the live
-case today, not an edge case. Geography, by contrast, is always present.
+**Know which store you are looking at.** Three different populations, and they
+are easy to confuse:
+
+| Store | Businesses |
+|---|---|
+| **Live production** — volume `docker_api_data` | **39**, per `docs/ops/launch-readiness.md` |
+| **A fresh production boot** — no store file yet | **0**, geography only |
+| **Local dev** | 29 demo listings, all `sample: true`, 24 of them in Bali |
+
+The geography-only path in `packages/db/src/repository.ts` runs **only when no
+store file exists**. It never clears an existing volume, so the live store keeps
+its 39 listings across deploys. A listing-backed section will therefore render
+with real content in production — validate it that way, not against an empty
+store. Still handle the empty case: it is what a fresh boot and a dead API both
+produce. Geography, by contrast, is always present.
 
 **`tests/web.visitor-chrome.test.mjs:56-67` reads `index.astro` as source text**
 and pins exact strings:
@@ -149,10 +159,15 @@ not exist.
 ADR-006, but it exists only **under a tenant host**
 (`apps/web/src/pages/host/[label]/c/[...facet].astro`). There is no nation-level
 `/c/` route. The only nation-scoped destination is `/search?category={slug}`,
-which `robots.txt` disallows. Link there regardless: it is correct for a user,
-and with zero listings nation-wide a nation-level `/c/` page would be `noindex`
-under ADR-006 rule 2 anyway, so building one now buys nothing. Revisit once real
-listings exist.
+which `robots.txt` disallows. Link there for now — it is correct for a user, and
+it keeps this change to the homepage.
+
+But note what that costs: with 39 listings live, a nation-level `/c/{category}`
+page would satisfy ADR-006 rule 2 (≥1 result) for the categories that have
+listings, so it would be **indexable today**. Sixteen homepage links into a
+robots-disallowed path is real crawl equity left on the floor. Building that
+route is the better answer and it is worth doing soon — it is kept out of this
+change to avoid widening it, not because it would not pay.
 
 ```astro
 <section class="section">
@@ -245,27 +260,45 @@ The data is **already fetched**: #56 added
 `apiTry<{ results: NationHit[] }>("/v1/search")` to the `Promise.all` for map
 markers. With no parameters that route returns every non-draft business
 nation-wide with geo context. Widen the existing `NationHit` type to carry
-`summary`, `categories` and `sample` rather than adding a second request.
+`summary`, `categories`, `sample` and **`createdAt`** rather than adding a second
+request. All four are already on `PublicBusinessCard`.
 
 Render with the established listing-row pattern — `.index-list` → `.index-row`
 with `.n`, `.name` (via `tenantHref` with island + place + area + slug), `.rhs`,
 and `.index-desc` for the summary. Show `<span class="stamp">{t(locale, "sampleListing")}</span>`
 in `.rhs` when `business.sample`, otherwise the first category label.
 
-**Gate the whole section on a non-empty result:**
+**Sort before slicing — the endpoint does not.** `listBusinesses` in
+`packages/db/src/repository.ts` only filters; it returns `store.businesses` in
+insertion order and never sorts. Taking the first six would put an arbitrary six
+listings under a heading that claims recency — the same unearned claim that
+disqualified "Featured" above, and with 39 real listings live it would mislabel
+real businesses on the live homepage.
+
+`PublicBusinessCard` already carries `createdAt`, so no API change is needed.
+Include it in the widened `NationHit` and sort newest-first:
 
 ```astro
-{(search?.results ?? []).length > 0 && (
+{recent.length > 0 && (
   <section class="section">
     <h2>{t(locale, "recentlyAdded")}</h2>
-    …first 6 rows…
+    …rows from `recent`…
   </section>
 )}
 ```
 
-In production today this renders nothing at all, which is the correct outcome —
-better than a heading over a void. Do not add a "no listings yet" placeholder to
-the homepage.
+```ts
+const recent = [...(search?.results ?? [])]
+  .sort((a, b) => b.business.createdAt.localeCompare(a.business.createdAt))
+  .slice(0, 6);
+```
+
+`createdAt` is an ISO-8601 string, so a lexicographic compare is a chronological
+one. Sort a copy — `search.results` is also the source for the map markers.
+
+Keep the non-empty gate. It renders nothing on a fresh production boot or when
+the API is down, which beats a heading over a void; do not add a "no listings
+yet" placeholder to the homepage.
 
 Follow-up worth raising with product: a real featured signal could be built from
 `verifiedAt` (set when a claim is approved) or from review counts. Both exist in
@@ -331,8 +364,9 @@ extraction, but doing it here would touch `search.astro`, `PlaceDirectory.astro`
 `CategoryBrowse.astro` and both host pages — and could move test-pinned strings
 out of `index.astro` and break `web.visitor-chrome`. Separate change.
 
-**A nation-level `/c/{category}` route.** Worth building once listings exist;
-pointless while the nation-wide count is zero.
+**A nation-level `/c/{category}` route.** Deliberately deferred to keep this
+change to one page — but it would be indexable today against the 39 live
+listings, so it is a near-term follow-up rather than a someday item.
 
 **Photographs.** Not until the product stance in
 `docs/ideas/2026-09-07-fast-text-and-contact.md` is revisited and `gallery` is
@@ -361,10 +395,13 @@ npm run build:packages && npm run build && npm test
   `http://localhost:4321/` (nation), `/id/` (Indonesian labels), `/host/java`
   (region hub lists six provinces), `/host/bali` (province hub), and a category
   link through to `/search?category=food-drink`.
-- **The production-shaped case matters most.** Run the API with
-  `NUSA_ALLOW_DEMO_SEED` unset so the store is geography-only, and confirm the
-  homepage renders lede, search, map, categories, island groups, provinces,
-  how-it-works and the CTA — with the recently-added section **absent**, not
-  empty.
+- **Check the recency ordering against real data**, since production carries 39
+  listings: the six rows must be the six newest by `createdAt`, not the first six
+  the API returns. Compare against the store directly.
+- **Also check the empty-store case**, which is a fresh production boot rather
+  than the live one: run the API against an empty `NUSA_DATA_DIR` with
+  `NUSA_ALLOW_DEMO_SEED` unset, and confirm the homepage renders lede, search,
+  map, categories, island groups, provinces, how-it-works and the CTA — with the
+  recently-added section **absent**, not empty.
 - Stop the API and reload: the `directoryUnavailable` branch must still render
   the search form and the category block.

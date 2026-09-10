@@ -2,6 +2,7 @@
 import { geoHref, tenantHref } from "../lib/links";
 import { inWhere, islandName, t, type Locale } from "../i18n/ui";
 import DirectoryMap from "./DirectoryMap.astro";
+import DirectoryNotice from "./DirectoryNotice.astro";
 import { listingMarker, takeMarkers } from "../lib/map-markers";
 import {
   categoryLabel,
@@ -128,12 +129,7 @@ const browseMarkers = takeMarkers(
 <section class="lede">
   <h1>{inWhere(locale, facetHeading, where)}</h1>
   {unavailable ? (
-    <p class="prose">
-      {t(locale, "directoryUnavailable")}{" "}
-      <a href={tenantHref(req, { island: "bali", locale })}>
-        {t(locale, "browseBali")}
-      </a>
-    </p>
+    <DirectoryNotice locale={locale} variant="unavailable" />
   ) : (
     <p class="prose">
       {listings.length} {t(locale, "listingsCount")}

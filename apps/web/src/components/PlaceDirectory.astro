@@ -2,6 +2,8 @@
 import { geoHref, tenantHref } from "../lib/links";
 import { t, placeTypeLabel, type Locale } from "../i18n/ui";
 import DirectoryMap from "./DirectoryMap.astro";
+import DirectoryNotice from "./DirectoryNotice.astro";
+import CategoryShortcuts from "./CategoryShortcuts.astro";
 import { geoView } from "../lib/geo-centroids";
 import { listingMarker, takeMarkers } from "../lib/map-markers";
 import {
@@ -32,6 +34,8 @@ export type PlaceHubBusiness = {
   fieldRegistered?: boolean;
   lat?: number;
   lng?: number;
+  verifiedAt?: string;
+  updatedAt?: string;
 };
 
 type Props = {
@@ -118,6 +122,18 @@ const placeFallback = geoView(island.slug);
   )}
 </section>
 
+<CategoryShortcuts
+  locale={locale}
+  island={island.slug}
+  place={parent && place.type === "tourist_area" ? parent.slug : place.slug}
+  area={place.type === "tourist_area" ? place.slug : undefined}
+/>
+
+{businesses.length === 0 && (
+  <DirectoryNotice locale={locale} variant="coming_soon" where={place.name} />
+)}
+
+{placeBusinesses.length > 0 && (
 <aside class="banner" aria-label={t(locale, "listingsCount")}>
   {placeBusinesses.length} {t(locale, "listingsCount")}
   {activeCategory ? ` · ${activeCategoryLabel}` : ""}
@@ -125,6 +141,7 @@ const placeFallback = geoView(island.slug);
     ? ` · ${businesses.length}`
     : ""}
 </aside>
+)}
 
 <DirectoryMap
   label={t(locale, "directoryMap")}

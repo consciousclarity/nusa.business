@@ -81,10 +81,32 @@ const jsonLdBlocks = jsonLd
       <a class="brand" href={homeHref}>nusa<span class="tld">.business</span></a>
       <nav aria-label={t(locale, "navPrimary")}>
         <a class="nav-search" href={withLocale("/search", locale)}>{t(locale, "search")}</a>
-        <a href={switchHref} lang={other} hreflang={other}>
-          {t(locale, "langSwitchShort")}
+        <a class="nav-search" href={`${withLocale("/claim", locale)}#add`}>{t(locale, "navAdd")}</a>
+        <a class="nav-owner" href={`${withLocale("/claim", locale)}#claim`}>{t(locale, "navClaim")}</a>
+        <a
+          class="nav-lang"
+          href={switchHref}
+          lang={other}
+          hreflang={other}
+          aria-label={t(locale, "langSwitchAria")}
+        >
+          <svg
+            class="nav-lang-mark"
+            aria-hidden="true"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M2 12h20"></path>
+            <path d="M12 2a15 15 0 0 1 0 20"></path>
+            <path d="M12 2a15 15 0 0 0 0 20"></path>
+          </svg>
+          {t(locale, "langSwitch")}
         </a>
-        <a class="nav-owner" href={withLocale("/claim", locale)}>{t(locale, "navClaim")}</a>
       </nav>
     </header>
     <nav class="crumbs" aria-label={t(locale, "navPath")}>

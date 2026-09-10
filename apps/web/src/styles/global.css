@@ -244,6 +244,7 @@ ol {
 
 .site-header nav a.nav-search {
   color: var(--ink);
+  font-weight: 600;
 }
 
 .site-header nav a.nav-search:visited {
@@ -256,6 +257,19 @@ ol {
 
 .site-header nav a.nav-owner:visited {
   color: var(--ink-faint);
+}
+
+.nav-lang-mark {
+  width: 0.85em;
+  height: 0.85em;
+  margin-right: 0.35em;
+  color: var(--ink-faint);
+  display: inline;
+  vertical-align: -0.12em;
+}
+
+.banner .stamp {
+  margin-right: 0.4rem;
 }
 
 /* —— Path —— */

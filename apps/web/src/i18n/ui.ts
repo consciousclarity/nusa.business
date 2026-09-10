@@ -51,7 +51,6 @@ const ui = {
     browseBali: "Browse Bali",
     addListing: "Add a missing business",
     claimListing: "Claim an existing listing",
-    openBali: "Open Bali",
     claimTitle: "Claim or add a listing — nusa.business",
     claimH1: "Owners: claim or add a listing",
     claimLede:
@@ -252,7 +251,6 @@ const ui = {
     browseBali: "Buka Bali",
     addListing: "Tambah bisnis yang belum ada",
     claimListing: "Klaim listing yang sudah ada",
-    openBali: "Buka Bali",
     claimTitle: "Klaim atau tambah listing — nusa.business",
     claimH1: "Pemilik: klaim atau tambah listing",
     claimLede:

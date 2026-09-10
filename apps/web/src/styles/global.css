@@ -357,10 +357,6 @@ textarea,
   padding-left: 0.55rem;
 }
 
-.review-note {
-  margin-top: 0.75rem;
-}
-
 .banner {
   background: var(--paper-2);
   border: 1px solid var(--rule);

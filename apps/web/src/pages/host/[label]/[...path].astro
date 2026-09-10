@@ -288,7 +288,6 @@ type ListingPayload = {
     name: string;
     slug: string;
     summary: string;
-    description: string;
     categories: string[];
     address?: string;
     phone?: string;
@@ -303,14 +302,6 @@ type ListingPayload = {
     updatedAt?: string;
     openingHours: { day: string; open: string; close: string; closed?: boolean }[];
   };
-  reviews: {
-    authorName: string;
-    service: number;
-    value: number;
-    location: number;
-    cleanliness: number;
-    comment: string;
-  }[];
   vendor?: {
     id: string;
     name: string;

@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS deps
+FROM node:26-bookworm-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json packages/shared/
@@ -6,7 +6,7 @@ COPY packages/db/package.json packages/db/
 COPY apps/api/package.json apps/api/
 RUN npm install --ignore-scripts --workspace=@nusa/shared --workspace=@nusa/db --workspace=@nusa/api
 
-FROM node:22-bookworm-slim AS build
+FROM node:26-bookworm-slim AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json tsconfig.base.json ./
@@ -16,7 +16,7 @@ RUN npm run build -w @nusa/shared \
   && npm run build -w @nusa/db \
   && npm run build -w @nusa/api
 
-FROM node:22-bookworm-slim
+FROM node:26-bookworm-slim
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8787

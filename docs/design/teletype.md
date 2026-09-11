@@ -21,6 +21,9 @@ below; the colour tokens, performance limits and functional constraints stay.
   that breakpoint the same DOM order forms one readable column. The upstream
   one-map listing cleanup is retained; no duplicate location map or overview
   section is reintroduced.
+- Nearby map/list layout uses a CSS container query, so it adapts to its
+  actual column width without a JavaScript resize listener. Its stacked
+  default also works in browsers without container-query support.
 - Controls have at least `2.75rem` height. Keep visible focus, native labels,
   localized status messages, safe-area padding and reduced-motion overrides.
 - The homepage uses useful introductory copy, an inset search panel, and

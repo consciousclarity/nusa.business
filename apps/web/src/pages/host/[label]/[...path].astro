@@ -1471,6 +1471,7 @@ if (hub && categoryParam) {
 </script>
 
 <style>
+  .nearby-discovery { container-type: inline-size; }
   /* Listing-only styles: kept off global.css so every other page — and the
      shared stylesheet's budget — stays untouched by the discovery panels. */
   .nearby-layout {
@@ -1531,7 +1532,7 @@ if (hub && categoryParam) {
     isolation: isolate;
   }
 
-  @media (min-width: 48rem) {
+  @container (min-width: 48rem) {
     .nearby-layout {
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       align-items: start;

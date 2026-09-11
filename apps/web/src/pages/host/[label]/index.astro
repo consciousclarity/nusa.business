@@ -240,6 +240,7 @@ const islandUpdatedAt = islandData
 
 {mode === "island" && islandData && (
   <Base
+    wide
     title={`${islandHubLabel} — nusa.business`}
     description={islandTagline(locale, islandData.island.slug, islandData.island.tagline)}
     crumb={[{ label: islandHubLabel }]}
@@ -270,7 +271,7 @@ const islandUpdatedAt = islandData
     )}
 
     <form
-      class="section filter-bar"
+      class="section filter-bar search-bar province-search"
       method="get"
       action={withLocale("/search", locale)}
     >
@@ -309,7 +310,7 @@ const islandUpdatedAt = islandData
           ? t(locale, "provinces")
           : t(locale, "regenciesCities")}
       </h2>
-      <ol class="index-list">
+      <ol class="index-list index-grid">
         {(islandData.island.kind === "region"
           ? (islandData.childProvinces ?? []).map((p) => ({
               slug: p.slug,
@@ -360,7 +361,7 @@ const islandUpdatedAt = islandData
       islandData.places.some((p) => p.type === "tourist_area") && (
         <section class="section">
           <h2>{t(locale, "areasIn")}</h2>
-          <ol class="index-list">
+          <ol class="index-list index-grid">
             {islandData.places
               .filter((p) => p.type === "tourist_area")
               .map((place, i) => {
@@ -411,7 +412,7 @@ const islandUpdatedAt = islandData
     {islandData.businesses.length > 0 && (
     <section class="section">
       <h2>{t(locale, "featured")}</h2>
-      <ol class="index-list">
+      <ol class="index-list index-grid">
         {islandData.businesses.slice(0, 9).map((b, i) => {
           const place = placeById[b.placeId];
           return (
@@ -454,6 +455,7 @@ const islandUpdatedAt = islandData
 
 {mode === "place" && placeData && (
   <Base
+    wide
     title={`${placeData.place.name}, ${placeIslandLabel} — nusa.business`}
     description={placeData.place.summary}
     crumb={[

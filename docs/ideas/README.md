@@ -30,6 +30,7 @@ You do not need to remember to file things. When you brainstorm with Cursor (“
 
 | Idea | Status | Updated |
 |---|---|---|
+| [Wide-format directory design](./2026-09-10-wide-format-directory-design.md) | `decided` | 2026-09-11 |
 | [Listing discovery: same address, similar, nearby map](./2026-09-08-listing-nearby-discovery.md) | `exploring` | 2026-09-09 |
 | [Complete 38 provinces and 514 kabupaten/kota](./2026-09-10-complete-provinces.md) | `done` | 2026-09-10 |
 | [Monetization & advertising (Nusa-adapted)](./2026-09-07-monetization-passive-income.md) | `exploring` | 2026-09-07 |

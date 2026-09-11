@@ -1,5 +1,19 @@
 # Nation homepage — structure spec
 
+## Phase-one implementation — 2026-09-11
+
+The owner-approved wide redesign keeps the current sequence: navigation and
+breadcrumbs → welcoming lede → GET search → category shortcuts → bounded map
+→ catalog trust information → add/claim actions → all 38 province links →
+footer. Province groups gain responsive columns; copy remains localized.
+
+This phase adds no imagery, new feed or client dependency. Existing raster
+map tiles remain for now; vector maps and saved businesses are deferred.
+The island row, recently-added feed and extra explanatory sections described
+under the older target below are proposals, not part of this implementation.
+See [the updated visual rules](teletype.md#wide-directory-update--2026-09-11)
+and [validation](wide-directory-validation.md).
+
 Companion to [teletype.md](teletype.md), which governs the visual language. This
 document specifies the **content structure** of the apex homepage only:
 `nusa.business`, `HostContext.kind === "nation"`, rendered by

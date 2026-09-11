@@ -21,6 +21,8 @@ interface Props {
   jsonLd?: JsonLd;
   /** Defaults to index,follow. Use noindex,follow for thin filter combinations. */
   robots?: string;
+  /** Directory and listing pages use the wide shell; legal/forms keep a reading measure. */
+  wide?: boolean;
 }
 
 const locale: Locale =
@@ -122,7 +124,7 @@ const jsonLdBlocks = jsonLd
         </>
       ))}
     </nav>
-    <main id="main-content" tabindex="-1">
+    <main id="main-content" class:list={{ "directory-page": Astro.props.wide }} tabindex="-1">
       <slot />
     </main>
     <footer class="site-footer">

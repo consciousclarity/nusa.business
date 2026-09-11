@@ -83,6 +83,7 @@ const searchMarkers = takeMarkers(
 );
 ---
 <Base
+  wide
   title={title}
   description={t(locale, "searchLede")}
   canonical={canonical}
@@ -94,7 +95,7 @@ const searchMarkers = takeMarkers(
     <p class="prose">{t(locale, "searchLede")}</p>
   </section>
 
-  <form class="section filter-bar" method="get" action={withLocale("/search", locale)}>
+  <form class="section filter-bar search-bar" method="get" action={withLocale("/search", locale)}>
     <label>
       {t(locale, "findBusiness")}
       <input
@@ -136,6 +137,8 @@ const searchMarkers = takeMarkers(
   <section class="section">
     {searchFailed ? (
       <DirectoryNotice locale={locale} variant="unavailable" />
+    ) : !queried ? (
+      <p class="prose">{t(locale, "searchStart")}</p>
     ) : (
       <>
     <h2>
@@ -149,7 +152,7 @@ const searchMarkers = takeMarkers(
     ) : (
       <>
       <DirectoryMap label={t(locale, "directoryMap")} markers={searchMarkers} />
-      <ol class="index-list">
+      <ol class="index-list index-grid">
         {hits.map((hit, i) => {
           const href = hitHref(hit);
           return (

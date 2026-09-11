@@ -1,0 +1,44 @@
+name: Dependabot auto-merge
+
+# Approves and enables auto-merge for patch/minor Dependabot bumps only.
+# Major bumps are left alone — they still need a human look.
+#
+# The approval must come from a real codeowner account, not the default
+# GITHUB_TOKEN: branch protection requires review "from Code Owners"
+# (.github/CODEOWNERS: `* @consciousclarity`), and GitHub does not let a
+# GITHUB_TOKEN-authored review satisfy that. DEPENDABOT_AUTOMERGE_PAT must
+# be a fine-grained PAT from the @consciousclarity account, scoped to this
+# repo, with "Pull requests: read and write" permission.
+#
+# Merging itself still waits on required status checks (the CI workflow) —
+# `gh pr merge --auto` only queues the merge for once those pass.
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Approve and enable auto-merge (patch/minor only)
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        env:
+          GH_TOKEN: "${{ secrets.DEPENDABOT_AUTOMERGE_PAT }}"
+          PR_URL: "${{ github.event.pull_request.html_url }}"
+        run: |
+          gh pr review "$PR_URL" --approve -b "Auto-approved: ${{ steps.metadata.outputs.update-type }} bump, CI must still pass."
+          gh pr merge "$PR_URL" --auto --squash

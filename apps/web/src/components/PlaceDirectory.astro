@@ -174,7 +174,7 @@ const placeFallback = geoView(island.slug);
 {children.length > 0 && (
   <section class="section">
     <h2>{t(locale, "areasIn")} {place.name}</h2>
-    <ol class="index-list">
+    <ol class="index-list index-grid">
       {children.map((child, i) => (
         <li>
           <div class="index-row">
@@ -256,7 +256,7 @@ const placeFallback = geoView(island.slug);
       </a>
     </p>
   ) : (
-    <ol class="index-list">
+    <ol class="index-list index-grid">
       {placeBusinesses.map((b, i) => (
         <li>
           <div class="index-row">

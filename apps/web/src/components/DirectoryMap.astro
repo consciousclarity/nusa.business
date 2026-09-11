@@ -32,8 +32,8 @@ const payload = JSON.stringify({
       role="img"
       aria-label={label}
       style={compact
-        ? "position:relative;width:100%;height:16rem;max-height:45vh;border:1px solid var(--rule);border-radius:var(--radius);background:var(--paper-2);overflow:hidden"
-        : "position:relative;width:100%;height:22rem;max-height:55vh;border:1px solid var(--rule);border-radius:var(--radius);background:var(--paper-2);overflow:hidden"}
+        ? "position:relative;isolation:isolate;z-index:0;width:100%;height:16rem;max-height:45vh;border:1px solid var(--rule);border-radius:var(--radius);background:var(--paper-2);overflow:hidden"
+        : "position:relative;isolation:isolate;z-index:0;width:100%;height:22rem;max-height:55vh;border:1px solid var(--rule);border-radius:var(--radius);background:var(--paper-2);overflow:hidden"}
     ></div>
   </section>
 )}

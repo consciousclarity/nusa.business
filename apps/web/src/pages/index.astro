@@ -125,6 +125,7 @@ const nationMarkers = takeMarkers([
 ]);
 ---
 <Base
+  wide
   title={t(locale, "nationTitle")}
   description={nationDescription}
   canonical={nationUrl}
@@ -135,12 +136,13 @@ const nationMarkers = takeMarkers([
     locale,
   })}
 >
-  <section class="lede">
+  <section class="lede nation-lede">
+    <p class="meta">{t(locale, "nationEyebrow")}</p>
     <h1>{t(locale, "nationH1")}</h1>
     <p class="prose">{t(locale, "nationLede")}</p>
   </section>
 
-  <form class="section filter-bar" method="get" action={searchAction}>
+  <form class="section filter-bar search-bar" method="get" action={searchAction}>
     <label>
       {t(locale, "findBusiness")}
       <input
@@ -219,6 +221,7 @@ const nationMarkers = takeMarkers([
     <p class="prose">
       {provinces.length} {t(locale, "provinces").toLowerCase()} · {t(locale, "regenciesCities")}
     </p>
+    <div class="province-groups">
     {directoryUp ? (
       grouped.map((group) => (
         <section class="section">
@@ -250,6 +253,7 @@ const nationMarkers = takeMarkers([
     ) : (
       <DirectoryNotice locale={locale} variant="unavailable" />
     )}
+    </div>
     {leftover.length > 0 && (
       <ol class="index-list">
         {leftover.map((island, i) => (

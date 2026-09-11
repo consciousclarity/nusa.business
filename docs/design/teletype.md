@@ -1,5 +1,39 @@
 # Teletype — visual design specification
 
+## Wide directory update — 2026-09-11
+
+The owner approved a wider, more inviting public directory. This update
+supersedes the narrow layout, uppercase-heading and resolver-hero guidance
+below; the colour tokens, performance limits and functional constraints stay.
+
+- `Base` opts directory and listing pages into a shell capped at `90rem`,
+  with `clamp(1rem, 4vw, 4rem)` gutters. Legal, support and onboarding content
+  keeps a `66ch` reading measure; prose within wide pages also stays `66ch`.
+- Use sentence-case sans headings and a system-serif nation headline. Body
+  and prose use `1.0625rem`, preserving browser text enlargement. Metadata,
+  navigation and tables retain the system mono stack. No font downloads.
+- Search stacks on phones, uses two columns from `40rem`, and one row from
+  `64rem`. Province search retains its hidden province parameter.
+- Result lists use two columns from `48rem`; province groups use two columns
+  from `48rem` and three from `80rem`. All province links stay in the HTML.
+- Listing identity and contact details sit side by side from `64rem`.
+  Hours precede discovery, reviews, reports and booking. Below
+  that breakpoint the same DOM order forms one readable column. The upstream
+  one-map listing cleanup is retained; no duplicate location map or overview
+  section is reintroduced.
+- Controls have at least `2.75rem` height. Keep visible focus, native labels,
+  localized status messages, safe-area padding and reduced-motion overrides.
+- The homepage uses useful introductory copy, an inset search panel, and
+  category links with subtle CSS arrows. No decorative images or new client
+  runtime are added. The obsolete resolver component has no public consumer.
+- Phase one retains the existing lazy Leaflet maps, including their raster
+  tiles. Directory maps get an isolated, bounded stacking context. A literal
+  zero-image vector map is a separately scoped follow-up, not this release.
+
+See [the decision note](../ideas/2026-09-10-wide-format-directory-design.md)
+and [validation](wide-directory-validation.md). The historical description
+below remains useful for the unchanged palette and performance constraints.
+
 The public surface (`apps/web`) is a **tropical modernist editorial**: warm
 paper, hairline rules, and machine-set labels, with humanist reading type for
 the sentences people actually read. Sophisticated and very fast — not a generic

@@ -82,4 +82,23 @@ describe("Indonesia 38 provinces and 514 kabupaten/kota", () => {
     assert.equal(kab, 416);
     assert.equal(kota, 98);
   });
+
+  it("seeds at least one business in every province", async () => {
+    const { resetSeed, listProvinces, getStore } = await import("@nusa/db");
+    resetSeed();
+    const store = getStore();
+    const uncovered = listProvinces().filter((province) => {
+      const placeIds = new Set(
+        store.places
+          .filter((p) => p.islandId === province.id)
+          .map((p) => p.id),
+      );
+      return !store.businesses.some((b) => placeIds.has(b.placeId));
+    });
+    assert.deepEqual(
+      uncovered.map((p) => p.slug),
+      [],
+      "every province should have at least one seeded business",
+    );
+  });
 });

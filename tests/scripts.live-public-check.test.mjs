@@ -39,7 +39,8 @@ describe("live public check script", () => {
     assert.match(script, />Booking<\/dt>/);
     assert.match(script, />Host<\/dt>/);
     assert.match(script, /Alamat/);
-    assert.match(script, /Nilai ulasan/);
+    assert.match(script, />Ulasan<\/h2>/);
+    assert.match(script, />Nilai \(1/);
     assert.match(script, />Sen<\//);
     assert.match(script, /sitemap\.xml/);
     assert.match(script, /\/host\/bali/);

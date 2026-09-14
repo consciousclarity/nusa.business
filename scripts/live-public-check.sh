@@ -200,10 +200,16 @@ if [ -n "$listing_id" ]; then
     pass "listing /id has no English Review scores"
   fi
 
-  if has "$listing_id" 'Nilai ulasan'; then
-    pass "listing /id has Indonesian review chrome Nilai ulasan"
+  if has "$listing_id" '>Ulasan</h2>'; then
+    pass "listing /id has Indonesian reviews heading Ulasan"
   else
-    fail "listing /id missing Indonesian review chrome Nilai ulasan"
+    fail "listing /id missing Indonesian reviews heading Ulasan"
+  fi
+
+  if has "$listing_id" '>Nilai (1'; then
+    pass "listing /id has Indonesian review score legend Nilai (1-5)"
+  else
+    fail "listing /id missing Indonesian review score legend Nilai (1-5)"
   fi
 
   if has "$listing_id" '>Mon</th>' || has "$listing_id" '>Mon</'; then

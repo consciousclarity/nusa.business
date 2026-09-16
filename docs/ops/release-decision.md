@@ -127,11 +127,20 @@ gap and did not block this GO.
 
 ## Post-GO operator follow-ups
 
-- Change the one-time `ops@nusa.business` password after first login (carried
-  over from the prior GO if not already done).
-- Search Console / property verification (C11).
-- Isolated C07 restore drill into a scratch volume (non-production directory).
-- Fix the stale `"Nilai ulasan"` assertion in `scripts/live-public-check.sh`.
+- ~~Change the one-time `ops@nusa.business` password after first login~~ —
+  **done 2026-09-14**. Rotated in place on the live `docker_api_data` volume
+  (backed up first to `/var/backups/nusa/`); operator confirmed portal login
+  with the new password.
+- Search Console / property verification (C11) — still open; no
+  `google-site-verification` meta tag, verification file, or DNS TXT record
+  found on the live site as of 2026-09-14.
+- Isolated C07 restore drill into a scratch volume (non-production directory)
+  — still open.
+- ~~Fix the stale `"Nilai ulasan"` assertion in `scripts/live-public-check.sh`~~
+  — **done**, merged in [#94](https://github.com/consciousclarity/nusa.business/pull/94).
+  Live site still runs the pre-fix build as of 2026-09-14, so
+  `live-public-check.sh` will keep reporting this one FAIL until the next
+  deploy.
 - Screen-reader pass (C10) and RUM (C12) remain non-blocking.
 
 None of these block this GO.

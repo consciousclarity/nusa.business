@@ -30,22 +30,14 @@ It does **not** cover:
 
 ### Recommended certificate strategy
 
-Order an **Advanced Certificate** (or enable Total TLS) including:
-
-```text
-nusa.business
-*.nusa.business
-*.bali.nusa.business
-*.java.nusa.business
-*.lombok.nusa.business
-*.sumatra.nusa.business
-*.sulawesi.nusa.business
-*.kalimantan.nusa.business
-*.maluku.nusa.business
-*.papua.nusa.business
-```
-
-Each `*.{island}.nusa.business` covers place hubs under that island. ACM allows up to 50 SANs per cert (apex counts as one).
+Order an **Advanced Certificate** (or enable Total TLS) including `nusa.business`,
+`*.nusa.business`, and `*.{slug}.nusa.business` for every slug in
+`PLACE_WILDCARD_ISLANDS` (`scripts/lib/place-wildcard-islands.mjs`) — the 38
+`ADMIN_PROVINCES` slugs plus the 5 legacy region/alias hubs (`java`, `lombok`,
+`sumatra`, `sulawesi`, `kalimantan`). That's 41 SANs plus apex/wildcard; ACM
+allows up to 50 per cert. **Do not hand-list only the original 8 islands here**
+— that produced exactly the bug fixed 2026-09-16 (below): 34 provinces had no
+place-host cert coverage at all after the 38-province rollout (ADR-007).
 
 **Free alternative while prototyping:** keep public URLs as `bali.nusa.business` + path `/host/gianyar/...` until ACM is purchased.
 
@@ -78,19 +70,23 @@ Cloudflare → **DNS** → **Records**. Delete conflicting Hostinger parking rec
 | A | `@` | `62.72.7.218` | Proxied (orange cloud) |
 | A | `www` | `62.72.7.218` | Proxied |
 | A | `*` | `62.72.7.218` | Proxied |
-| A | `*.bali` | `62.72.7.218` | **DNS-only (grey)** |
-| A | `*.java` | `62.72.7.218` | **DNS-only (grey)** |
-| A | `*.lombok` | `62.72.7.218` | **DNS-only (grey)** |
-| A | `*.sumatra` | `62.72.7.218` | **DNS-only (grey)** |
-| A | `*.sulawesi` | `62.72.7.218` | **DNS-only (grey)** |
-| A | `*.kalimantan` | `62.72.7.218` | **DNS-only (grey)** |
-| A | `*.maluku` | `62.72.7.218` | **DNS-only (grey)** |
-| A | `*.papua` | `62.72.7.218` | **DNS-only (grey)** |
+| A | `*.{slug}` for every slug in `PLACE_WILDCARD_ISLANDS` | `62.72.7.218` | **DNS-only (grey)** |
 
-- `@` + `*` → `nusa.business` and `bali.nusa.business` (island hosts, orange)  
-- `*.bali` → `gianyar.bali.nusa.business`, … (place hosts, **grey** so origin can mint LE certs)
+- `@` + `*` → `nusa.business` and `bali.nusa.business` (island hosts, orange)
+- `*.{slug}` → `gianyar.bali.nusa.business`, `tangerang.banten.nusa.business`, … (place hosts, **grey** so origin can mint LE certs)
 
-Or with API token:
+**Do not hand-enter only a handful of islands here.** On 2026-09-16 the live
+zone had grey-cloud wildcards for just the original 8-island set (`bali`,
+`java`, `lombok`, `sumatra`, `sulawesi`, `kalimantan`, `maluku`, `papua`) —
+`PLACE_WILDCARD_ISLANDS` has grown to 43 entries since the 38-province rollout
+(ADR-007) and this table (plus the matching Caddy host list, fixed in #96)
+were never updated. Every nested host under the other 35 provinces
+handshake-failed at Cloudflare's edge — TLS termination for a two-label host
+falls through to the orange `*` record, which free Universal SSL doesn't
+cover. Always run `npm run cf:zone` (below) rather than adding records by
+hand, so the full current list is applied every time.
+
+Run with an API token:
 
 ```bash
 export CLOUDFLARE_API_TOKEN="..."

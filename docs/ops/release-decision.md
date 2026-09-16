@@ -125,6 +125,48 @@ assertion to match actual copy (or vice versa, if `"Nilai ulasan"` is
 preferred wording) as a follow-up; it does not indicate a real localization
 gap and did not block this GO.
 
+## Post-GO incident: 34+ province hosts unreachable (2026-09-15/16)
+
+**Found:** a user report that `https://sumatera-utara.nusa.business/` 404'd.
+Investigation found two independent, compounding infra gaps left over from
+before the 38-province rollout (ADR-007, #53) — both were manual/hand-listed
+configs that were never updated when the geography model grew from ~8 islands
+to 38 provinces + 5 region/alias hubs:
+
+1. **Host Caddy** (`/etc/caddy/Caddyfile` on the VPS, mirrored in
+   `deploy/caddy/nusa.business.caddy`): the apex `nusa.business` site block's
+   host list only had the original 8 islands. 34 of the 38 real provinces had
+   no matching Caddy site block at all — requests 404'd at Caddy, never
+   reaching the app. Confirmed by bypassing Cloudflare and hitting the VPS
+   origin directly with `curl --resolve`.
+2. **Cloudflare DNS**: the zone only had grey-cloud (DNS-only) `*.{slug}`
+   wildcards for the same 8 islands. Every nested place host
+   (`{place}.{province}.nusa.business`, e.g.
+   `tangerang.banten.nusa.business`) under the other 35 provinces fell
+   through to the orange-clouded `*.nusa.business` record, which free
+   Cloudflare Universal SSL cannot terminate for two-label hosts — a hard TLS
+   handshake failure, not just a 404.
+
+**Fixed 2026-09-16:**
+- Caddy host list repaired and reloaded live on the VPS, and
+  `deploy/caddy/nusa.business.caddy` fixed to match — merged in
+  [#96](https://github.com/consciousclarity/nusa.business/pull/96), which
+  also added `tests/deploy-caddy-hosts.test.mjs` to pin the host list against
+  `PLACE_WILDCARD_ISLANDS` so it can't silently drift stale again.
+- The 35 missing Cloudflare DNS-only wildcards created via `npm run cf:zone`
+  (`scripts/cloudflare-setup-zone.mjs`), which reads the same
+  `PLACE_WILDCARD_ISLANDS` source of truth
+  (`scripts/lib/place-wildcard-islands.mjs`). `docs/ops/cloudflare.md`'s
+  onboarding runbook — the likely origin of the original 8-only setup — was
+  also corrected to stop hand-listing islands.
+- Verified live: all 38 single-label province hosts and a broad sample of
+  nested kabupaten/kota/tourist-area hosts across the newly-fixed provinces
+  return `200`.
+
+Neither gap affected the 4 originally-covered provinces (Bali, DI
+Yogyakarta, NTB, Sulawesi Selatan) or the 5 legacy region hubs — only the 34
+provinces added in the 38-province rollout, until this fix.
+
 ## Post-GO operator follow-ups
 
 - ~~Change the one-time `ops@nusa.business` password after first login~~ —

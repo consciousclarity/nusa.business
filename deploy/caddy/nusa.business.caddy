@@ -69,15 +69,58 @@ sumatera.nusa.business {
 
 # Nation + island hubs (one DNS label). Covered by Cloudflare Universal SSL
 # when orange-clouded, and by Let's Encrypt at the origin for Full Strict.
+#
+# Keep in sync with scripts/lib/place-wildcard-islands.mjs PLACE_WILDCARD_ISLANDS
+# (PROVINCE_HOST_SLUGS + LEGACY_REGION_HOST_SLUGS) — the 38 ADMIN_PROVINCES
+# slugs plus the legacy region/alias hubs (java, lombok, sumatra, sulawesi,
+# kalimantan). `lombok` has no island/province record of its own — the app's
+# canonicalizeIslandSlug (packages/shared/src/index.ts) aliases it to
+# nusa-tenggara-barat — so it must stay in this list even though it will
+# never appear in packages/db ADMIN_PROVINCES.
 nusa.business,
+aceh.nusa.business,
 bali.nusa.business,
+banten.nusa.business,
+bengkulu.nusa.business,
+di-yogyakarta.nusa.business,
+dki-jakarta.nusa.business,
+gorontalo.nusa.business,
+jambi.nusa.business,
 java.nusa.business,
-lombok.nusa.business,
-sumatra.nusa.business,
-sulawesi.nusa.business,
+jawa-barat.nusa.business,
+jawa-tengah.nusa.business,
+jawa-timur.nusa.business,
 kalimantan.nusa.business,
+kalimantan-barat.nusa.business,
+kalimantan-selatan.nusa.business,
+kalimantan-tengah.nusa.business,
+kalimantan-timur.nusa.business,
+kalimantan-utara.nusa.business,
+kepulauan-bangka-belitung.nusa.business,
+kepulauan-riau.nusa.business,
+lombok.nusa.business,
+lampung.nusa.business,
 maluku.nusa.business,
-papua.nusa.business {
+maluku-utara.nusa.business,
+nusa-tenggara-barat.nusa.business,
+nusa-tenggara-timur.nusa.business,
+papua.nusa.business,
+papua-barat.nusa.business,
+papua-barat-daya.nusa.business,
+papua-pegunungan.nusa.business,
+papua-selatan.nusa.business,
+papua-tengah.nusa.business,
+riau.nusa.business,
+sulawesi.nusa.business,
+sulawesi-barat.nusa.business,
+sulawesi-selatan.nusa.business,
+sulawesi-tengah.nusa.business,
+sulawesi-tenggara.nusa.business,
+sulawesi-utara.nusa.business,
+sumatera-barat.nusa.business,
+sumatera-selatan.nusa.business,
+sumatera-utara.nusa.business,
+sumatra.nusa.business {
 	reverse_proxy 127.0.0.1:4321
 	import nusa_headers
 

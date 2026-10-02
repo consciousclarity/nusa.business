@@ -13,7 +13,7 @@
   "dependencies": {
     "@astrojs/node": "^11.1.6",
     "@nusa/shared": "*",
-    "astro": "^7.2.8",
+    "astro": "^7.3.5",
     "leaflet": "^1.9.4"
   },
   "devDependencies": {

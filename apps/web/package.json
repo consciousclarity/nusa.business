@@ -11,9 +11,9 @@
     "preview": "astro preview --port 4321"
   },
   "dependencies": {
-    "@astrojs/node": "^11.1.9",
+    "@astrojs/node": "^11.1.12",
     "@nusa/shared": "*",
-    "astro": "^7.4.5",
+    "astro": "^7.4.10",
     "leaflet": "^1.9.4"
   },
   "devDependencies": {

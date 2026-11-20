@@ -9,10 +9,10 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
-    "@hono/node-server": "^2.1.6",
+    "@hono/node-server": "^2.1.9",
     "@nusa/db": "*",
     "@nusa/shared": "*",
-    "hono": "^4.13.17"
+    "hono": "^4.13.19"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
